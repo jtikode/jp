@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "../src/lib/auth";
 
-const adapter = new PrismaMariaDb(process.env.DATABASE_URL as string);
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL as string });
 const db = new PrismaClient({ adapter });
 
 async function main() {

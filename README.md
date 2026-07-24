@@ -4,7 +4,7 @@ Internal operations app for J.P. Traders: a mobile Field Terminal for salesmen, 
 
 ## Stack
 
-Next.js (App Router, TypeScript) + Prisma + Tailwind. Local development uses SQLite; production is meant to run on PostgreSQL (e.g. Neon) + Vercel + Vercel Blob for photo storage.
+Next.js (App Router, TypeScript) + Prisma + Tailwind. PostgreSQL database (Supabase in production). Deployed via Hostinger's "Deploy Web App" (Node.js hosting, Git-connected).
 
 ## Running locally
 
@@ -19,21 +19,18 @@ Open [http://localhost:3000](http://localhost:3000). Change the seeded admin pas
 
 ## Environment variables (`.env`)
 
-- `DATABASE_URL` — `file:./dev.db` locally; a PostgreSQL connection string in production.
+- `DATABASE_URL` — PostgreSQL connection string (`postgresql://USER:PASSWORD@HOST:PORT/DATABASE`). In production this points at the Supabase project connected through Hostinger's deploy flow.
 - `SESSION_SECRET` — 32+ random characters, used to encrypt the login session cookie. Generate a real one before deploying (`openssl rand -base64 32`).
-- `BLOB_READ_WRITE_TOKEN` — only needed in production. Without it, visit photos are written to `public/uploads` on local disk (dev-only fallback).
+- `BLOB_READ_WRITE_TOKEN` — not needed on Hostinger. Leave unset and visit photos are written to `public/uploads` on local disk, which works fine since Hostinger's Node hosting is a persistent process (unlike Vercel's ephemeral serverless filesystem, which was the original target this fallback was designed around).
 
-## Deploying to production
+## Deploying (Hostinger)
 
-The app was built against SQLite locally since no Postgres instance was available in this environment, but it's meant to run on Postgres in production. Before deploying:
-
-1. Provision a Postgres database (e.g. [Neon](https://neon.tech)) and get its connection string.
-2. In `prisma/schema.prisma`, change the datasource `provider` from `"sqlite"` to `"postgresql"`.
-3. In `src/lib/db.ts` and `prisma/seed.ts`, swap the `@prisma/adapter-better-sqlite3` driver adapter for `@prisma/adapter-pg` (or your preferred Postgres adapter), pointed at `DATABASE_URL`.
-4. Run `npx prisma migrate deploy` against the new database, then `npm run db:seed`.
-5. Set up [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) and add `BLOB_READ_WRITE_TOKEN` to your Vercel project's environment variables — without it, photo uploads will fail on Vercel's ephemeral filesystem.
-6. Set a real `SESSION_SECRET` and `DATABASE_URL` in the Vercel project settings.
-7. Deploy the project to Vercel (framework preset: Next.js, zero extra config needed otherwise).
+1. Push this repo to GitHub (already done — connected as `jtikode/jp`).
+2. In hPanel: **Advanced → Deploy Web App → Import Git repository → Connect with GitHub**, select the repo and `main` branch.
+3. When prompted to connect a database, choose **Supabase** and follow Hostinger's guided setup to create/link a Supabase Postgres project.
+4. Add environment variables in the deploy screen: `DATABASE_URL` (from the Supabase connection Hostinger gives you), `SESSION_SECRET` (a real random value — don't reuse the local dev one).
+5. Deploy. The `postinstall` script runs `prisma generate` automatically after `npm install`, and all pages that depend on the database/session are marked `force-dynamic` so the build doesn't try to prerender them.
+6. Once live, run migrations against the Supabase database (`npx prisma migrate deploy` with `DATABASE_URL` pointed at it) and seed the first admin (`npm run db:seed`), if Hostinger's deploy shell allows running one-off commands — otherwise these can be run from a local machine pointed at the same Supabase connection string.
 
 ## Notes
 
