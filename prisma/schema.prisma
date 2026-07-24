@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  SALESMAN
+  TELECALLER
+  WAREHOUSE
+  ADMIN
+}
+
+enum WarehouseTaskType {
+  INWARD
+  SHELVING
+  FULFILLMENT
+}
+
+enum AttendanceStatus {
+  LEAVE
+  HALF_LEAVE
+  ABSENT
+  HOLIDAY_WEEKOFF
+  OFFICE_DAY
+}
+
+enum NoOrderReason {
+  STORE_CLOSED
+  NO_STOCK_NEEDED
+  OWNER_NOT_AVAILABLE
+  PAYMENT_DISPUTE
+  COMPETITOR_STOCKED
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  phone        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  routeAssignments RouteAssignment[]
+  visits           Visit[]
+  attendances      Attendance[]
+  telecallerLogs   TelecallerLog[]
+  warehouseActions WarehouseAction[]
+  targets          Target[]
+  importBatches    ImportBatch[]
+
+  @@index([role])
+}
+
+model Route {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  stores      Store[]
+  assignments RouteAssignment[]
+  visits      Visit[]
+}
+
+model RouteAssignment {
+  id      String @id @default(cuid())
+  userId  String
+  routeId String
+  user    User   @relation(fields: [userId], references: [id])
+  route   Route  @relation(fields: [routeId], references: [id])
+
+  @@unique([userId, routeId])
+}
+
+model Store {
+  id           String   @id @default(cuid())
+  externalCode String?  @unique
+  name         String
+  address      String
+  phone        String?
+  routeId      String?
+  route        Route?   @relation(fields: [routeId], references: [id])
+  createdAt    DateTime @default(now())
+
+  visits          Visit[]
+  telecallerLogs  TelecallerLog[]
+  ledgerEntries   LedgerEntry[]
+  purchaseHistory PurchaseHistoryItem[]
+
+  @@index([routeId])
+  @@index([name])
+}
+
+model Visit {
+  id               String         @id @default(cuid())
+  userId           String
+  storeId          String
+  routeId          String?
+  visitDate        DateTime       @default(now())
+  latitude         Float
+  longitude        Float
+  photoUrl         String
+  collectionAmount Decimal?
+  orderAmount      Decimal?
+  hasOrder         Boolean        @default(false)
+  noOrderReason    NoOrderReason?
+  notes            String?
+  createdAt        DateTime       @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+  route Route? @relation(fields: [routeId], references: [id])
+
+  @@index([userId, visitDate])
+  @@index([storeId])
+  @@index([routeId])
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  userId    String
+  date      DateTime
+  status    AttendanceStatus
+  note      String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([date])
+}
+
+model TelecallerLog {
+  id               String         @id @default(cuid())
+  userId           String
+  storeId          String
+  contactDate      DateTime       @default(now())
+  orderAmount      Decimal?
+  paymentPromise   Decimal?
+  collectionAmount Decimal?
+  hasOrder         Boolean        @default(false)
+  noOrderReason    NoOrderReason?
+  noPaymentReason  String?
+  complaintNotes   String?
+  createdAt        DateTime       @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@index([userId, contactDate])
+  @@index([storeId])
+}
+
+model WarehouseAction {
+  id               String            @id @default(cuid())
+  userId           String
+  taskType         WarehouseTaskType
+  referenceNo      String?
+  itemDescription  String?
+  quantity         Int?
+  rackLocation     String?
+  hasDiscrepancy   Boolean           @default(false)
+  discrepancyNotes String?
+  actionDate       DateTime          @default(now())
+  createdAt        DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, actionDate])
+  @@index([taskType])
+  @@index([hasDiscrepancy])
+}
+
+model LedgerEntry {
+  id                String    @id @default(cuid())
+  storeId           String
+  invoiceNo         String?
+  invoiceDate       DateTime?
+  amount            Decimal
+  outstandingAmount Decimal
+  dueDate           DateTime?
+  uploadBatchId     String
+  importedAt        DateTime  @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@index([storeId])
+  @@index([uploadBatchId])
+}
+
+model PurchaseHistoryItem {
+  id            String    @id @default(cuid())
+  storeId       String
+  itemName      String
+  quantity      Decimal
+  unit          String?
+  periodStart   DateTime?
+  periodEnd     DateTime?
+  uploadBatchId String
+  importedAt    DateTime  @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@index([storeId])
+  @@index([itemName])
+}
+
+model Target {
+  id                String   @id @default(cuid())
+  userId            String
+  periodMonth       Int
+  periodYear        Int
+  monthlyTarget     Decimal
+  todayTarget       Decimal
+  perRetailerTarget Decimal
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, periodMonth, periodYear])
+}
+
+model ImportBatch {
+  id           String   @id @default(cuid())
+  importType   String
+  fileName     String
+  rowCount     Int
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+}
