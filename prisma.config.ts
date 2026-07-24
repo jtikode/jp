@@ -9,6 +9,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // The Prisma CLI (migrate/generate) needs a non-pooled connection to run
+    // DDL — Supabase's pgbouncer transaction pooler (DATABASE_URL, used by
+    // the running app instead) doesn't support that.
+    url: process.env["DIRECT_URL"],
   },
 });
