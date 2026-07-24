@@ -8,11 +8,27 @@ import type { ActionResult } from "@/actions/employeeActions";
 
 const STORE_ALIASES = {
   code: ["code", "store code", "id", "store id"],
-  name: ["name", "store name", "medical store", "chemist name"],
+  name: ["name", "store name", "medical store", "chemist name", "ledger"],
   address: ["address", "store address"],
-  phone: ["phone", "mobile", "contact", "phone number"],
-  route: ["route", "route name", "beat", "beat name"],
+  addressParts: ["address1", "address2", "address3"],
+  phone: ["phone", "mobile", "contact", "phone number", "phone1", "phone2"],
+  route: ["route", "route name", "beat", "beat name", "rout", "area"],
 };
+
+/**
+ * Some billing-software exports (e.g. Tally ledger exports) split the
+ * address across address1/address2/address3 instead of one column.
+ */
+function findAddress(row: Record<string, string>): string | undefined {
+  const single = findColumn(row, STORE_ALIASES.address);
+  if (single) return single;
+
+  const parts = STORE_ALIASES.addressParts
+    .map((alias) => findColumn(row, [alias]))
+    .filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(", ") : undefined;
+}
 
 export async function importStoreMaster(
   _prevState: (ActionResult & { rowCount?: number }) | null,
@@ -37,7 +53,7 @@ export async function importStoreMaster(
 
   for (const row of rows) {
     const name = findColumn(row, STORE_ALIASES.name);
-    const address = findColumn(row, STORE_ALIASES.address);
+    const address = findAddress(row);
     if (!name || !address) continue;
 
     const code = findColumn(row, STORE_ALIASES.code);
