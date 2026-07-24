@@ -2,6 +2,8 @@ import { requireRole } from "@/lib/permissions";
 import { AppHeader } from "@/components/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(["ADMIN"]);
 

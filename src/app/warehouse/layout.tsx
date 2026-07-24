@@ -2,6 +2,8 @@ import { requireRole } from "@/lib/permissions";
 import { AppHeader } from "@/components/AppHeader";
 import { WarehouseNav } from "@/components/warehouse/WarehouseNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function WarehouseLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(["WAREHOUSE"]);
 

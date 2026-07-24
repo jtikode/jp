@@ -2,6 +2,8 @@ import { requireRole } from "@/lib/permissions";
 import { AppHeader } from "@/components/AppHeader";
 import { SalesmanNav } from "@/components/salesman/SalesmanNav";
 
+export const dynamic = "force-dynamic";
+
 export default async function SalesmanLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(["SALESMAN"]);
 

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ROLE_HOME } from "@/lib/permissions";
 
+export const dynamic = "force-dynamic";
+
 export default async function RootPage() {
   const session = await getSession();
 
