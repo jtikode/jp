@@ -26,6 +26,8 @@ export default async function SalesmanStoresPage() {
           name: s.name,
           address: s.address,
           routeName: s.route?.name,
+          latitude: s.latitude,
+          longitude: s.longitude,
         }))}
       />
     </div>

@@ -58,6 +58,17 @@ export async function submitVisit(
     },
   });
 
+  // First confirmed GPS fix for this store becomes its known location, so any
+  // salesman covering this route later can see it's already been found.
+  if (store.latitude == null || store.longitude == null) {
+    await db.store.update({
+      where: { id: store.id },
+      data: { latitude: parsed.data.latitude, longitude: parsed.data.longitude },
+    });
+  }
+
   revalidatePath("/salesman/calendar");
+  revalidatePath(`/salesman/routes/${store.routeId}`);
+  revalidatePath("/salesman/stores");
   redirect("/salesman/stores?visitSubmitted=1");
 }

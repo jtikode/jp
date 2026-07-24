@@ -49,6 +49,9 @@ export async function importStoreMaster(
   }
 
   const routeCache = new Map<string, string>();
+  // The file's row order is the salesman's real-world visit sequence along
+  // each route, so track a running counter per route as rows are processed.
+  const sequenceCounters = new Map<string, number>();
   let imported = 0;
 
   for (const row of rows) {
@@ -61,6 +64,7 @@ export async function importStoreMaster(
     const routeName = findColumn(row, STORE_ALIASES.route);
 
     let routeId: string | undefined;
+    let visitSequence: number | undefined;
     if (routeName) {
       if (!routeCache.has(routeName)) {
         const route = await db.route.upsert({
@@ -71,16 +75,20 @@ export async function importStoreMaster(
         routeCache.set(routeName, route.id);
       }
       routeId = routeCache.get(routeName);
+
+      const nextSeq = (sequenceCounters.get(routeId!) ?? 0) + 1;
+      sequenceCounters.set(routeId!, nextSeq);
+      visitSequence = nextSeq;
     }
 
     if (code) {
       await db.store.upsert({
         where: { externalCode: code },
-        update: { name, address, phone, routeId },
-        create: { externalCode: code, name, address, phone, routeId },
+        update: { name, address, phone, routeId, visitSequence },
+        create: { externalCode: code, name, address, phone, routeId, visitSequence },
       });
     } else {
-      await db.store.create({ data: { name, address, phone, routeId } });
+      await db.store.create({ data: { name, address, phone, routeId, visitSequence } });
     }
 
     imported += 1;

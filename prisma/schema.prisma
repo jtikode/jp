@@ -90,6 +90,11 @@ model Store {
   phone        String?
   routeId      String?
   route        Route?   @relation(fields: [routeId], references: [id])
+  visitSequence Int?
+  // Set from the GPS captured on the first confirmed visit, so any salesman
+  // covering this route later can see the store has already been located.
+  latitude     Float?
+  longitude    Float?
   createdAt    DateTime @default(now())
 
   visits          Visit[]
