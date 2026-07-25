@@ -14,6 +14,16 @@ export default async function TelecallerStorePage({
 
   if (!store) notFound();
 
+  // Highest-value items first, so the telecaller can lead the call by asking
+  // about what this store buys the most rather than reading an arbitrary list.
+  const regularItems = await db.purchaseHistoryItem.groupBy({
+    by: ["itemName", "unit"],
+    where: { storeId },
+    _sum: { quantity: true, totalValue: true },
+    orderBy: { _sum: { totalValue: "desc" } },
+    take: 20,
+  });
+
   return (
     <div className="mx-auto max-w-md space-y-4">
       <Card>
@@ -38,6 +48,31 @@ export default async function TelecallerStorePage({
           </div>
         )}
       </Card>
+
+      {regularItems.length > 0 && (
+        <Card className="overflow-x-auto">
+          <h2 className="mb-1 text-base font-bold text-slate-900">Regularly bought items</h2>
+          <p className="mb-3 text-xs text-slate-500">Ask about these — highest value first.</p>
+          <table className="w-full min-w-[320px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500">
+                <th className="py-2 pr-4">Item</th>
+                <th className="py-2 pr-4">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {regularItems.map((item) => (
+                <tr key={`${item.itemName}-${item.unit}`} className="border-b border-slate-100">
+                  <td className="py-2 pr-4 font-medium text-slate-900">{item.itemName}</td>
+                  <td className="py-2 pr-4 text-slate-600">
+                    {Number(item._sum.quantity ?? 0).toLocaleString("en-IN")} {item.unit ?? ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <Card>
         <TelecallerLogForm storeId={store.id} />

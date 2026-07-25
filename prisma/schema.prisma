@@ -209,6 +209,9 @@ model PurchaseHistoryItem {
   itemName      String
   quantity      Decimal
   unit          String?
+  // Total sale value for this item over the report period — used to rank
+  // "regularly bought items" highest-value-first for telecaller upsell asks.
+  totalValue    Decimal?
   periodStart   DateTime?
   periodEnd     DateTime?
   uploadBatchId String

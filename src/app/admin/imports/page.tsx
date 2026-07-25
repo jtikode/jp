@@ -35,9 +35,11 @@ export default async function ImportsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload purchase history</h2>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload regular items</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Past order/item history per store, used for upsell suggestions.
+          Excel export of yearly purchases per store (Party VS Item Wise Sale Analysis), used to
+          show telecallers what each medical regularly buys. Only stores in the file get their
+          item list replaced.
         </p>
         <FileImportForm
           action={importPurchaseHistory}

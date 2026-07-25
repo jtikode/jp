@@ -19,9 +19,9 @@ export default async function IntelligencePage({
     ? await db.purchaseHistoryItem.groupBy({
         by: ["itemName", "unit"],
         where: { storeId },
-        _sum: { quantity: true },
-        orderBy: { _sum: { quantity: "desc" } },
-        take: 10,
+        _sum: { quantity: true, totalValue: true },
+        orderBy: { _sum: { totalValue: "desc" } },
+        take: 100,
       })
     : [];
 
@@ -46,12 +46,15 @@ export default async function IntelligencePage({
 
       {storeId && (
         <Card className="overflow-x-auto">
-          <h2 className="mb-4 text-lg font-bold text-slate-900">Frequently bought items</h2>
+          <h2 className="mb-4 text-lg font-bold text-slate-900">
+            Regularly bought items (highest value first)
+          </h2>
           <table className="w-full min-w-[400px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500">
                 <th className="py-2 pr-4">Item</th>
-                <th className="py-2 pr-4">Estimated Quantity</th>
+                <th className="py-2 pr-4">Quantity</th>
+                <th className="py-2 pr-4">Value</th>
               </tr>
             </thead>
             <tbody>
@@ -61,11 +64,14 @@ export default async function IntelligencePage({
                   <td className="py-2 pr-4 text-slate-600">
                     {Number(item._sum.quantity ?? 0).toLocaleString("en-IN")} {item.unit ?? ""}
                   </td>
+                  <td className="py-2 pr-4 text-slate-600">
+                    ₹{Number(item._sum.totalValue ?? 0).toLocaleString("en-IN")}
+                  </td>
                 </tr>
               ))}
               {topItems.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="py-4 text-center text-slate-400">
+                  <td colSpan={3} className="py-4 text-center text-slate-400">
                     No purchase history for this store.
                   </td>
                 </tr>

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
+import { parseRegularItemsExcel } from "@/lib/regularItems";
 import type { ActionResult } from "@/actions/employeeActions";
 
 const STORE_ALIASES = {
@@ -237,6 +238,7 @@ const PURCHASE_HISTORY_ALIASES = {
   itemName: ["item", "item name", "product", "product name"],
   quantity: ["quantity", "qty"],
   unit: ["unit", "uom"],
+  amount: ["amount", "value", "total value"],
   periodStart: ["period start", "from"],
   periodEnd: ["period end", "to"],
 };
@@ -253,9 +255,48 @@ export async function importPurchaseHistory(
   }
 
   const buffer = await file.arrayBuffer();
-  const rows = parseSpreadsheet(file.name, buffer);
-  if (rows.length === 0) {
-    return { ok: false, error: "No rows found in that file." };
+  const isExcel = /\.xlsx?$/i.test(file.name);
+
+  const parsedRows: Array<{ code: string; itemName: string; quantity: number; totalValue?: number }> =
+    [];
+
+  // The owner's "Party VS Item Wise Sale Analysis" export (store subtotal
+  // rows followed by indented per-item rows) is the expected real format
+  // for Excel uploads — try it first.
+  if (isExcel) {
+    const regularItemRows = parseRegularItemsExcel(buffer);
+    for (const r of regularItemRows) {
+      parsedRows.push({
+        code: r.code,
+        itemName: r.itemName,
+        quantity: r.quantity,
+        totalValue: r.totalValue,
+      });
+    }
+  }
+
+  // Fall back to a plain CSV/Excel with generic column headers (code, item,
+  // quantity, ...) if the specialized parser found nothing.
+  if (parsedRows.length === 0) {
+    const rows = parseSpreadsheet(file.name, buffer);
+    for (const row of rows) {
+      const code = findColumn(row, PURCHASE_HISTORY_ALIASES.code);
+      const itemName = findColumn(row, PURCHASE_HISTORY_ALIASES.itemName);
+      const quantityRaw = findColumn(row, PURCHASE_HISTORY_ALIASES.quantity);
+      if (!code || !itemName || quantityRaw === undefined) continue;
+
+      const amountRaw = findColumn(row, PURCHASE_HISTORY_ALIASES.amount);
+      parsedRows.push({
+        code,
+        itemName,
+        quantity: Number(quantityRaw),
+        totalValue: amountRaw ? Number(amountRaw) : undefined,
+      });
+    }
+  }
+
+  if (parsedRows.length === 0) {
+    return { ok: false, error: "No purchase history rows could be read from that file." };
   }
 
   const batch = await db.importBatch.create({
@@ -268,38 +309,39 @@ export async function importPurchaseHistory(
   });
 
   const storeCache = new Map<string, string | null>();
+  const touchedStoreIds = new Set<string>();
   let imported = 0;
 
-  for (const row of rows) {
-    const code = findColumn(row, PURCHASE_HISTORY_ALIASES.code);
-    const itemName = findColumn(row, PURCHASE_HISTORY_ALIASES.itemName);
-    const quantityRaw = findColumn(row, PURCHASE_HISTORY_ALIASES.quantity);
-    if (!code || !itemName || quantityRaw === undefined) continue;
-
-    if (!storeCache.has(code)) {
-      const store = await db.store.findUnique({ where: { externalCode: code } });
-      storeCache.set(code, store?.id ?? null);
+  for (const row of parsedRows) {
+    if (!storeCache.has(row.code)) {
+      const store = await db.store.findUnique({ where: { externalCode: row.code } });
+      storeCache.set(row.code, store?.id ?? null);
     }
-    const storeId = storeCache.get(code);
+    const storeId = storeCache.get(row.code);
     if (!storeId) continue;
+    touchedStoreIds.add(storeId);
+    imported += 1;
+  }
 
-    const unit = findColumn(row, PURCHASE_HISTORY_ALIASES.unit);
-    const periodStartRaw = findColumn(row, PURCHASE_HISTORY_ALIASES.periodStart);
-    const periodEndRaw = findColumn(row, PURCHASE_HISTORY_ALIASES.periodEnd);
+  // Refresh only the stores present in this file, same reasoning as
+  // Outstanding: a periodic re-upload shouldn't erase other stores' data.
+  if (touchedStoreIds.size > 0) {
+    await db.purchaseHistoryItem.deleteMany({ where: { storeId: { in: [...touchedStoreIds] } } });
+  }
+
+  for (const row of parsedRows) {
+    const storeId = storeCache.get(row.code);
+    if (!storeId) continue;
 
     await db.purchaseHistoryItem.create({
       data: {
         storeId,
-        itemName,
-        quantity: Number(quantityRaw),
-        unit,
-        periodStart: periodStartRaw ? new Date(periodStartRaw) : undefined,
-        periodEnd: periodEndRaw ? new Date(periodEndRaw) : undefined,
+        itemName: row.itemName,
+        quantity: row.quantity,
+        totalValue: row.totalValue,
         uploadBatchId: batch.id,
       },
     });
-
-    imported += 1;
   }
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
