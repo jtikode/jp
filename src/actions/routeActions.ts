@@ -61,3 +61,21 @@ export async function unassignRoute(assignmentId: string): Promise<void> {
 
   revalidatePath("/admin/routes");
 }
+
+export async function deleteRoute(routeId: string): Promise<ActionResult> {
+  await assertRole(["ADMIN"]);
+
+  // Detach rather than cascade-delete: store master data and past visit
+  // history stay intact, just no longer tied to this (now gone) route.
+  await db.$transaction([
+    db.visit.updateMany({ where: { routeId }, data: { routeId: null } }),
+    db.store.updateMany({ where: { routeId }, data: { routeId: null, visitSequence: null } }),
+    db.routeStore.deleteMany({ where: { routeId } }),
+    db.routeAssignment.deleteMany({ where: { routeId } }),
+    db.route.delete({ where: { id: routeId } }),
+  ]);
+
+  revalidatePath("/admin/routes");
+  revalidatePath("/admin/stores");
+  return { ok: true };
+}

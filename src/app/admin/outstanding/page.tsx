@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
+import { storeLabel } from "@/lib/storeLabel";
 
 export default async function OutstandingPage() {
   const grouped = await db.ledgerEntry.groupBy({
@@ -36,7 +37,9 @@ export default async function OutstandingPage() {
               if (!store) return null;
               return (
                 <tr key={g.storeId} className="border-b border-slate-100">
-                  <td className="py-2 pr-4 font-medium text-slate-900">{store.name}</td>
+                  <td className="py-2 pr-4 font-medium text-slate-900">
+                    {storeLabel(store.name, store.externalCode)}
+                  </td>
                   <td className="py-2 pr-4 text-slate-600">{store.route?.name ?? "—"}</td>
                   <td className="py-2 pr-4 text-slate-600">{g._count._all}</td>
                   <td className="py-2 pr-4 font-semibold text-red-700">

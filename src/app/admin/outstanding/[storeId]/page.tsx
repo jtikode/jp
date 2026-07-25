@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
+import { storeLabel } from "@/lib/storeLabel";
 
 export default async function StoreOutstandingPage({
   params,
@@ -23,7 +24,9 @@ export default async function StoreOutstandingPage({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Card>
-        <h1 className="text-lg font-bold text-slate-900">{store.name}</h1>
+        <h1 className="text-lg font-bold text-slate-900">
+          {storeLabel(store.name, store.externalCode)}
+        </h1>
         <p className="text-sm text-slate-500">{store.address}</p>
         {store.route && <p className="mt-1 text-xs font-medium text-blue-700">{store.route.name}</p>}
         <div className="mt-4 flex gap-6">

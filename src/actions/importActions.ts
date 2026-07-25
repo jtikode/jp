@@ -1,12 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import * as XLSX from "xlsx";
 import { db } from "@/lib/db";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
 import { parseRegularItemsExcel } from "@/lib/regularItems";
 import type { ActionResult } from "@/actions/employeeActions";
+
+/** Handles both a typed date string and an Excel serial date number. */
+function parseFlexibleDate(raw: string): Date | undefined {
+  if (/^\d+(\.\d+)?$/.test(raw)) {
+    const parsed = XLSX.SSF.parse_date_code(Number(raw));
+    if (parsed) return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d));
+  }
+  const asDate = new Date(raw);
+  return Number.isNaN(asDate.getTime()) ? undefined : asDate;
+}
 
 const STORE_ALIASES = {
   code: ["code", "store code", "id", "store id"],
@@ -83,14 +94,23 @@ export async function importStoreMaster(
       visitSequence = nextSeq;
     }
 
+    let store;
     if (code) {
-      await db.store.upsert({
+      store = await db.store.upsert({
         where: { externalCode: code },
         update: { name, address, phone, routeId, visitSequence },
         create: { externalCode: code, name, address, phone, routeId, visitSequence },
       });
     } else {
-      await db.store.create({ data: { name, address, phone, routeId, visitSequence } });
+      store = await db.store.create({ data: { name, address, phone, routeId, visitSequence } });
+    }
+
+    if (routeId) {
+      await db.routeStore.upsert({
+        where: { routeId_storeId: { routeId, storeId: store.id } },
+        update: { visitSequence },
+        create: { routeId, storeId: store.id, visitSequence },
+      });
     }
 
     imported += 1;
@@ -349,4 +369,70 @@ export async function importPurchaseHistory(
   revalidatePath("/admin/imports");
   revalidatePath("/admin/intelligence");
   return { ok: true, rowCount: imported };
+}
+
+const EXPIRY_ALIASES = {
+  itemName: ["item", "item name", "product", "product name"],
+  expiryDate: ["expiry", "expiry date", "exp date", "exp"],
+  specialRate: ["special rate", "rate", "price", "special price"],
+};
+
+export async function importExpiryItems(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const buffer = await file.arrayBuffer();
+  const rows = parseSpreadsheet(file.name, buffer);
+
+  const parsedRows: Array<{ itemName: string; expiryDate: Date; specialRate?: number }> = [];
+  for (const row of rows) {
+    const itemName = findColumn(row, EXPIRY_ALIASES.itemName);
+    const expiryRaw = findColumn(row, EXPIRY_ALIASES.expiryDate);
+    if (!itemName || !expiryRaw) continue;
+
+    const expiryDate = parseFlexibleDate(expiryRaw);
+    if (!expiryDate) continue;
+
+    const rateRaw = findColumn(row, EXPIRY_ALIASES.specialRate);
+    parsedRows.push({ itemName, expiryDate, specialRate: rateRaw ? Number(rateRaw) : undefined });
+  }
+
+  if (parsedRows.length === 0) {
+    return { ok: false, error: "No item/expiry rows could be read from that file." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      importType: "EXPIRY",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  // Each upload is a fresh full snapshot of near-expiry stock (no store
+  // dimension to scope by), so replace the whole list every time.
+  await db.expiryItem.deleteMany({});
+
+  await db.expiryItem.createMany({
+    data: parsedRows.map((row) => ({
+      itemName: row.itemName,
+      expiryDate: row.expiryDate,
+      specialRate: row.specialRate,
+      uploadBatchId: batch.id,
+    })),
+  });
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
+
+  revalidatePath("/admin/imports");
+  revalidatePath("/admin/intelligence");
+  return { ok: true, rowCount: parsedRows.length };
 }

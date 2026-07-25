@@ -1,5 +1,3 @@
-import { PDFParse } from "pdf-parse";
-
 export interface OutstandingInvoiceRow {
   code: string;
   invoiceNo: string;
@@ -40,7 +38,27 @@ interface Slot {
  * assign each invoice to whichever slot's (previous total + this balance)
  * matches the printed running total — the data validates its own placement.
  */
+/**
+ * pdf-parse pulls in pdfjs-dist, which at module-load time needs a global
+ * `DOMMatrix` and normally gets one from the native `@napi-rs/canvas`
+ * package. That package isn't installed on every host (it's optional and
+ * silently absent on Hostinger's runtime), which crashes the *entire*
+ * importing module — not just PDF parsing — the moment anything imports
+ * this file. We only ever call `getText()` (no rendering), so a pure-JS
+ * DOMMatrix polyfill is enough; loading pdf-parse itself is also deferred
+ * to a dynamic import so this file stays safe to import unconditionally.
+ */
+async function ensureDomMatrixPolyfill() {
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    const mod = await import("@thednp/dommatrix");
+    (globalThis as unknown as { DOMMatrix: unknown }).DOMMatrix =
+      (mod as { default?: unknown }).default ?? mod;
+  }
+}
+
 export async function parseOutstandingPdf(data: ArrayBuffer): Promise<OutstandingInvoiceRow[]> {
+  await ensureDomMatrixPolyfill();
+  const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: new Uint8Array(data) });
   const result = await parser.getText();
   await parser.destroy();

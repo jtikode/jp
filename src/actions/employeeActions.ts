@@ -52,3 +52,30 @@ export async function toggleEmployeeActive(userId: string, active: boolean): Pro
 
   revalidatePath("/admin/employees");
 }
+
+export async function deleteEmployee(userId: string): Promise<ActionResult> {
+  await assertRole(["ADMIN"]);
+
+  const [visits, attendances, telecallerLogs, stockCounts] = await Promise.all([
+    db.visit.count({ where: { userId } }),
+    db.attendance.count({ where: { userId } }),
+    db.telecallerLog.count({ where: { userId } }),
+    db.stockCount.count({ where: { recordedById: userId } }),
+  ]);
+
+  if (visits + attendances + telecallerLogs + stockCounts > 0) {
+    return {
+      ok: false,
+      error: "This employee has logged activity — deactivate them instead of deleting.",
+    };
+  }
+
+  await db.$transaction([
+    db.routeAssignment.deleteMany({ where: { userId } }),
+    db.target.deleteMany({ where: { userId } }),
+    db.user.delete({ where: { id: userId } }),
+  ]);
+
+  revalidatePath("/admin/employees");
+  return { ok: true };
+}

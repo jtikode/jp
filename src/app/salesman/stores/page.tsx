@@ -24,6 +24,7 @@ export default async function SalesmanStoresPage() {
         stores={stores.map((s) => ({
           id: s.id,
           name: s.name,
+          externalCode: s.externalCode,
           address: s.address,
           routeName: s.route?.name,
           latitude: s.latitude,

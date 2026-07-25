@@ -4,6 +4,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { StoresTable } from "@/components/admin/StoresTable";
 import { StoreSequenceList } from "@/components/admin/StoreSequenceList";
+import { AssignStoreToRouteForm } from "@/components/admin/AssignStoreToRouteForm";
 
 export default async function AdminStoresPage({
   searchParams,
@@ -16,10 +17,16 @@ export default async function AdminStoresPage({
 
   if (routeId) {
     const route = routes.find((r) => r.id === routeId);
-    const sequencedStores = await db.store.findMany({
-      where: { routeId },
-      orderBy: [{ visitSequence: { sort: "asc", nulls: "last" } }, { name: "asc" }],
-    });
+    const [routeStores, allStores] = await Promise.all([
+      db.routeStore.findMany({
+        where: { routeId },
+        include: { store: true },
+        orderBy: [{ visitSequence: { sort: "asc", nulls: "last" } }, { store: { name: "asc" } }],
+      }),
+      db.store.findMany({ orderBy: { name: "asc" } }),
+    ]);
+    const onRouteIds = new Set(routeStores.map((rs) => rs.storeId));
+    const availableToAdd = allStores.filter((s) => !onRouteIds.has(s.id));
 
     return (
       <div className="mx-auto max-w-3xl space-y-6">
@@ -43,20 +50,38 @@ export default async function AdminStoresPage({
         </Card>
 
         <Card>
+          <h2 className="mb-4 text-lg font-bold text-slate-900">Assign store to this route</h2>
+          <p className="mb-3 text-sm text-slate-500">
+            For a medical that needs visits from more than one salesman — a store can be on
+            several routes at once.
+          </p>
+          <AssignStoreToRouteForm
+            routeId={routeId}
+            stores={availableToAdd.map((s) => ({
+              id: s.id,
+              label: s.externalCode ? `${s.externalCode} - ${s.name}` : s.name,
+            }))}
+          />
+        </Card>
+
+        <Card>
           <h1 className="mb-1 text-lg font-bold text-slate-900">
             {route?.name} — Visit Sequence
           </h1>
           <p className="mb-4 text-sm text-slate-500">
             Reorder with the arrows to match the actual visit route.
           </p>
-          <StoreSequenceList routeId={routeId} stores={sequencedStores} />
+          <StoreSequenceList
+            routeId={routeId}
+            stores={routeStores.map((rs) => rs.store)}
+          />
         </Card>
       </div>
     );
   }
 
   const stores = await db.store.findMany({
-    include: { route: true },
+    include: { route: true, routeStores: { include: { route: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -89,7 +114,7 @@ export default async function AdminStoresPage({
             name: s.name,
             address: s.address,
             phone: s.phone,
-            routeName: s.route?.name ?? null,
+            routeNames: [...new Set(s.routeStores.map((rs) => rs.route.name))].join(", ") || null,
           }))}
         />
       </Card>

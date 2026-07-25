@@ -3,6 +3,7 @@ import { startOfMonth, endOfMonth } from "date-fns";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
+import { AttendanceButtons } from "@/components/salesman/AttendanceButtons";
 
 export default async function SalesmanRoutesPage() {
   const session = await getSession();
@@ -11,11 +12,17 @@ export default async function SalesmanRoutesPage() {
   const today = new Date();
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  const assignments = await db.routeAssignment.findMany({
-    where: { userId },
-    include: { route: true },
-  });
+  const [assignments, attendance] = await Promise.all([
+    db.routeAssignment.findMany({
+      where: { userId },
+      include: { route: true },
+    }),
+    db.attendance.findUnique({
+      where: { userId_date: { userId, date: startOfToday } },
+    }),
+  ]);
 
   const visits = await db.visit.findMany({
     where: { userId, visitDate: { gte: monthStart, lte: monthEnd } },
@@ -32,6 +39,10 @@ export default async function SalesmanRoutesPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-3">
+      <Card>
+        <AttendanceButtons currentStatus={attendance?.status ?? null} />
+      </Card>
+
       <h1 className="text-xl font-bold text-slate-900">My Routes</h1>
       {assignments.map(({ route }) => (
         <Link key={route.id} href={`/salesman/routes/${route.id}`}>

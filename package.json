@@ -13,6 +13,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "@thednp/dommatrix": "^3.0.4",
     "@vercel/blob": "^2.6.1",
     "bcryptjs": "^3.0.3",
     "browser-image-compression": "^2.0.2",

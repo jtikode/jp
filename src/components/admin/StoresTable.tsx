@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
+import { storeLabel } from "@/lib/storeLabel";
 
 interface StoreRow {
   id: string;
@@ -11,14 +12,14 @@ interface StoreRow {
   name: string;
   address: string;
   phone: string | null;
-  routeName: string | null;
+  routeNames: string | null;
 }
 
 export function StoresTable({ stores }: { stores: StoreRow[] }) {
   const [query, setQuery] = useState("");
 
   const filtered = stores.filter((s) =>
-    `${s.name} ${s.address} ${s.externalCode ?? ""} ${s.routeName ?? ""}`
+    `${s.name} ${s.address} ${s.externalCode ?? ""} ${s.routeNames ?? ""}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
@@ -34,22 +35,22 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
         <table className="w-full min-w-[750px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
-              <th className="py-2 pr-4">Code</th>
               <th className="py-2 pr-4">Name</th>
               <th className="py-2 pr-4">Address</th>
               <th className="py-2 pr-4">Phone</th>
-              <th className="py-2 pr-4">Route</th>
+              <th className="py-2 pr-4">Route(s)</th>
               <th className="py-2 pr-4"></th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((s) => (
               <tr key={s.id} className="border-b border-slate-100">
-                <td className="py-2 pr-4 text-slate-600">{s.externalCode ?? "—"}</td>
-                <td className="py-2 pr-4 font-medium text-slate-900">{s.name}</td>
+                <td className="py-2 pr-4 font-medium text-slate-900">
+                  {storeLabel(s.name, s.externalCode)}
+                </td>
                 <td className="py-2 pr-4 text-slate-600">{s.address}</td>
                 <td className="py-2 pr-4 text-slate-600">{s.phone ?? "—"}</td>
-                <td className="py-2 pr-4 text-slate-600">{s.routeName ?? "—"}</td>
+                <td className="py-2 pr-4 text-slate-600">{s.routeNames ?? "—"}</td>
                 <td className="py-2 pr-4">
                   <div className="flex gap-2">
                     {s.phone && (
@@ -74,7 +75,7 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-slate-400">
+                <td colSpan={5} className="py-6 text-center text-slate-400">
                   No stores match your search.
                 </td>
               </tr>

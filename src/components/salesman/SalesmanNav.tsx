@@ -7,7 +7,6 @@ import { clsx } from "@/lib/clsx";
 const LINKS = [
   { href: "/salesman/dashboard", label: "Home" },
   { href: "/salesman/routes", label: "Routes" },
-  { href: "/salesman/attendance", label: "Attendance" },
   { href: "/salesman/calendar", label: "Calendar" },
   { href: "/salesman/stores", label: "Stores" },
 ];

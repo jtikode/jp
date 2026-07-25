@@ -21,7 +21,7 @@ export async function markAttendance(status: AttendanceStatus): Promise<{ ok: bo
     create: { userId: session.userId as string, date, status },
   });
 
-  revalidatePath("/salesman/attendance");
+  revalidatePath("/salesman/routes");
   revalidatePath("/salesman/calendar");
   return { ok: true };
 }

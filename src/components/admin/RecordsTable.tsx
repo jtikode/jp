@@ -4,7 +4,6 @@ import { clsx } from "@/lib/clsx";
 const TYPE_STYLES: Record<UnifiedRecord["type"], string> = {
   VISIT: "bg-green-100 text-green-700",
   TELECALLER: "bg-blue-100 text-blue-700",
-  WAREHOUSE: "bg-purple-100 text-purple-700",
 };
 
 function formatMoney(value: number | null): string {

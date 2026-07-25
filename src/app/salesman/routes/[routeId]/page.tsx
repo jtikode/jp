@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { RouteBarChart, type MonthlyPoint } from "@/components/charts/RouteBarChart";
+import { storeLabel } from "@/lib/storeLabel";
 
 export default async function RouteDetailPage({
   params,
@@ -40,17 +41,31 @@ export default async function RouteDetailPage({
     });
   }
 
-  const [stores, visitedTodayRows] = await Promise.all([
-    db.store.findMany({
+  const [routeStores, visitedTodayRows] = await Promise.all([
+    db.routeStore.findMany({
       where: { routeId },
-      orderBy: [{ visitSequence: { sort: "asc", nulls: "last" } }, { name: "asc" }],
+      include: { store: true },
+      orderBy: [{ visitSequence: { sort: "asc", nulls: "last" } }, { store: { name: "asc" } }],
     }),
     db.visit.findMany({
       where: { userId, routeId, visitDate: { gte: startOfDay(today), lte: endOfDay(today) } },
       select: { storeId: true },
     }),
   ]);
+  const stores = routeStores.map((rs) => rs.store);
   const visitedTodayIds = new Set(visitedTodayRows.map((v) => v.storeId));
+
+  const lastCallByStore = new Map<string, Date>();
+  if (stores.length > 0) {
+    const lastCalls = await db.telecallerLog.groupBy({
+      by: ["storeId"],
+      where: { storeId: { in: stores.map((s) => s.id) } },
+      _max: { contactDate: true },
+    });
+    for (const c of lastCalls) {
+      if (c._max.contactDate) lastCallByStore.set(c.storeId, c._max.contactDate);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -76,7 +91,7 @@ export default async function RouteDetailPage({
                 </span>
                 <Link href={`/salesman/stores/${store.id}/visit`} className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 font-semibold text-slate-900">
-                    {store.name}
+                    {storeLabel(store.name, store.externalCode)}
                     {located && (
                       <span title="Location already marked" aria-label="Location already marked">
                         📍
@@ -84,6 +99,11 @@ export default async function RouteDetailPage({
                     )}
                   </p>
                   <p className="text-sm text-slate-500">{store.address}</p>
+                  {lastCallByStore.has(store.id) && (
+                    <p className="text-xs font-medium text-blue-700">
+                      Tele called: {lastCallByStore.get(store.id)!.toLocaleDateString("en-IN")}
+                    </p>
+                  )}
                 </Link>
                 {located && (
                   <a

@@ -1,22 +1,24 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { buildTelLink, buildWhatsAppLink } from "@/lib/waLink";
+import { storeLabel } from "@/lib/storeLabel";
 
 interface StoreCardProps {
   id: string;
   name: string;
+  externalCode?: string | null;
   address: string;
   phone: string | null;
   outstanding?: number;
 }
 
-export function StoreCard({ id, name, address, phone, outstanding }: StoreCardProps) {
+export function StoreCard({ id, name, externalCode, address, phone, outstanding }: StoreCardProps) {
   return (
     <Card>
       <Link href={`/telecaller/stores/${id}`}>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="font-semibold text-slate-900">{name}</p>
+            <p className="font-semibold text-slate-900">{storeLabel(name, externalCode)}</p>
             <p className="text-sm text-slate-500">{address}</p>
           </div>
           {outstanding != null && outstanding > 0 && (

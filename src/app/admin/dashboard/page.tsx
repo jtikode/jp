@@ -1,7 +1,9 @@
+import { startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { RecordsTable } from "@/components/admin/RecordsTable";
+import { SalesmanGlanceTable, type SalesmanGlanceRow } from "@/components/admin/SalesmanGlanceTable";
 import { getUnifiedRecords } from "@/lib/adminRecords";
 
 export default async function AdminDashboardPage({
@@ -10,15 +12,55 @@ export default async function AdminDashboardPage({
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const params = await searchParams;
+  const today = new Date();
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
 
-  const [routes, employees, records] = await Promise.all([
+  const [routes, employees, records, salesmen, todayAgg, monthAgg, targets] = await Promise.all([
     db.route.findMany({ orderBy: { name: "asc" } }),
     db.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     getUnifiedRecords(params),
+    db.user.findMany({ where: { role: "SALESMAN", active: true }, orderBy: { name: "asc" } }),
+    db.visit.groupBy({
+      by: ["userId"],
+      where: { visitDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+      _sum: { orderAmount: true, collectionAmount: true },
+    }),
+    db.visit.groupBy({
+      by: ["userId"],
+      where: { visitDate: { gte: monthStart, lte: monthEnd } },
+      _sum: { orderAmount: true, collectionAmount: true },
+    }),
+    db.target.findMany({
+      where: { periodMonth: today.getMonth() + 1, periodYear: today.getFullYear() },
+    }),
   ]);
+
+  const todayByUser = new Map(todayAgg.map((a) => [a.userId, a._sum]));
+  const monthByUser = new Map(monthAgg.map((a) => [a.userId, a._sum]));
+  const targetByUser = new Map(targets.map((t) => [t.userId, t]));
+
+  const glanceRows: SalesmanGlanceRow[] = salesmen.map((s) => {
+    const target = targetByUser.get(s.id);
+    return {
+      userId: s.id,
+      name: s.name,
+      todayOrderAmount: Number(todayByUser.get(s.id)?.orderAmount ?? 0),
+      todayCollection: Number(todayByUser.get(s.id)?.collectionAmount ?? 0),
+      monthOrderAmount: Number(monthByUser.get(s.id)?.orderAmount ?? 0),
+      monthCollection: Number(monthByUser.get(s.id)?.collectionAmount ?? 0),
+      todayTarget: Number(target?.todayTarget ?? 0),
+      monthlyTarget: Number(target?.monthlyTarget ?? 0),
+    };
+  });
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      <Card className="overflow-x-auto">
+        <h2 className="mb-4 text-lg font-bold text-slate-900">Salesmen — At a Glance</h2>
+        <SalesmanGlanceTable rows={glanceRows} />
+      </Card>
+
       <Card>
         <FilterBar
           routes={routes.map((r) => ({ id: r.id, label: r.name }))}

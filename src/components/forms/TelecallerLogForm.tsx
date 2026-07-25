@@ -71,7 +71,7 @@ export function TelecallerLogForm({ storeId }: { storeId: string }) {
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">Payment Promise</label>
-        <Input name="paymentPromise" type="number" step="0.01" min="0" placeholder="0.00" />
+        <Input name="paymentPromise" placeholder="e.g. Promised ₹3000 on next visit" />
       </div>
 
       <div>

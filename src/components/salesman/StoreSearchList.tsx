@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { storeLabel } from "@/lib/storeLabel";
 
 interface StoreItem {
   id: string;
   name: string;
+  externalCode?: string | null;
   address: string;
   routeName?: string;
   latitude?: number | null;
@@ -18,7 +20,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
   const [query, setQuery] = useState("");
 
   const filtered = stores.filter((s) =>
-    `${s.name} ${s.address}`.toLowerCase().includes(query.toLowerCase()),
+    `${s.name} ${s.address} ${s.externalCode ?? ""}`.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
@@ -37,7 +39,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
               <div className="flex items-start justify-between gap-2">
                 <Link href={`/salesman/stores/${store.id}/visit`} className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 font-semibold text-slate-900">
-                    {store.name}
+                    {storeLabel(store.name, store.externalCode)}
                     {located && (
                       <span title="Location already marked" aria-label="Location already marked">
                         📍

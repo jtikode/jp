@@ -5,7 +5,7 @@ import type { Role } from "@/generated/prisma/client";
 export const ROLE_HOME: Record<Role, string> = {
   SALESMAN: "/salesman/dashboard",
   TELECALLER: "/telecaller/dashboard",
-  WAREHOUSE: "/warehouse/inward",
+  WAREHOUSE: "/warehouse",
   ADMIN: "/admin/dashboard",
 };
 

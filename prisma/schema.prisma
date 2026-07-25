@@ -17,10 +17,9 @@ enum Role {
   ADMIN
 }
 
-enum WarehouseTaskType {
-  INWARD
-  SHELVING
-  FULFILLMENT
+enum TaskRecurrence {
+  WEEKLY
+  MONTHLY
 }
 
 enum AttendanceStatus {
@@ -54,7 +53,7 @@ model User {
   visits           Visit[]
   attendances      Attendance[]
   telecallerLogs   TelecallerLog[]
-  warehouseActions WarehouseAction[]
+  stockCounts      StockCount[]
   targets          Target[]
   importBatches    ImportBatch[]
 
@@ -70,6 +69,7 @@ model Route {
   stores      Store[]
   assignments RouteAssignment[]
   visits      Visit[]
+  routeStores RouteStore[]
 }
 
 model RouteAssignment {
@@ -88,6 +88,9 @@ model Store {
   name         String
   address      String
   phone        String?
+  // Primary route, set by store-master import. A store can additionally be
+  // assigned to other routes via RouteStore (e.g. two salesmen covering
+  // different product lines both visit the same medical store).
   routeId      String?
   route        Route?   @relation(fields: [routeId], references: [id])
   visitSequence Int?
@@ -101,9 +104,25 @@ model Store {
   telecallerLogs  TelecallerLog[]
   ledgerEntries   LedgerEntry[]
   purchaseHistory PurchaseHistoryItem[]
+  routeStores     RouteStore[]
 
   @@index([routeId])
   @@index([name])
+}
+
+model RouteStore {
+  id            String   @id @default(cuid())
+  routeId       String
+  storeId       String
+  visitSequence Int?
+  createdAt     DateTime @default(now())
+
+  route Route @relation(fields: [routeId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([routeId, storeId])
+  @@index([routeId])
+  @@index([storeId])
 }
 
 model Visit {
@@ -151,7 +170,9 @@ model TelecallerLog {
   storeId          String
   contactDate      DateTime       @default(now())
   orderAmount      Decimal?
-  paymentPromise   Decimal?
+  // Free text (e.g. "promised 3000 on next visit") — shown to the salesman
+  // as a note next time they visit this store.
+  paymentPromise   String?
   collectionAmount Decimal?
   hasOrder         Boolean        @default(false)
   noOrderReason    NoOrderReason?
@@ -166,24 +187,66 @@ model TelecallerLog {
   @@index([storeId])
 }
 
-model WarehouseAction {
-  id               String            @id @default(cuid())
-  userId           String
-  taskType         WarehouseTaskType
-  referenceNo      String?
-  itemDescription  String?
-  quantity         Int?
-  rackLocation     String?
-  hasDiscrepancy   Boolean           @default(false)
-  discrepancyNotes String?
-  actionDate       DateTime          @default(now())
-  createdAt        DateTime          @default(now())
+// Admin-defined recurring task (e.g. "sweep loading bay" every Monday, or
+// "count fast-movers" on the 1st of the month). Not assigned to a specific
+// person — any warehouse staff on shift can complete it.
+model WarehouseTask {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  recurrence  TaskRecurrence
+  dayOfWeek   Int? // 0=Sunday..6=Saturday, used when recurrence=WEEKLY
+  dayOfMonth  Int? // 1-31, used when recurrence=MONTHLY
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  occurrences WarehouseTaskOccurrence[]
+}
 
-  @@index([userId, actionDate])
-  @@index([taskType])
-  @@index([hasDiscrepancy])
+// One row per time a task actually comes due. scheduledDate starts equal to
+// originalDate but rolls forward a day at a time — automatically, whenever
+// the warehouse dashboard is loaded — for as long as it stays incomplete or
+// the day it was due had no one marked present.
+model WarehouseTaskOccurrence {
+  id            String    @id @default(cuid())
+  taskId        String
+  originalDate  DateTime
+  scheduledDate DateTime
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+  completedById String?
+
+  task WarehouseTask @relation(fields: [taskId], references: [id])
+
+  @@unique([taskId, originalDate])
+  @@index([scheduledDate])
+}
+
+// The shelf-stock sheet: one physical count per item per day, regardless of
+// which warehouse staff member recorded it.
+model StockItem {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  counts StockCount[]
+}
+
+model StockCount {
+  id            String   @id @default(cuid())
+  stockItemId   String
+  date          DateTime
+  quantity      Decimal
+  recordedById  String
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  stockItem  StockItem @relation(fields: [stockItemId], references: [id])
+  recordedBy User      @relation(fields: [recordedById], references: [id])
+
+  @@unique([stockItemId, date])
+  @@index([date])
 }
 
 model LedgerEntry {
@@ -221,6 +284,17 @@ model PurchaseHistoryItem {
 
   @@index([storeId])
   @@index([itemName])
+}
+
+model ExpiryItem {
+  id            String    @id @default(cuid())
+  itemName      String
+  expiryDate    DateTime
+  specialRate   Decimal?
+  uploadBatchId String
+  importedAt    DateTime  @default(now())
+
+  @@index([expiryDate])
 }
 
 model Target {

@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { RouteForm } from "@/components/admin/RouteForm";
 import { AssignRouteForm } from "@/components/admin/AssignRouteForm";
-import { unassignRoute } from "@/actions/routeActions";
+import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
+import { unassignRoute, deleteRoute } from "@/actions/routeActions";
 
 export default async function RoutesPage() {
   const [routes, salesmen] = await Promise.all([
@@ -31,9 +32,15 @@ export default async function RoutesPage() {
       <div className="space-y-4">
         {routes.map((route) => (
           <Card key={route.id}>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <h3 className="text-base font-bold text-slate-900">{route.name}</h3>
-              <span className="text-sm text-slate-500">{route.stores.length} stores</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-500">{route.stores.length} stores</span>
+                <ConfirmDeleteButton
+                  action={deleteRoute.bind(null, route.id)}
+                  confirmMessage={`Delete route "${route.name}"? Stores and past visits stay, just detached from this route. This can't be undone.`}
+                />
+              </div>
             </div>
             {route.description && <p className="mb-2 text-sm text-slate-500">{route.description}</p>}
             <div className="flex flex-wrap gap-2">

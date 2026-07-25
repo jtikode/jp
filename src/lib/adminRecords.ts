@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { storeLabel } from "@/lib/storeLabel";
 
 export interface RecordFilters {
   from?: string;
@@ -10,7 +11,7 @@ export interface RecordFilters {
 
 export interface UnifiedRecord {
   id: string;
-  type: "VISIT" | "TELECALLER" | "WAREHOUSE";
+  type: "VISIT" | "TELECALLER";
   date: Date;
   employeeName: string;
   role: string;
@@ -44,7 +45,7 @@ export async function getUnifiedRecords(filters: RecordFilters): Promise<Unified
     matchingUserIds = new Set(attendances.map((a) => a.userId));
   }
 
-  const [visits, telecallerLogs, warehouseActions] = await Promise.all([
+  const [visits, telecallerLogs] = await Promise.all([
     db.visit.findMany({
       where: {
         ...(gte || lte ? { visitDate: { gte, lte } } : {}),
@@ -64,15 +65,6 @@ export async function getUnifiedRecords(filters: RecordFilters): Promise<Unified
       orderBy: { contactDate: "desc" },
       take: 200,
     }),
-    db.warehouseAction.findMany({
-      where: {
-        ...(gte || lte ? { actionDate: { gte, lte } } : {}),
-        ...(filters.employeeId ? { userId: filters.employeeId } : {}),
-      },
-      include: { user: true },
-      orderBy: { actionDate: "desc" },
-      take: 200,
-    }),
   ]);
 
   const rows: UnifiedRecord[] = [];
@@ -86,7 +78,7 @@ export async function getUnifiedRecords(filters: RecordFilters): Promise<Unified
       employeeName: v.user.name,
       role: v.user.role,
       routeName: v.route?.name ?? null,
-      storeName: v.store.name,
+      storeName: storeLabel(v.store.name, v.store.externalCode),
       collection: v.collectionAmount != null ? Number(v.collectionAmount) : null,
       orderAmount: v.orderAmount != null ? Number(v.orderAmount) : null,
       reason: v.noOrderReason,
@@ -105,29 +97,10 @@ export async function getUnifiedRecords(filters: RecordFilters): Promise<Unified
       employeeName: t.user.name,
       role: t.user.role,
       routeName: null,
-      storeName: t.store.name,
+      storeName: storeLabel(t.store.name, t.store.externalCode),
       collection: t.collectionAmount != null ? Number(t.collectionAmount) : null,
       orderAmount: t.orderAmount != null ? Number(t.orderAmount) : null,
       reason: t.noOrderReason ?? t.complaintNotes,
-      gpsLink: null,
-      photoUrl: null,
-    });
-  }
-
-  for (const w of warehouseActions) {
-    if (filters.routeId) continue; // warehouse actions aren't route-scoped
-    if (matchingUserIds && !matchingUserIds.has(w.userId)) continue;
-    rows.push({
-      id: `warehouse-${w.id}`,
-      type: "WAREHOUSE",
-      date: w.actionDate,
-      employeeName: w.user.name,
-      role: w.user.role,
-      routeName: null,
-      storeName: w.itemDescription,
-      collection: null,
-      orderAmount: null,
-      reason: w.hasDiscrepancy ? (w.discrepancyNotes ?? "Discrepancy flagged") : `${w.taskType} — OK`,
       gpsLink: null,
       photoUrl: null,
     });

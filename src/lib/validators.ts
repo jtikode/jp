@@ -38,20 +38,18 @@ const optionalNoOrderReason = z.preprocess(emptyToUndefined, z.enum(NO_ORDER_REA
 // would incorrectly coerce "false" to true, since Boolean("false") is truthy.
 const booleanFromRadio = z.enum(["true", "false"]).transform((v) => v === "true");
 
-export const warehouseActionSchema = z.object({
-  taskType: z.enum(["INWARD", "SHELVING", "FULFILLMENT"]),
-  referenceNo: optionalString,
-  itemDescription: optionalString,
-  quantity: optionalNumber,
-  rackLocation: optionalString,
-  hasDiscrepancy: booleanFromRadio,
-  discrepancyNotes: optionalString,
+export const createWarehouseTaskSchema = z.object({
+  title: z.string().min(1, "Title is required."),
+  description: optionalString,
+  recurrence: z.enum(["WEEKLY", "MONTHLY"]),
+  dayOfWeek: optionalNumber,
+  dayOfMonth: optionalNumber,
 });
 
 export const telecallerLogSchema = z.object({
   storeId: z.string().min(1),
   orderAmount: optionalNumber,
-  paymentPromise: optionalNumber,
+  paymentPromise: optionalString,
   collectionAmount: optionalNumber,
   hasOrder: booleanFromRadio,
   noOrderReason: optionalNoOrderReason,

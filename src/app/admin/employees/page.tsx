@@ -2,7 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
-import { toggleEmployeeActive } from "@/actions/employeeActions";
+import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
+import { toggleEmployeeActive, deleteEmployee } from "@/actions/employeeActions";
 
 export default async function EmployeesPage() {
   const employees = await db.user.findMany({ orderBy: { createdAt: "desc" } });
@@ -61,6 +62,10 @@ export default async function EmployeesPage() {
                         {emp.active ? "Deactivate" : "Activate"}
                       </button>
                     </form>
+                    <ConfirmDeleteButton
+                      action={deleteEmployee.bind(null, emp.id)}
+                      confirmMessage={`Delete ${emp.name} (${emp.username})? This only works if they have no logged activity yet.`}
+                    />
                   </div>
                 </td>
               </tr>

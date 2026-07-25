@@ -1,7 +1,12 @@
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { FileImportForm } from "@/components/admin/FileImportForm";
-import { importStoreMaster, importOutstanding, importPurchaseHistory } from "@/actions/importActions";
+import {
+  importStoreMaster,
+  importOutstanding,
+  importPurchaseHistory,
+  importExpiryItems,
+} from "@/actions/importActions";
 
 export default async function ImportsPage() {
   const batches = await db.importBatch.findMany({
@@ -45,6 +50,19 @@ export default async function ImportsPage() {
           action={importPurchaseHistory}
           buttonLabel="Upload purchase history"
           itemLabel="purchase history rows"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload near-expiry stock</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Item name, expiry date, and special rate. Each upload replaces the whole list — upload
+          this whenever your near-expiry stock changes.
+        </p>
+        <FileImportForm
+          action={importExpiryItems}
+          buttonLabel="Upload expiry list"
+          itemLabel="expiry items"
         />
       </Card>
 
