@@ -6,6 +6,7 @@ import {
   importOutstanding,
   importPurchaseHistory,
   importExpiryItems,
+  importTelecallerParties,
 } from "@/actions/importActions";
 
 export default async function ImportsPage() {
@@ -63,6 +64,20 @@ export default async function ImportsPage() {
           action={importExpiryItems}
           buttonLabel="Upload expiry list"
           itemLabel="expiry items"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload telecaller party list</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          CSV or Excel with a store code column. Sets exactly which parties telecallers see and
+          call — each upload replaces the whole list. Until the first upload, telecallers see every
+          store.
+        </p>
+        <FileImportForm
+          action={importTelecallerParties}
+          buttonLabel="Upload party list"
+          itemLabel="parties"
         />
       </Card>
 

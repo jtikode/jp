@@ -9,7 +9,10 @@ function startOfToday(): Date {
 
 export default async function WarehouseStockPage() {
   const [items, todaysCounts] = await Promise.all([
-    db.stockItem.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.stockItem.findMany({
+      where: { active: true },
+      orderBy: [{ company: "asc" }, { name: "asc" }],
+    }),
     db.stockCount.findMany({ where: { date: startOfToday() } }),
   ]);
 
@@ -24,6 +27,7 @@ export default async function WarehouseStockPage() {
           items={items.map((i) => ({
             id: i.id,
             name: i.name,
+            company: i.company,
             quantity: countByItem.get(i.id) ?? null,
           }))}
         />

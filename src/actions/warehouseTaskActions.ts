@@ -46,6 +46,30 @@ export async function createWarehouseTask(
   return { ok: true };
 }
 
+/** Lets warehouse staff add their own one-off task, due today, without going through admin. */
+export async function createAdHocWarehouseTask(
+  _prevState: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await assertRole(["WAREHOUSE"]);
+
+  const title = (formData.get("title") as string | null)?.trim();
+  if (!title) return { ok: false, error: "Title is required." };
+  const description = (formData.get("description") as string | null)?.trim() || undefined;
+
+  const today = startOfToday();
+
+  const task = await db.warehouseTask.create({
+    data: { title, description, recurrence: "ONCE" },
+  });
+  await db.warehouseTaskOccurrence.create({
+    data: { taskId: task.id, originalDate: today, scheduledDate: today },
+  });
+
+  revalidatePath("/warehouse");
+  return { ok: true };
+}
+
 export async function toggleWarehouseTaskActive(taskId: string, active: boolean): Promise<void> {
   await assertRole(["ADMIN"]);
 

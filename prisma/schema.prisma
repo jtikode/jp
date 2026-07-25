@@ -20,6 +20,7 @@ enum Role {
 enum TaskRecurrence {
   WEEKLY
   MONTHLY
+  ONCE
 }
 
 enum AttendanceStatus {
@@ -100,11 +101,12 @@ model Store {
   longitude    Float?
   createdAt    DateTime @default(now())
 
-  visits          Visit[]
-  telecallerLogs  TelecallerLog[]
-  ledgerEntries   LedgerEntry[]
-  purchaseHistory PurchaseHistoryItem[]
-  routeStores     RouteStore[]
+  visits           Visit[]
+  telecallerLogs   TelecallerLog[]
+  ledgerEntries    LedgerEntry[]
+  purchaseHistory  PurchaseHistoryItem[]
+  routeStores      RouteStore[]
+  telecallerParty  TelecallerParty?
 
   @@index([routeId])
   @@index([name])
@@ -227,10 +229,13 @@ model WarehouseTaskOccurrence {
 model StockItem {
   id        String   @id @default(cuid())
   name      String   @unique
+  company   String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
   counts StockCount[]
+
+  @@index([company])
 }
 
 model StockCount {
@@ -311,6 +316,20 @@ model Target {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, periodMonth, periodYear])
+}
+
+// Admin-uploaded call list ("party list"). If empty, the telecaller
+// dashboard falls back to showing every store, so nothing breaks before
+// the first upload.
+model TelecallerParty {
+  id            String   @id @default(cuid())
+  storeId       String
+  uploadBatchId String
+  importedAt    DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId])
 }
 
 model ImportBatch {

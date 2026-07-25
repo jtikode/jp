@@ -436,3 +436,59 @@ export async function importExpiryItems(
   revalidatePath("/admin/intelligence");
   return { ok: true, rowCount: parsedRows.length };
 }
+
+const PARTY_LIST_ALIASES = {
+  code: ["code", "store code", "id", "store id"],
+};
+
+export async function importTelecallerParties(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const buffer = await file.arrayBuffer();
+  const rows = parseSpreadsheet(file.name, buffer);
+
+  const codes: string[] = [];
+  for (const row of rows) {
+    const code = findColumn(row, PARTY_LIST_ALIASES.code);
+    if (code) codes.push(code);
+  }
+
+  if (codes.length === 0) {
+    return { ok: false, error: "No store codes could be read from that file." };
+  }
+
+  const stores = await db.store.findMany({ where: { externalCode: { in: codes } } });
+  if (stores.length === 0) {
+    return { ok: false, error: "None of those store codes matched an existing store." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      importType: "TELECALLER_PARTY_LIST",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  // Each upload is the full current call list — replace it entirely rather
+  // than only adding to it, so removed parties actually drop off the list.
+  await db.telecallerParty.deleteMany({});
+  await db.telecallerParty.createMany({
+    data: stores.map((s) => ({ storeId: s.id, uploadBatchId: batch.id })),
+  });
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: stores.length } });
+
+  revalidatePath("/admin/imports");
+  revalidatePath("/telecaller/dashboard");
+  return { ok: true, rowCount: stores.length };
+}

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { getTodaysTaskOccurrences } from "@/lib/warehouseTasks";
 import { WarehouseAttendanceButtons } from "@/components/warehouse/WarehouseAttendanceButtons";
 import { WarehouseTaskList } from "@/components/warehouse/WarehouseTaskList";
+import { AddOwnTaskForm } from "@/components/warehouse/AddOwnTaskForm";
 
 function startOfToday(): Date {
   const now = new Date();
@@ -43,6 +44,12 @@ export default async function WarehouseDashboardPage() {
             overdue: o.originalDate.getTime() < startOfToday().getTime(),
           }))}
         />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Add Your Own Task</h2>
+        <p className="mb-4 text-sm text-slate-500">For something one-off, due today.</p>
+        <AddOwnTaskForm />
       </Card>
     </div>
   );

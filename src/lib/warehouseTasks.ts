@@ -6,9 +6,16 @@ function startOfToday(): Date {
 }
 
 function isDueOn(
-  task: { recurrence: "WEEKLY" | "MONTHLY"; dayOfWeek: number | null; dayOfMonth: number | null },
+  task: {
+    recurrence: "WEEKLY" | "MONTHLY" | "ONCE";
+    dayOfWeek: number | null;
+    dayOfMonth: number | null;
+  },
   date: Date,
 ): boolean {
+  // ONCE tasks get their single occurrence created directly at creation
+  // time (see createAdHocWarehouseTask) — they never recur via this check.
+  if (task.recurrence === "ONCE") return false;
   if (task.recurrence === "WEEKLY") return date.getDay() === task.dayOfWeek;
   return date.getDate() === task.dayOfMonth;
 }

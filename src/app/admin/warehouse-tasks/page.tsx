@@ -2,9 +2,10 @@ import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { WarehouseTaskForm } from "@/components/admin/WarehouseTaskForm";
 import { AddStockItemForm } from "@/components/admin/AddStockItemForm";
+import { FileImportForm } from "@/components/admin/FileImportForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { toggleWarehouseTaskActive } from "@/actions/warehouseTaskActions";
-import { deleteStockItem } from "@/actions/stockActions";
+import { deleteStockItem, importStockItems } from "@/actions/stockActions";
 
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -13,6 +14,7 @@ function describeRecurrence(task: {
   dayOfWeek: number | null;
   dayOfMonth: number | null;
 }): string {
+  if (task.recurrence === "ONCE") return "One-time";
   if (task.recurrence === "WEEKLY") return `Every ${WEEKDAY_NAMES[task.dayOfWeek ?? 0]}`;
   return `Every month on the ${task.dayOfMonth}${task.dayOfMonth === 1 ? "st" : "th"}`;
 }
@@ -20,7 +22,10 @@ function describeRecurrence(task: {
 export default async function AdminWarehouseTasksPage() {
   const [tasks, stockItems] = await Promise.all([
     db.warehouseTask.findMany({ orderBy: { createdAt: "desc" } }),
-    db.stockItem.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    db.stockItem.findMany({
+      where: { active: true },
+      orderBy: [{ company: "asc" }, { name: "asc" }],
+    }),
   ]);
 
   return (
@@ -78,7 +83,20 @@ export default async function AdminWarehouseTasksPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Add stock sheet item</h2>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload company-wise product list</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Excel/CSV with company and item name columns. Re-uploading updates existing items by name
+          rather than duplicating them.
+        </p>
+        <FileImportForm
+          action={importStockItems}
+          buttonLabel="Upload product list"
+          itemLabel="stock items"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-4 text-lg font-bold text-slate-900">Add a single stock sheet item</h2>
         <AddStockItemForm />
       </Card>
 
@@ -87,6 +105,7 @@ export default async function AdminWarehouseTasksPage() {
         <table className="w-full min-w-[400px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
+              <th className="py-2 pr-4">Company</th>
               <th className="py-2 pr-4">Item</th>
               <th className="py-2 pr-4"></th>
             </tr>
@@ -94,6 +113,7 @@ export default async function AdminWarehouseTasksPage() {
           <tbody>
             {stockItems.map((item) => (
               <tr key={item.id} className="border-b border-slate-100">
+                <td className="py-2 pr-4 text-slate-600">{item.company ?? "—"}</td>
                 <td className="py-2 pr-4 font-medium text-slate-900">{item.name}</td>
                 <td className="py-2 pr-4">
                   <ConfirmDeleteButton
@@ -105,7 +125,7 @@ export default async function AdminWarehouseTasksPage() {
             ))}
             {stockItems.length === 0 && (
               <tr>
-                <td colSpan={2} className="py-4 text-center text-slate-400">
+                <td colSpan={3} className="py-4 text-center text-slate-400">
                   No stock items yet.
                 </td>
               </tr>

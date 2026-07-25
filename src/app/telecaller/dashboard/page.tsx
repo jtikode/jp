@@ -12,13 +12,20 @@ export default async function TelecallerDashboardPage() {
   const userId = session.userId as string;
   const today = new Date();
 
-  const [stores, outstandingGroups, todayCallCount] = await Promise.all([
-    db.store.findMany(),
+  const [partyCount, outstandingGroups, todayCallCount] = await Promise.all([
+    db.telecallerParty.count(),
     db.ledgerEntry.groupBy({ by: ["storeId"], _sum: { outstandingAmount: true } }),
     db.telecallerLog.count({
       where: { userId, contactDate: { gte: startOfDay(today), lte: endOfDay(today) } },
     }),
   ]);
+
+  // Until admin uploads a party list, keep showing every store so the
+  // dashboard never regresses to empty on its own.
+  const stores =
+    partyCount > 0
+      ? (await db.telecallerParty.findMany({ include: { store: true } })).map((p) => p.store)
+      : await db.store.findMany();
 
   const outstandingByStore = new Map(
     outstandingGroups.map((g) => [g.storeId, Number(g._sum.outstandingAmount ?? 0)]),
