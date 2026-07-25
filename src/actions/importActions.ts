@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
+import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
 import type { ActionResult } from "@/actions/employeeActions";
 
 const STORE_ALIASES = {
@@ -108,7 +109,7 @@ export async function importStoreMaster(
   return { ok: true, rowCount: imported };
 }
 
-const LEDGER_ALIASES = {
+const OUTSTANDING_ALIASES = {
   code: ["code", "store code", "id", "store id"],
   invoiceNo: ["invoice no", "invoice number", "invoice"],
   invoiceDate: ["invoice date", "date"],
@@ -117,7 +118,7 @@ const LEDGER_ALIASES = {
   dueDate: ["due date"],
 };
 
-export async function importLedger(
+export async function importOutstanding(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
@@ -129,54 +130,105 @@ export async function importLedger(
   }
 
   const buffer = await file.arrayBuffer();
-  const rows = parseSpreadsheet(file.name, buffer);
-  if (rows.length === 0) {
-    return { ok: false, error: "No rows found in that file." };
-  }
+  const isPdf = file.name.toLowerCase().endsWith(".pdf");
 
-  const batch = await db.importBatch.create({
-    data: { importType: "LEDGER", fileName: file.name, rowCount: 0, uploadedById: session.userId as string },
-  });
+  // { code, invoiceNo, invoiceDate, amount, outstandingAmount }[]
+  const parsedRows: Array<{
+    code: string;
+    invoiceNo?: string;
+    invoiceDate?: Date;
+    amount: number;
+    outstandingAmount: number;
+  }> = [];
 
-  const storeCache = new Map<string, string | null>();
-  let imported = 0;
-
-  for (const row of rows) {
-    const code = findColumn(row, LEDGER_ALIASES.code);
-    const outstandingRaw = findColumn(row, LEDGER_ALIASES.outstandingAmount);
-    if (!code || outstandingRaw === undefined) continue;
-
-    if (!storeCache.has(code)) {
-      const store = await db.store.findUnique({ where: { externalCode: code } });
-      storeCache.set(code, store?.id ?? null);
+  if (isPdf) {
+    const pdfRows = await parseOutstandingPdf(buffer);
+    for (const r of pdfRows) {
+      parsedRows.push({
+        code: r.code,
+        invoiceNo: r.invoiceNo,
+        invoiceDate: r.invoiceDate,
+        amount: r.billAmount,
+        outstandingAmount: r.outstandingAmount,
+      });
     }
-    const storeId = storeCache.get(code);
-    if (!storeId) continue; // no matching store for this code — skip
+  } else {
+    const rows = parseSpreadsheet(file.name, buffer);
+    for (const row of rows) {
+      const code = findColumn(row, OUTSTANDING_ALIASES.code);
+      const outstandingRaw = findColumn(row, OUTSTANDING_ALIASES.outstandingAmount);
+      if (!code || outstandingRaw === undefined) continue;
 
-    const amountRaw = findColumn(row, LEDGER_ALIASES.amount);
-    const invoiceNo = findColumn(row, LEDGER_ALIASES.invoiceNo);
-    const invoiceDateRaw = findColumn(row, LEDGER_ALIASES.invoiceDate);
-    const dueDateRaw = findColumn(row, LEDGER_ALIASES.dueDate);
+      const amountRaw = findColumn(row, OUTSTANDING_ALIASES.amount);
+      const invoiceNo = findColumn(row, OUTSTANDING_ALIASES.invoiceNo);
+      const invoiceDateRaw = findColumn(row, OUTSTANDING_ALIASES.invoiceDate);
 
-    await db.ledgerEntry.create({
-      data: {
-        storeId,
+      parsedRows.push({
+        code,
         invoiceNo,
         invoiceDate: invoiceDateRaw ? new Date(invoiceDateRaw) : undefined,
         amount: amountRaw ? Number(amountRaw) : Number(outstandingRaw),
         outstandingAmount: Number(outstandingRaw),
-        dueDate: dueDateRaw ? new Date(dueDateRaw) : undefined,
+      });
+    }
+  }
+
+  if (parsedRows.length === 0) {
+    return { ok: false, error: "No outstanding rows could be read from that file." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      importType: "OUTSTANDING",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  const storeCache = new Map<string, string | null>();
+  const touchedStoreIds = new Set<string>();
+  let imported = 0;
+
+  for (const row of parsedRows) {
+    if (!storeCache.has(row.code)) {
+      const store = await db.store.findUnique({ where: { externalCode: row.code } });
+      storeCache.set(row.code, store?.id ?? null);
+    }
+    const storeId = storeCache.get(row.code);
+    if (!storeId) continue; // no matching store for this code — skip
+    touchedStoreIds.add(storeId);
+    imported += 1;
+  }
+
+  // Each upload is a fresh "as on <date>" snapshot — replace prior outstanding
+  // data only for the stores actually present in this file (a "mixed routes"
+  // upload shouldn't wipe out other stores' figures from an earlier upload).
+  if (touchedStoreIds.size > 0) {
+    await db.ledgerEntry.deleteMany({ where: { storeId: { in: [...touchedStoreIds] } } });
+  }
+
+  for (const row of parsedRows) {
+    const storeId = storeCache.get(row.code);
+    if (!storeId) continue;
+
+    await db.ledgerEntry.create({
+      data: {
+        storeId,
+        invoiceNo: row.invoiceNo,
+        invoiceDate: row.invoiceDate,
+        amount: row.amount,
+        outstandingAmount: row.outstandingAmount,
+        dueDate: undefined,
         uploadBatchId: batch.id,
       },
     });
-
-    imported += 1;
   }
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
   revalidatePath("/admin/imports");
-  revalidatePath("/admin/ledger");
+  revalidatePath("/admin/outstanding");
   return { ok: true, rowCount: imported };
 }
 

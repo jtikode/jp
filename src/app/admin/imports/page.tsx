@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { FileImportForm } from "@/components/admin/FileImportForm";
-import { importStoreMaster, importLedger, importPurchaseHistory } from "@/actions/importActions";
+import { importStoreMaster, importOutstanding, importPurchaseHistory } from "@/actions/importActions";
 
 export default async function ImportsPage() {
   const batches = await db.importBatch.findMany({
@@ -21,11 +21,17 @@ export default async function ImportsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload ledger / outstanding data</h2>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload outstanding data</h2>
         <p className="mb-4 text-sm text-slate-500">
-          CSV or Excel export from billing software, matched to stores by store code.
+          PDF (or CSV/Excel) export from billing software, matched to stores by store code. Can
+          cover mixed routes — only the stores in the file get their outstanding figures replaced.
         </p>
-        <FileImportForm action={importLedger} buttonLabel="Upload ledger" itemLabel="ledger entries" />
+        <FileImportForm
+          action={importOutstanding}
+          buttonLabel="Upload outstanding"
+          itemLabel="outstanding entries"
+          accept=".pdf,.csv,.xlsx,.xls"
+        />
       </Card>
 
       <Card>

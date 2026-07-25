@@ -14,9 +14,15 @@ interface FileImportFormProps {
   action: ImportAction;
   buttonLabel: string;
   itemLabel: string;
+  accept?: string;
 }
 
-export function FileImportForm({ action, buttonLabel, itemLabel }: FileImportFormProps) {
+export function FileImportForm({
+  action,
+  buttonLabel,
+  itemLabel,
+  accept = ".csv,.xlsx,.xls",
+}: FileImportFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
@@ -24,7 +30,7 @@ export function FileImportForm({ action, buttonLabel, itemLabel }: FileImportFor
       <input
         type="file"
         name="file"
-        accept=".csv,.xlsx,.xls"
+        accept={accept}
         required
         className="min-h-14 flex-1 rounded-xl border-2 border-dashed border-slate-300 px-4 py-3 text-sm"
       />

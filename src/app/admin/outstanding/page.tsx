@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 
-export default async function LedgerPage() {
+export default async function OutstandingPage() {
   const grouped = await db.ledgerEntry.groupBy({
     by: ["storeId"],
     _sum: { outstandingAmount: true },
@@ -26,6 +27,7 @@ export default async function LedgerPage() {
               <th className="py-2 pr-4">Route</th>
               <th className="py-2 pr-4">Invoices</th>
               <th className="py-2 pr-4">Total Outstanding</th>
+              <th className="py-2 pr-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -40,13 +42,21 @@ export default async function LedgerPage() {
                   <td className="py-2 pr-4 font-semibold text-red-700">
                     ₹{Number(g._sum.outstandingAmount ?? 0).toLocaleString("en-IN")}
                   </td>
+                  <td className="py-2 pr-4">
+                    <Link
+                      href={`/admin/outstanding/${store.id}`}
+                      className="text-sm font-semibold text-blue-700 hover:underline"
+                    >
+                      Details
+                    </Link>
+                  </td>
                 </tr>
               );
             })}
             {grouped.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-6 text-center text-slate-400">
-                  No ledger data uploaded yet.
+                <td colSpan={5} className="py-6 text-center text-slate-400">
+                  No outstanding data uploaded yet.
                 </td>
               </tr>
             )}

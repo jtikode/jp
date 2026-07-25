@@ -2,9 +2,9 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addDays, format } from "date-fns";
+import Link from "next/link";
 import { reorderStoreSequence } from "@/actions/storeActions";
-import { buildWhatsAppLink } from "@/lib/waLink";
+import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
 
 interface StoreRow {
   id: string;
@@ -24,8 +24,6 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
       router.refresh();
     });
   }
-
-  const tomorrow = format(addDays(new Date(), 1), "d MMM yyyy");
 
   return (
     <div className="flex flex-col gap-2">
@@ -62,10 +60,7 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
             </button>
             {store.phone && (
               <a
-                href={buildWhatsAppLink(
-                  store.phone,
-                  `Hello, this is J.P. Traders. We will be visiting ${store.name} tomorrow (${tomorrow}). Please keep your requirements ready.`,
-                )}
+                href={buildWhatsAppLink(store.phone, buildVisitReminderMessage())}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-8 items-center rounded-lg bg-green-600 px-2 text-xs font-semibold text-white hover:bg-green-700"
@@ -73,6 +68,12 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
                 WhatsApp
               </a>
             )}
+            <Link
+              href={`/admin/outstanding/${store.id}`}
+              className="flex h-8 items-center rounded-lg bg-amber-600 px-2 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              Outstanding
+            </Link>
           </div>
         </div>
       ))}

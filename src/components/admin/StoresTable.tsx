@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { addDays, format } from "date-fns";
+import Link from "next/link";
 import { Input } from "@/components/ui/Input";
-import { buildWhatsAppLink } from "@/lib/waLink";
+import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
 
 interface StoreRow {
   id: string;
@@ -22,8 +22,6 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
-
-  const tomorrow = format(addDays(new Date(), 1), "d MMM yyyy");
 
   return (
     <div className="space-y-4">
@@ -53,19 +51,24 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
                 <td className="py-2 pr-4 text-slate-600">{s.phone ?? "—"}</td>
                 <td className="py-2 pr-4 text-slate-600">{s.routeName ?? "—"}</td>
                 <td className="py-2 pr-4">
-                  {s.phone && (
-                    <a
-                      href={buildWhatsAppLink(
-                        s.phone,
-                        `Hello, this is J.P. Traders. We will be visiting ${s.name} tomorrow (${tomorrow}). Please keep your requirements ready.`,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700"
+                  <div className="flex gap-2">
+                    {s.phone && (
+                      <a
+                        href={buildWhatsAppLink(s.phone, buildVisitReminderMessage())}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700"
+                      >
+                        WhatsApp
+                      </a>
+                    )}
+                    <Link
+                      href={`/admin/outstanding/${s.id}`}
+                      className="rounded-lg bg-amber-600 px-2 py-1 text-xs font-semibold text-white hover:bg-amber-700"
                     >
-                      WhatsApp
-                    </a>
-                  )}
+                      Outstanding
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}
