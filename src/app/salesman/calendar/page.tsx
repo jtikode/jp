@@ -14,10 +14,13 @@ import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { DCRCalendarGrid, type DayCell } from "@/components/calendar/DCRCalendarGrid";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { getLang } from "@/lib/langCookie";
+import { t } from "@/lib/i18n";
 
 export default async function CalendarPage() {
   const session = await getSession();
   const userId = session.userId as string;
+  const lang = await getLang();
 
   const today = new Date();
   const monthStart = startOfMonth(today);
@@ -110,30 +113,40 @@ export default async function CalendarPage() {
     <div className="mx-auto max-w-lg space-y-4">
       <Card>
         <h1 className="mb-4 text-lg font-bold text-slate-900">
-          Daily Call Report — {monthStart.toLocaleString("default", { month: "long", year: "numeric" })}
+          {t(lang, "daily_call_report")} — {monthStart.toLocaleString("default", { month: "long", year: "numeric" })}
         </h1>
         <DCRCalendarGrid cells={cells} leadingBlanks={leadingBlanks} />
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Target Progress</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-900">{t(lang, "target_progress")}</h2>
         <div className="flex flex-col gap-4">
-          <ProgressBar label="Today" achieved={todayOrderAmount} target={todayTarget} />
-          <ProgressBar label="This month" achieved={monthOrderAmount} target={monthlyTarget} />
+          <ProgressBar
+            label={t(lang, "today")}
+            achieved={todayOrderAmount}
+            target={todayTarget}
+            pctSuffix={t(lang, "of_target")}
+          />
+          <ProgressBar
+            label={t(lang, "this_month")}
+            achieved={monthOrderAmount}
+            target={monthlyTarget}
+            pctSuffix={t(lang, "of_target")}
+          />
         </div>
       </Card>
 
       <Card className="overflow-x-auto">
-        <h2 className="mb-1 text-lg font-bold text-slate-900">3-Year History</h2>
-        <p className="mb-4 text-sm text-slate-500">Your monthly numbers, most recent first.</p>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">{t(lang, "three_year_history")}</h2>
+        <p className="mb-4 text-sm text-slate-500">{t(lang, "monthly_numbers_recent")}</p>
         <table className="w-full min-w-[480px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
-              <th className="py-2 pr-4">Month</th>
-              <th className="py-2 pr-4">Visits</th>
-              <th className="py-2 pr-4">Productive</th>
-              <th className="py-2 pr-4">Order Amt</th>
-              <th className="py-2 pr-4">Collected</th>
+              <th className="py-2 pr-4">{t(lang, "month")}</th>
+              <th className="py-2 pr-4">{t(lang, "visits")}</th>
+              <th className="py-2 pr-4">{t(lang, "productive")}</th>
+              <th className="py-2 pr-4">{t(lang, "order_amt")}</th>
+              <th className="py-2 pr-4">{t(lang, "collected")}</th>
             </tr>
           </thead>
           <tbody>

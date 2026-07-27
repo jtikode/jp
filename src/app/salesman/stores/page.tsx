@@ -1,9 +1,12 @@
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { StoreSearchList } from "@/components/salesman/StoreSearchList";
+import { getLang } from "@/lib/langCookie";
+import { t } from "@/lib/i18n";
 
 export default async function SalesmanStoresPage() {
   const session = await getSession();
+  const lang = await getLang();
 
   const assignments = await db.routeAssignment.findMany({
     where: { userId: session.userId },
@@ -19,8 +22,9 @@ export default async function SalesmanStoresPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="mb-4 text-xl font-bold text-slate-900">Chemist List</h1>
+      <h1 className="mb-4 text-xl font-bold text-slate-900">{t(lang, "chemist_list")}</h1>
       <StoreSearchList
+        lang={lang}
         stores={stores.map((s) => ({
           id: s.id,
           name: s.name,

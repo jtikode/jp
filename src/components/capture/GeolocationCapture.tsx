@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { t, type Lang } from "@/lib/i18n";
 
 interface GeolocationCaptureProps {
+  lang: Lang;
   onCapture: (lat: number, lng: number) => void;
 }
 
-export function GeolocationCapture({ onCapture }: GeolocationCaptureProps) {
+export function GeolocationCapture({ lang, onCapture }: GeolocationCaptureProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +49,10 @@ export function GeolocationCapture({ onCapture }: GeolocationCaptureProps) {
         disabled={status === "loading"}
       >
         {status === "done"
-          ? "GPS Verified ✓"
+          ? t(lang, "gps_verified")
           : status === "loading"
-            ? "Fetching location..."
-            : "Verify GPS Location"}
+            ? t(lang, "fetching_location")
+            : t(lang, "verify_gps_location")}
       </Button>
       {coords && (
         <p className="text-sm text-slate-500">

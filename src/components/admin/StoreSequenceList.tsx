@@ -1,9 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { reorderStoreSequence, removeStoreFromRoute } from "@/actions/storeActions";
+import {
+  reorderStoreSequence,
+  reorderAllStores,
+  removeStoreFromRoute,
+} from "@/actions/storeActions";
 import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
 import { storeLabel } from "@/lib/storeLabel";
 
@@ -18,6 +22,13 @@ interface StoreRow {
 export function StoreSequenceList({ routeId, stores }: { routeId: string; stores: StoreRow[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [items, setItems] = useState(stores);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  // Reflect server-refreshed data once a reorder/remove completes.
+  if (items !== stores && items.length !== stores.length) {
+    setItems(stores);
+  }
 
   function move(storeId: string, direction: "up" | "down") {
     startTransition(async () => {
@@ -36,14 +47,54 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
     });
   }
 
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  function handleDragOver(index: number, e: React.DragEvent) {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    setItems((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setDragIndex(index);
+  }
+
+  function handleDrop() {
+    setDragIndex(null);
+    startTransition(async () => {
+      await reorderAllStores(
+        routeId,
+        items.map((s) => s.id),
+      );
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex flex-col gap-2">
-      {stores.map((store, i) => (
+      {items.map((store, i) => (
         <div
           key={store.id}
-          className="flex flex-col gap-3 rounded-xl border-2 border-slate-200 p-3 sm:flex-row sm:items-center"
+          draggable
+          onDragStart={() => handleDragStart(i)}
+          onDragOver={(e) => handleDragOver(i, e)}
+          onDrop={handleDrop}
+          onDragEnd={() => setDragIndex(null)}
+          className={`flex flex-col gap-3 rounded-xl border-2 p-3 sm:flex-row sm:items-center ${
+            dragIndex === i ? "border-blue-400 bg-blue-50" : "border-slate-200"
+          }`}
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
+            <span
+              className="flex h-9 w-6 shrink-0 cursor-grab items-center justify-center text-slate-400 active:cursor-grabbing"
+              title="Drag to reorder"
+            >
+              ⠿
+            </span>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800">
               {i + 1}
             </span>
@@ -66,7 +117,7 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
             </button>
             <button
               type="button"
-              disabled={pending || i === stores.length - 1}
+              disabled={pending || i === items.length - 1}
               onClick={() => move(store.id, "down")}
               className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-slate-300 text-slate-600 disabled:opacity-30"
               aria-label="Move down"
@@ -100,7 +151,7 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
           </div>
         </div>
       ))}
-      {stores.length === 0 && (
+      {items.length === 0 && (
         <p className="py-6 text-center text-slate-400">No stores on this route yet.</p>
       )}
     </div>

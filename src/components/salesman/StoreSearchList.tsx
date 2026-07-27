@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
+import { t, type Lang } from "@/lib/i18n";
 
 interface StoreItem {
   id: string;
@@ -16,7 +17,7 @@ interface StoreItem {
   longitude?: number | null;
 }
 
-export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
+export function StoreSearchList({ lang, stores }: { lang: Lang; stores: StoreItem[] }) {
   const [query, setQuery] = useState("");
 
   const filtered = stores.filter((s) =>
@@ -26,7 +27,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
   return (
     <div className="flex flex-col gap-3">
       <Input
-        placeholder="Search stores by name or address..."
+        placeholder={t(lang, "search_stores_placeholder")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
@@ -41,7 +42,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
                   <p className="flex items-center gap-1.5 font-semibold text-slate-900">
                     {storeLabel(store.name, store.externalCode)}
                     {located && (
-                      <span title="Location already marked" aria-label="Location already marked">
+                      <span title={t(lang, "location_marked")} aria-label={t(lang, "location_marked")}>
                         📍
                       </span>
                     )}
@@ -58,7 +59,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
                     rel="noopener noreferrer"
                     className="shrink-0 text-xs font-semibold text-blue-700 hover:underline"
                   >
-                    Map
+                    {t(lang, "map")}
                   </a>
                 )}
               </div>
@@ -66,7 +67,7 @@ export function StoreSearchList({ stores }: { stores: StoreItem[] }) {
           );
         })}
         {filtered.length === 0 && (
-          <p className="py-6 text-center text-slate-400">No stores match your search.</p>
+          <p className="py-6 text-center text-slate-400">{t(lang, "no_stores_match")}</p>
         )}
       </div>
     </div>

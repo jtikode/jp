@@ -10,18 +10,22 @@ function startOfToday(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-export async function markAttendance(status: AttendanceStatus): Promise<{ ok: boolean; error?: string }> {
+export async function markAttendance(
+  status: AttendanceStatus,
+  routeId?: string,
+): Promise<{ ok: boolean; error?: string }> {
   const session = await assertRole(["SALESMAN"]);
 
   const date = startOfToday();
+  const userId = session.userId as string;
 
   await db.attendance.upsert({
-    where: { userId_date: { userId: session.userId as string, date } },
-    update: { status },
-    create: { userId: session.userId as string, date, status },
+    where: { userId_date: { userId, date } },
+    update: { status, routeId: status === "ON_ROUTE" ? routeId : null },
+    create: { userId, date, status, routeId: status === "ON_ROUTE" ? routeId : undefined },
   });
 
-  revalidatePath("/salesman/routes");
+  revalidatePath("/salesman/dashboard");
   revalidatePath("/salesman/calendar");
   return { ok: true };
 }

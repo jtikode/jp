@@ -5,6 +5,7 @@ import { logTelecallerContact } from "@/actions/telecallerActions";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 
 const initialState = { ok: false, error: undefined };
 
@@ -88,11 +89,7 @@ export function TelecallerLogForm({ storeId }: { storeId: string }) {
         <label className="mb-1 block text-sm font-medium text-slate-700">
           Complaint / Issue notes (visible to owner)
         </label>
-        <textarea
-          name="complaintNotes"
-          rows={3}
-          className="w-full rounded-xl border-2 border-slate-300 p-3 text-base focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
-        />
+        <Textarea name="complaintNotes" rows={3} />
       </div>
 
       {state.error && <p className="text-sm font-medium text-red-600">{state.error}</p>}

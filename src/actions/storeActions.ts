@@ -58,6 +58,53 @@ export async function assignStoreToRoute(
   return { ok: true };
 }
 
+/** Persists a full drag-and-drop reorder in one go: sets visitSequence = position for every store, in the given order. */
+export async function reorderAllStores(routeId: string, orderedStoreIds: string[]): Promise<void> {
+  await assertRole(["ADMIN"]);
+
+  await Promise.all(
+    orderedStoreIds.map((storeId, index) =>
+      db.routeStore.update({
+        where: { routeId_storeId: { routeId, storeId } },
+        data: { visitSequence: index + 1 },
+      }),
+    ),
+  );
+
+  revalidatePath("/admin/stores");
+}
+
+export async function assignMultipleStoresToRoute(
+  routeId: string,
+  storeIds: string[],
+): Promise<{ ok: boolean; error?: string; addedCount?: number }> {
+  await assertRole(["ADMIN"]);
+
+  if (storeIds.length === 0) {
+    return { ok: false, error: "Choose at least one store." };
+  }
+
+  const existing = await db.routeStore.findMany({
+    where: { routeId, storeId: { in: storeIds } },
+    select: { storeId: true },
+  });
+  const existingIds = new Set(existing.map((e) => e.storeId));
+  const toAdd = storeIds.filter((id) => !existingIds.has(id));
+
+  if (toAdd.length === 0) {
+    return { ok: false, error: "Those stores are already on this route." };
+  }
+
+  let count = await db.routeStore.count({ where: { routeId } });
+  for (const storeId of toAdd) {
+    count += 1;
+    await db.routeStore.create({ data: { routeId, storeId, visitSequence: count } });
+  }
+
+  revalidatePath("/admin/stores");
+  return { ok: true, addedCount: toAdd.length };
+}
+
 export async function removeStoreFromRoute(
   routeId: string,
   storeId: string,

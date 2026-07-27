@@ -3,13 +3,15 @@
 import { useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { Button } from "@/components/ui/Button";
+import { t, type Lang } from "@/lib/i18n";
 
 interface CameraCaptureProps {
+  lang: Lang;
   onCapture: (file: File) => void;
   name?: string;
 }
 
-export function CameraCapture({ onCapture, name = "photo" }: CameraCaptureProps) {
+export function CameraCapture({ lang, onCapture, name = "photo" }: CameraCaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
@@ -64,7 +66,11 @@ export function CameraCapture({ onCapture, name = "photo" }: CameraCaptureProps)
         onClick={() => inputRef.current?.click()}
         disabled={compressing}
       >
-        {compressing ? "Processing photo..." : previewUrl ? "Retake Photo" : "Take Photo"}
+        {compressing
+          ? t(lang, "processing_photo")
+          : previewUrl
+            ? t(lang, "retake_photo")
+            : t(lang, "take_photo")}
       </Button>
       {previewUrl && (
         // eslint-disable-next-line @next/next/no-img-element

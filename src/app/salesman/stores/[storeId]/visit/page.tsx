@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { VisitForm } from "@/components/forms/VisitForm";
 import { storeLabel } from "@/lib/storeLabel";
+import { getLang } from "@/lib/langCookie";
+import { t } from "@/lib/i18n";
 
 export default async function StoreVisitPage({
   params,
@@ -13,6 +15,7 @@ export default async function StoreVisitPage({
   const store = await db.store.findUnique({ where: { id: storeId } });
 
   if (!store) notFound();
+  const lang = await getLang();
 
   // Highest-value items first, so the salesman can open the visit already
   // knowing what this store usually orders before logging today's numbers.
@@ -41,11 +44,11 @@ export default async function StoreVisitPage({
       {lastTelecallerLog && (
         <Card className="border-2 border-amber-200 bg-amber-50">
           <p className="text-xs font-semibold text-amber-800">
-            Last telecaller call: {lastTelecallerLog.contactDate.toLocaleDateString("en-IN")}
+            {t(lang, "last_telecaller_call")} {lastTelecallerLog.contactDate.toLocaleDateString("en-IN")}
           </p>
           {lastTelecallerLog.paymentPromise && (
             <p className="mt-1 text-sm font-medium text-amber-900">
-              Note: {lastTelecallerLog.paymentPromise}
+              {t(lang, "note")} {lastTelecallerLog.paymentPromise}
             </p>
           )}
         </Card>
@@ -53,14 +56,14 @@ export default async function StoreVisitPage({
 
       {nearExpiryItems.length > 0 && (
         <Card className="overflow-x-auto">
-          <h2 className="mb-1 text-base font-bold text-slate-900">Near-Expiry Stock</h2>
-          <p className="mb-3 text-xs text-slate-500">Push these at special rate.</p>
+          <h2 className="mb-1 text-base font-bold text-slate-900">{t(lang, "near_expiry_stock")}</h2>
+          <p className="mb-3 text-xs text-slate-500">{t(lang, "push_special_rate")}</p>
           <table className="w-full min-w-[280px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500">
-                <th className="py-2 pr-4">Item</th>
-                <th className="py-2 pr-4">Expiry</th>
-                <th className="py-2 pr-4">Rate</th>
+                <th className="py-2 pr-4">{t(lang, "item")}</th>
+                <th className="py-2 pr-4">{t(lang, "expiry")}</th>
+                <th className="py-2 pr-4">{t(lang, "rate")}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,13 +85,13 @@ export default async function StoreVisitPage({
 
       {regularItems.length > 0 && (
         <Card className="overflow-x-auto">
-          <h2 className="mb-1 text-base font-bold text-slate-900">Regularly bought items</h2>
-          <p className="mb-3 text-xs text-slate-500">Highest value first — check before you order.</p>
+          <h2 className="mb-1 text-base font-bold text-slate-900">{t(lang, "regularly_bought_items")}</h2>
+          <p className="mb-3 text-xs text-slate-500">{t(lang, "check_before_order")}</p>
           <table className="w-full min-w-[280px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500">
-                <th className="py-2 pr-4">Item</th>
-                <th className="py-2 pr-4">Qty</th>
+                <th className="py-2 pr-4">{t(lang, "item")}</th>
+                <th className="py-2 pr-4">{t(lang, "qty")}</th>
               </tr>
             </thead>
             <tbody>
@@ -105,7 +108,7 @@ export default async function StoreVisitPage({
         </Card>
       )}
 
-      <VisitForm storeId={store.id} />
+      <VisitForm storeId={store.id} lang={lang} />
     </div>
   );
 }

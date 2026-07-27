@@ -7,6 +7,7 @@ import {
   importPurchaseHistory,
   importExpiryItems,
   importTelecallerParties,
+  importIncentiveItems,
 } from "@/actions/importActions";
 
 export default async function ImportsPage() {
@@ -78,6 +79,19 @@ export default async function ImportsPage() {
           action={importTelecallerParties}
           buttonLabel="Upload party list"
           itemLabel="parties"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload incentive product list</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Item name and incentive amount columns. Shown to salesmen as &quot;Current Incentives&quot;
+          on their dashboard — each upload replaces the whole list.
+        </p>
+        <FileImportForm
+          action={importIncentiveItems}
+          buttonLabel="Upload incentive list"
+          itemLabel="incentive items"
         />
       </Card>
 

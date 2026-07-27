@@ -21,6 +21,7 @@ export async function submitVisit(
     collectionAmount: formData.get("collectionAmount"),
     orderAmount: formData.get("orderAmount"),
     hasOrder: formData.get("hasOrder"),
+    hasDiscount: formData.get("hasDiscount"),
     noOrderReason: formData.get("noOrderReason"),
     notes: formData.get("notes"),
   });
@@ -53,6 +54,7 @@ export async function submitVisit(
       collectionAmount: parsed.data.collectionAmount,
       orderAmount: parsed.data.orderAmount,
       hasOrder: parsed.data.hasOrder,
+      hasDiscount: parsed.data.hasDiscount,
       noOrderReason: parsed.data.hasOrder ? undefined : parsed.data.noOrderReason,
       notes: parsed.data.notes,
     },

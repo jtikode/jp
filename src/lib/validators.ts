@@ -64,6 +64,7 @@ export const visitSchema = z.object({
   collectionAmount: optionalNumber,
   orderAmount: optionalNumber,
   hasOrder: booleanFromRadio,
+  hasDiscount: booleanFromRadio,
   noOrderReason: optionalNoOrderReason,
   notes: optionalString,
 });

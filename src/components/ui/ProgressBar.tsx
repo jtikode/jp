@@ -7,11 +7,13 @@ export function ProgressBar({
   achieved,
   target,
   formatValue = formatCurrency,
+  pctSuffix = "% of target",
 }: {
   label: string;
   achieved: number;
   target: number;
   formatValue?: (value: number) => string;
+  pctSuffix?: string;
 }) {
   const pct = target > 0 ? Math.min(100, Math.round((achieved / target) * 100)) : 0;
   const barColor = pct >= 100 ? "bg-green-600" : pct >= 50 ? "bg-blue-600" : "bg-amber-500";
@@ -27,7 +29,7 @@ export function ProgressBar({
       <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
         <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      {target > 0 && <p className="mt-1 text-xs font-semibold text-slate-500">{pct}% of target</p>}
+      {target > 0 && <p className="mt-1 text-xs font-semibold text-slate-500">{pct}{pctSuffix}</p>}
     </div>
   );
 }

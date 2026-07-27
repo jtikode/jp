@@ -1,13 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import type { Lang } from "@/lib/i18n";
 
 interface AppHeaderProps {
   title: string;
   name: string;
+  lang: Lang;
+  logOutLabel?: string;
 }
 
-export function AppHeader({ title, name }: AppHeaderProps) {
+export function AppHeader({ title, name, lang, logOutLabel = "Log out" }: AppHeaderProps) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -22,12 +26,15 @@ export function AppHeader({ title, name }: AppHeaderProps) {
         <p className="text-lg font-bold text-slate-900">{title}</p>
         <p className="text-sm text-slate-500">{name}</p>
       </div>
-      <button
-        onClick={handleLogout}
-        className="min-h-11 rounded-lg border-2 border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-      >
-        Log out
-      </button>
+      <div className="flex items-center gap-2">
+        <LanguageToggle initialLang={lang} />
+        <button
+          onClick={handleLogout}
+          className="min-h-11 rounded-lg border-2 border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          {logOutLabel}
+        </button>
+      </div>
     </header>
   );
 }

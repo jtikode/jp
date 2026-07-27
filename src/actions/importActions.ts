@@ -437,6 +437,64 @@ export async function importExpiryItems(
   return { ok: true, rowCount: parsedRows.length };
 }
 
+const INCENTIVE_ALIASES = {
+  itemName: ["item", "item name", "product", "product name"],
+  incentiveAmount: ["incentive", "incentive amount", "amount", "bonus"],
+};
+
+export async function importIncentiveItems(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const buffer = await file.arrayBuffer();
+  const rows = parseSpreadsheet(file.name, buffer);
+
+  const parsedRows: Array<{ itemName: string; incentiveAmount: number }> = [];
+  for (const row of rows) {
+    const itemName = findColumn(row, INCENTIVE_ALIASES.itemName);
+    const amountRaw = findColumn(row, INCENTIVE_ALIASES.incentiveAmount);
+    if (!itemName || amountRaw === undefined) continue;
+    parsedRows.push({ itemName, incentiveAmount: Number(amountRaw) });
+  }
+
+  if (parsedRows.length === 0) {
+    return { ok: false, error: "No item/incentive rows could be read from that file." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      importType: "INCENTIVE_ITEMS",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  // Current incentive scheme is a full snapshot — replace the whole list
+  // each time, same as ExpiryItem.
+  await db.incentiveItem.deleteMany({});
+  await db.incentiveItem.createMany({
+    data: parsedRows.map((row) => ({
+      itemName: row.itemName,
+      incentiveAmount: row.incentiveAmount,
+      uploadBatchId: batch.id,
+    })),
+  });
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
+
+  revalidatePath("/admin/imports");
+  revalidatePath("/salesman/dashboard");
+  return { ok: true, rowCount: parsedRows.length };
+}
+
 const PARTY_LIST_ALIASES = {
   code: ["code", "store code", "id", "store id"],
 };

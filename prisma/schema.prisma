@@ -29,6 +29,7 @@ enum AttendanceStatus {
   ABSENT
   HOLIDAY_WEEKOFF
   OFFICE_DAY
+  ON_ROUTE
 }
 
 enum NoOrderReason {
@@ -71,6 +72,7 @@ model Route {
   assignments RouteAssignment[]
   visits      Visit[]
   routeStores RouteStore[]
+  attendances Attendance[]
 }
 
 model RouteAssignment {
@@ -139,6 +141,7 @@ model Visit {
   collectionAmount Decimal?
   orderAmount      Decimal?
   hasOrder         Boolean        @default(false)
+  hasDiscount      Boolean        @default(false)
   noOrderReason    NoOrderReason?
   notes            String?
   createdAt        DateTime       @default(now())
@@ -158,9 +161,13 @@ model Attendance {
   date      DateTime
   status    AttendanceStatus
   note      String?
+  // Set when status=ON_ROUTE — which of the salesman's assigned routes
+  // they're declaring themselves out on today.
+  routeId   String?
   createdAt DateTime         @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user  User   @relation(fields: [userId], references: [id])
+  route Route? @relation(fields: [routeId], references: [id])
 
   @@unique([userId, date])
   @@index([date])
@@ -289,6 +296,17 @@ model PurchaseHistoryItem {
 
   @@index([storeId])
   @@index([itemName])
+}
+
+// Admin-updated incentive scheme: item + incentive amount, shown to
+// salesmen as "current incentives" on their dashboard. Each upload
+// replaces the whole list, same as ExpiryItem.
+model IncentiveItem {
+  id              String    @id @default(cuid())
+  itemName        String
+  incentiveAmount Decimal
+  uploadBatchId   String
+  importedAt      DateTime  @default(now())
 }
 
 model ExpiryItem {

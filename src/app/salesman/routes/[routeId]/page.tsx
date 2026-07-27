@@ -6,6 +6,9 @@ import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { RouteBarChart, type MonthlyPoint } from "@/components/charts/RouteBarChart";
 import { storeLabel } from "@/lib/storeLabel";
+import { VisitHistoryDots } from "@/components/salesman/VisitHistoryDots";
+import { getLang } from "@/lib/langCookie";
+import { t } from "@/lib/i18n";
 
 export default async function RouteDetailPage({
   params,
@@ -15,6 +18,7 @@ export default async function RouteDetailPage({
   const { routeId } = await params;
   const session = await getSession();
   const userId = session.userId as string;
+  const lang = await getLang();
 
   const route = await db.route.findUnique({ where: { id: routeId } });
   if (!route) notFound();
@@ -56,14 +60,34 @@ export default async function RouteDetailPage({
   const visitedTodayIds = new Set(visitedTodayRows.map((v) => v.storeId));
 
   const lastCallByStore = new Map<string, Date>();
+  const visitHistoryByStore = new Map<string, boolean[]>();
   if (stores.length > 0) {
-    const lastCalls = await db.telecallerLog.groupBy({
-      by: ["storeId"],
-      where: { storeId: { in: stores.map((s) => s.id) } },
-      _max: { contactDate: true },
-    });
+    const storeIds = stores.map((s) => s.id);
+    const [lastCalls, recentVisits] = await Promise.all([
+      db.telecallerLog.groupBy({
+        by: ["storeId"],
+        where: { storeId: { in: storeIds } },
+        _max: { contactDate: true },
+      }),
+      // Fetched newest-first across all these stores in one query, then
+      // sliced to the first 10 encountered per store below — cheaper than
+      // one "last 10" query per store.
+      db.visit.findMany({
+        where: { storeId: { in: storeIds } },
+        orderBy: { visitDate: "desc" },
+        select: { storeId: true, hasOrder: true },
+        take: 1000,
+      }),
+    ]);
     for (const c of lastCalls) {
       if (c._max.contactDate) lastCallByStore.set(c.storeId, c._max.contactDate);
+    }
+    for (const v of recentVisits) {
+      const list = visitHistoryByStore.get(v.storeId) ?? [];
+      if (list.length < 10) {
+        list.push(v.hasOrder);
+        visitHistoryByStore.set(v.storeId, list);
+      }
     }
   }
 
@@ -71,12 +95,12 @@ export default async function RouteDetailPage({
     <div className="mx-auto max-w-lg space-y-4">
       <Card>
         <h1 className="mb-1 text-lg font-bold text-slate-900">{route.name}</h1>
-        <p className="mb-4 text-sm text-slate-500">Monthly visit history</p>
+        <p className="mb-4 text-sm text-slate-500">{t(lang, "monthly_visit_history")}</p>
         <RouteBarChart data={monthlyData} />
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Today&apos;s Visit Order</h2>
+        <h2 className="mb-4 text-lg font-bold text-slate-900">{t(lang, "todays_visit_order")}</h2>
         <div className="flex flex-col gap-2">
           {stores.map((store, i) => {
             const visited = visitedTodayIds.has(store.id);
@@ -93,15 +117,16 @@ export default async function RouteDetailPage({
                   <p className="flex items-center gap-1.5 font-semibold text-slate-900">
                     {storeLabel(store.name, store.externalCode)}
                     {located && (
-                      <span title="Location already marked" aria-label="Location already marked">
+                      <span title={t(lang, "location_marked")} aria-label={t(lang, "location_marked")}>
                         📍
                       </span>
                     )}
+                    <VisitHistoryDots history={visitHistoryByStore.get(store.id) ?? []} />
                   </p>
                   <p className="text-sm text-slate-500">{store.address}</p>
                   {lastCallByStore.has(store.id) && (
                     <p className="text-xs font-medium text-blue-700">
-                      Tele called: {lastCallByStore.get(store.id)!.toLocaleDateString("en-IN")}
+                      {t(lang, "tele_called")} {lastCallByStore.get(store.id)!.toLocaleDateString("en-IN")}
                     </p>
                   )}
                 </Link>
@@ -112,19 +137,19 @@ export default async function RouteDetailPage({
                     rel="noopener noreferrer"
                     className="shrink-0 text-xs font-semibold text-blue-700 hover:underline"
                   >
-                    Map
+                    {t(lang, "map")}
                   </a>
                 )}
                 {visited && (
                   <span className="shrink-0 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                    Visited
+                    {t(lang, "visited")}
                   </span>
                 )}
               </div>
             );
           })}
           {stores.length === 0 && (
-            <p className="py-4 text-center text-slate-400">No stores on this route yet.</p>
+            <p className="py-4 text-center text-slate-400">{t(lang, "no_stores_on_route")}</p>
           )}
         </div>
       </Card>
