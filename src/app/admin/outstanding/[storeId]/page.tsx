@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function StoreOutstandingPage({
   params,
@@ -44,7 +45,18 @@ export default async function StoreOutstandingPage({
       </Card>
 
       <Card className="overflow-x-auto">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Invoices</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">Invoices</h2>
+          <ExportExcelButton
+            data={entries.map((e) => ({
+              "Invoice #": e.invoiceNo ?? "",
+              Date: e.invoiceDate ? e.invoiceDate.toLocaleDateString() : "",
+              "Bill Amount": Number(e.amount),
+              "Balance Due": Number(e.outstandingAmount),
+            }))}
+            filename={`outstanding-${store.externalCode ?? store.id}`}
+          />
+        </div>
         <table className="w-full min-w-[500px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">

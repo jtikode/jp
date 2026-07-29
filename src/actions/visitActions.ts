@@ -8,6 +8,21 @@ import { uploadPhoto } from "@/lib/blob";
 import { visitSchema } from "@/lib/validators";
 import type { ActionResult } from "@/actions/employeeActions";
 
+const MAX_DISTANCE_METERS = 100;
+const EARTH_RADIUS_METERS = 6371000;
+
+/** Great-circle distance between two lat/lng points, in meters. */
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_METERS * c;
+}
+
 export async function submitVisit(
   _prevState: ActionResult | null,
   formData: FormData,
@@ -38,6 +53,24 @@ export async function submitVisit(
   const store = await db.store.findUnique({ where: { id: parsed.data.storeId } });
   if (!store) {
     return { ok: false, error: "Store not found." };
+  }
+
+  // Once a store's location is known (from its first confirmed visit), every
+  // later visit must be within range of it — catches the wrong-store mixups
+  // that free-text/manual entry allowed.
+  if (store.latitude != null && store.longitude != null) {
+    const distance = haversineMeters(
+      store.latitude,
+      store.longitude,
+      parsed.data.latitude,
+      parsed.data.longitude,
+    );
+    if (distance > MAX_DISTANCE_METERS) {
+      return {
+        ok: false,
+        error: `You can mark visit only within ${MAX_DISTANCE_METERS} meters from first visit location. Current distance: ${distance.toFixed(2)} meters`,
+      };
+    }
   }
 
   const buffer = Buffer.from(await photo.arrayBuffer());

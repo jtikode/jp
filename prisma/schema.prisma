@@ -58,6 +58,7 @@ model User {
   stockCounts      StockCount[]
   targets          Target[]
   importBatches    ImportBatch[]
+  workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
 
   @@index([role])
 }
@@ -164,10 +165,14 @@ model Attendance {
   // Set when status=ON_ROUTE — which of the salesman's assigned routes
   // they're declaring themselves out on today.
   routeId   String?
+  // Optional colleague they're working with that day — filled via the
+  // monthly Tour Plan grid, not the daily attendance buttons.
+  workingWithUserId String?
   createdAt DateTime         @default(now())
 
-  user  User   @relation(fields: [userId], references: [id])
-  route Route? @relation(fields: [routeId], references: [id])
+  user       User   @relation(fields: [userId], references: [id])
+  route      Route? @relation(fields: [routeId], references: [id])
+  workingWith User?  @relation("AttendanceWorkingWith", fields: [workingWithUserId], references: [id])
 
   @@unique([userId, date])
   @@index([date])

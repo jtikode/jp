@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { storeLabel } from "@/lib/storeLabel";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function IntelligencePage({
   searchParams,
@@ -36,7 +37,17 @@ export default async function IntelligencePage({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Card className="overflow-x-auto">
-        <h1 className="mb-1 text-lg font-bold text-slate-900">Near-Expiry Focus List</h1>
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-bold text-slate-900">Near-Expiry Focus List</h1>
+          <ExportExcelButton
+            data={nearExpiryItems.map((item) => ({
+              Item: item.itemName,
+              Expiry: item.expiryDate.toLocaleDateString("en-IN"),
+              "Special Rate": item.specialRate != null ? Number(item.specialRate) : "",
+            }))}
+            filename="near-expiry-list"
+          />
+        </div>
         <p className="mb-4 text-sm text-slate-500">Soonest expiry first — push these at special rate.</p>
         <table className="w-full min-w-[400px] text-left text-sm">
           <thead>
@@ -99,9 +110,20 @@ export default async function IntelligencePage({
 
       {storeId && (
         <Card className="overflow-x-auto">
-          <h2 className="mb-4 text-lg font-bold text-slate-900">
-            Regularly bought items (highest value first)
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-slate-900">
+              Regularly bought items (highest value first)
+            </h2>
+            <ExportExcelButton
+              data={topItems.map((item) => ({
+                Item: item.itemName,
+                Quantity: Number(item._sum.quantity ?? 0),
+                Unit: item.unit ?? "",
+                Value: Number(item._sum.totalValue ?? 0),
+              }))}
+              filename="regular-items"
+            />
+          </div>
           <table className="w-full min-w-[400px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500">

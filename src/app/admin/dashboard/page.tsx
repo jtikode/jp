@@ -5,6 +5,7 @@ import { FilterBar } from "@/components/admin/FilterBar";
 import { RecordsTable } from "@/components/admin/RecordsTable";
 import { SalesmanGlanceTable, type SalesmanGlanceRow } from "@/components/admin/SalesmanGlanceTable";
 import { getUnifiedRecords } from "@/lib/adminRecords";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function AdminDashboardPage({
   searchParams,
@@ -57,7 +58,21 @@ export default async function AdminDashboardPage({
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <Card className="overflow-x-auto">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Salesmen — At a Glance</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">Salesmen — At a Glance</h2>
+          <ExportExcelButton
+            data={glanceRows.map((r) => ({
+              Salesman: r.name,
+              "Today Order": r.todayOrderAmount,
+              "Today Target": r.todayTarget,
+              "Today Collected": r.todayCollection,
+              "Month Order": r.monthOrderAmount,
+              "Month Target": r.monthlyTarget,
+              "Month Collected": r.monthCollection,
+            }))}
+            filename="salesmen-at-a-glance"
+          />
+        </div>
         <SalesmanGlanceTable rows={glanceRows} />
       </Card>
 
@@ -70,9 +85,25 @@ export default async function AdminDashboardPage({
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-bold text-slate-900">
-          All Activity ({records.length} record{records.length === 1 ? "" : "s"})
-        </h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">
+            All Activity ({records.length} record{records.length === 1 ? "" : "s"})
+          </h2>
+          <ExportExcelButton
+            data={records.map((r) => ({
+              Date: r.date.toLocaleString(),
+              Type: r.type,
+              Employee: r.employeeName,
+              Role: r.role,
+              Route: r.routeName ?? "",
+              Store: r.storeName ?? "",
+              Collection: r.collection ?? "",
+              "Order Amount": r.orderAmount ?? "",
+              Reason: r.reason ?? "",
+            }))}
+            filename="all-activity"
+          />
+        </div>
         <RecordsTable records={records} />
       </Card>
     </div>

@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/warehouse-tasks", label: "Warehouse Tasks" },
   { href: "/admin/outstanding", label: "Outstanding" },
   { href: "/admin/intelligence", label: "Intelligence" },
+  { href: "/admin/route-map", label: "Route Map" },
 ];
 
 export function AdminNav() {

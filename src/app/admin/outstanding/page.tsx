@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function OutstandingPage() {
   const grouped = await db.ledgerEntry.groupBy({
@@ -20,7 +21,24 @@ export default async function OutstandingPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Card className="overflow-x-auto">
-        <h1 className="mb-4 text-lg font-bold text-slate-900">Live Outstanding</h1>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-bold text-slate-900">Live Outstanding</h1>
+          <ExportExcelButton
+            data={grouped
+              .map((g) => {
+                const store = storeMap.get(g.storeId);
+                if (!store) return null;
+                return {
+                  Store: storeLabel(store.name, store.externalCode),
+                  Route: store.route?.name ?? "",
+                  Invoices: g._count._all,
+                  "Total Outstanding": Number(g._sum.outstandingAmount ?? 0),
+                };
+              })
+              .filter((r): r is NonNullable<typeof r> => r !== null)}
+            filename="live-outstanding"
+          />
+        </div>
         <table className="w-full min-w-[600px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">

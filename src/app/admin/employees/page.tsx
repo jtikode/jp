@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { toggleEmployeeActive, deleteEmployee } from "@/actions/employeeActions";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function EmployeesPage() {
   const employees = await db.user.findMany({ orderBy: { createdAt: "desc" } });
@@ -16,7 +17,19 @@ export default async function EmployeesPage() {
       </Card>
 
       <Card className="overflow-x-auto">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">All employees</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">All employees</h2>
+          <ExportExcelButton
+            data={employees.map((emp) => ({
+              Name: emp.name,
+              Username: emp.username,
+              Role: emp.role,
+              Status: emp.active ? "Active" : "Inactive",
+              Phone: emp.phone ?? "",
+            }))}
+            filename="employees"
+          />
+        </div>
         <table className="w-full min-w-[600px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">

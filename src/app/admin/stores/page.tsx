@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { StoresTable } from "@/components/admin/StoresTable";
 import { StoreSequenceList } from "@/components/admin/StoreSequenceList";
 import { AssignStoreToRouteForm } from "@/components/admin/AssignStoreToRouteForm";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function AdminStoresPage({
   searchParams,
@@ -104,9 +105,19 @@ export default async function AdminStoresPage({
       </Card>
 
       <Card>
-        <h1 className="mb-4 text-lg font-bold text-slate-900">
-          Medical Stores ({stores.length})
-        </h1>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-bold text-slate-900">Medical Stores ({stores.length})</h1>
+          <ExportExcelButton
+            data={stores.map((s) => ({
+              Code: s.externalCode ?? "",
+              Name: s.name,
+              Address: s.address,
+              Phone: s.phone ?? "",
+              Routes: [...new Set(s.routeStores.map((rs) => rs.route.name))].join(", "),
+            }))}
+            filename="medical-stores"
+          />
+        </div>
         <StoresTable
           stores={stores.map((s) => ({
             id: s.id,

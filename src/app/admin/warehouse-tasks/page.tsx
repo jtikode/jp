@@ -6,6 +6,7 @@ import { FileImportForm } from "@/components/admin/FileImportForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { toggleWarehouseTaskActive } from "@/actions/warehouseTaskActions";
 import { deleteStockItem, importStockItems } from "@/actions/stockActions";
+import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -36,7 +37,17 @@ export default async function AdminWarehouseTasksPage() {
       </Card>
 
       <Card className="overflow-x-auto">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">All tasks</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">All tasks</h2>
+          <ExportExcelButton
+            data={tasks.map((task) => ({
+              Title: task.title,
+              Repeats: describeRecurrence(task),
+              Status: task.active ? "Active" : "Paused",
+            }))}
+            filename="warehouse-tasks"
+          />
+        </div>
         <table className="w-full min-w-[500px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
@@ -101,7 +112,16 @@ export default async function AdminWarehouseTasksPage() {
       </Card>
 
       <Card className="overflow-x-auto">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Stock sheet items</h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">Stock sheet items</h2>
+          <ExportExcelButton
+            data={stockItems.map((item) => ({
+              Company: item.company ?? "",
+              Item: item.name,
+            }))}
+            filename="stock-items"
+          />
+        </div>
         <table className="w-full min-w-[400px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">

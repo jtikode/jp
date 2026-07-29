@@ -7,9 +7,30 @@ export const translations = {
   nav_stores: { en: "Stores", mr: "दुकाने" },
   nav_near_expiry: { en: "Near Expiry", mr: "एक्सपायरी जवळ" },
   nav_regular_items: { en: "Regular Items", mr: "नियमित माल" },
+  nav_tour_plan: { en: "Tour Plan", mr: "टूर प्लॅन" },
 
   // --- Header ---
   log_out: { en: "Log out", mr: "लॉग आउट" },
+
+  // --- Score badge ---
+  score_out_of_100: { en: "Score", mr: "गुण" },
+  how_score_calculated: { en: "How is this calculated?", mr: "हे कसे मोजले जाते?" },
+  score_sales: { en: "Sales (order amount vs monthly target)", mr: "विक्री (मासिक लक्ष्याच्या तुलनेत ऑर्डर रक्कम)" },
+  score_receipts: { en: "Receipts (collection vs monthly target)", mr: "वसुली (मासिक लक्ष्याच्या तुलनेत जमा रक्कम)" },
+  score_locations: {
+    en: "Locations marked (% of your stores with GPS saved)",
+    mr: "ठिकाण नोंदवले (तुमच्या दुकानांपैकी GPS असलेले %)",
+  },
+  score_medicals_done: {
+    en: "Medicals visited (% of your stores visited this month)",
+    mr: "भेट दिलेली दुकाने (या महिन्यात भेट दिलेल्या दुकानांचे %)",
+  },
+  score_attendance: {
+    en: "Attendance (minus points for Leave/Absent days)",
+    mr: "हजेरी (रजा/गैरहजर दिवसांसाठी गुण वजा)",
+  },
+  score_this_month: { en: "This month, out of 100:", mr: "या महिन्यात, १०० पैकी:" },
+  close: { en: "Close", mr: "बंद करा" },
 
   // --- Dashboard / Home ---
   monthly_target: { en: "Monthly Target", mr: "मासिक लक्ष्य" },
@@ -121,6 +142,22 @@ export const translations = {
     en: "No purchase history for this store.",
     mr: "या दुकानासाठी खरेदी इतिहास नाही.",
   },
+
+  // --- Tour Plan ---
+  tour_plan_heading: { en: "Tour Plan", mr: "टूर प्लॅन" },
+  tour_plan_subtitle: {
+    en: "Plan your whole month at once — route and colleague for each day.",
+    mr: "संपूर्ण महिन्याचे नियोजन एकाच वेळी करा — प्रत्येक दिवसाचा मार्ग व सोबती.",
+  },
+  day: { en: "Day", mr: "दिवस" },
+  working_with: { en: "Working With", mr: "सोबती" },
+  route_col: { en: "Route", mr: "मार्ग" },
+  remarks: { en: "Remarks", mr: "शेरा" },
+  none: { en: "None", mr: "काहीही नाही" },
+  save_tour_plan: { en: "Save Tour Plan", mr: "टूर प्लॅन जतन करा" },
+  saving: { en: "Saving...", mr: "जतन होत आहे..." },
+  tour_plan_saved: { en: "Tour plan saved.", mr: "टूर प्लॅन जतन झाला." },
+  go: { en: "Go", mr: "जा" },
 
   // --- Route detail ---
   monthly_visit_history: { en: "Monthly visit history", mr: "मासिक भेटींचा तपशील" },
