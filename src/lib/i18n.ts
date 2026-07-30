@@ -159,6 +159,19 @@ export const translations = {
   tour_plan_saved: { en: "Tour plan saved.", mr: "टूर प्लॅन जतन झाला." },
   go: { en: "Go", mr: "जा" },
 
+  // --- July Catch-up (one-time backfill) ---
+  catchup_banner_text: {
+    en: "One-time: catch up July's numbers, store by store →",
+    mr: "एकदाच: जुलैचे आकडे दुकाननिहाय भरा →",
+  },
+  catchup_heading: { en: "July Catch-up Entry", mr: "जुलैची भरपाई नोंद" },
+  catchup_subtitle: {
+    en: "One-time exception: add order and collection amounts for each day of July, per store. No photo or GPS needed for these entries.",
+    mr: "एकदाची सूट: प्रत्येक दुकानासाठी जुलैच्या प्रत्येक दिवसाची ऑर्डर व जमा रक्कम भरा. यासाठी फोटो किंवा GPS लागणार नाही.",
+  },
+  save_all: { en: "Save All", mr: "सर्व जतन करा" },
+  entries_saved: { en: "Saved.", mr: "जतन झाले." },
+
   // --- Route detail ---
   monthly_visit_history: { en: "Monthly visit history", mr: "मासिक भेटींचा तपशील" },
   todays_visit_order: { en: "Today's Visit Order", mr: "आजचा भेट क्रम" },

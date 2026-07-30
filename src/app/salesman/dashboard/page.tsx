@@ -55,6 +55,11 @@ export default async function SalesmanDashboardPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
+      <Link href="/salesman/july-catchup">
+        <Card className="border-amber-300 bg-amber-50 hover:bg-amber-100">
+          <p className="text-sm font-semibold text-amber-800">{t(lang, "catchup_banner_text")}</p>
+        </Card>
+      </Link>
       <Card>
         <p className="text-sm font-medium text-slate-500">{t(lang, "monthly_target")}</p>
         <p className="text-2xl font-bold text-slate-900">
