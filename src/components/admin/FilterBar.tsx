@@ -35,7 +35,7 @@ export function FilterBar({ routes, employees, values }: FilterBarProps) {
           type="date"
           name="from"
           defaultValue={values.from}
-          className="min-h-11 w-full rounded-lg border-2 border-slate-300 px-3 text-sm"
+          className="min-h-11 w-full rounded-lg border-2 border-slate-300 px-3 text-sm text-slate-900"
         />
       </div>
       <div>
@@ -44,7 +44,7 @@ export function FilterBar({ routes, employees, values }: FilterBarProps) {
           type="date"
           name="to"
           defaultValue={values.to}
-          className="min-h-11 w-full rounded-lg border-2 border-slate-300 px-3 text-sm"
+          className="min-h-11 w-full rounded-lg border-2 border-slate-300 px-3 text-sm text-slate-900"
         />
       </div>
       <div>

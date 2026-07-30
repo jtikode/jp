@@ -74,7 +74,7 @@ export function TourPlanGrid({
             type="month"
             value={monthValue}
             onChange={(e) => handleMonthChange(e.target.value)}
-            className="min-h-14 w-full rounded-xl border-2 border-slate-300 px-4 text-lg focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="min-h-14 w-full rounded-xl border-2 border-slate-300 px-4 text-lg text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
       </Card>

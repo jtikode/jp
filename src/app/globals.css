@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Browsers bake a ~50% alpha into placeholder text by default, which halves
+   the contrast of any placeholder color utility no matter how dark it is —
+   opacity:1 alone doesn't clear it, so force a solid, unambiguous color. */
+input::placeholder,
+textarea::placeholder {
+  color: #334155 !important; /* slate-700, fully opaque */
+  opacity: 1 !important;
+}
