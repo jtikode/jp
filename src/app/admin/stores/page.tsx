@@ -101,6 +101,9 @@ export default async function AdminStoresPage({
               ))}
             </Select>
           </div>
+          <Button type="submit" className="min-h-11 px-6 py-2 text-sm">
+            View
+          </Button>
         </form>
       </Card>
 

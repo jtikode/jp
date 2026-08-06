@@ -19,7 +19,13 @@ export function AssignStoreToRouteForm({
   const [error, setError] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
 
-  const filtered = stores.filter((s) => s.label.toLowerCase().includes(query.toLowerCase()));
+  // With thousands of stores in the master list, rendering every unmatched
+  // row on initial mount (query === "") was hanging the page — only render
+  // once the admin has actually typed something to narrow it down.
+  const filtered =
+    query.trim().length > 0
+      ? stores.filter((s) => s.label.toLowerCase().includes(query.toLowerCase()))
+      : [];
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -68,7 +74,9 @@ export function AssignStoreToRouteForm({
           </label>
         ))}
         {filtered.length === 0 && (
-          <p className="p-3 text-center text-sm text-slate-400">No matching stores.</p>
+          <p className="p-3 text-center text-sm text-slate-400">
+            {query.trim().length > 0 ? "No matching stores." : "Type to search stores to add."}
+          </p>
         )}
       </div>
       <Button
