@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 
 export async function reorderStoreSequence(
@@ -9,7 +9,8 @@ export async function reorderStoreSequence(
   storeId: string,
   direction: "up" | "down",
 ): Promise<void> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const routeStores = await db.routeStore.findMany({
     where: { routeId },
@@ -39,7 +40,8 @@ export async function assignStoreToRoute(
   routeId: string,
   storeId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const existing = await db.routeStore.findUnique({
     where: { routeId_storeId: { routeId, storeId } },
@@ -51,7 +53,7 @@ export async function assignStoreToRoute(
   const count = await db.routeStore.count({ where: { routeId } });
 
   await db.routeStore.create({
-    data: { routeId, storeId, visitSequence: count + 1 },
+    data: { orgId: session.orgId, routeId, storeId, visitSequence: count + 1 },
   });
 
   revalidatePath("/admin/stores");
@@ -60,7 +62,8 @@ export async function assignStoreToRoute(
 
 /** Persists a full drag-and-drop reorder in one go: sets visitSequence = position for every store, in the given order. */
 export async function reorderAllStores(routeId: string, orderedStoreIds: string[]): Promise<void> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await Promise.all(
     orderedStoreIds.map((storeId, index) =>
@@ -78,7 +81,8 @@ export async function assignMultipleStoresToRoute(
   routeId: string,
   storeIds: string[],
 ): Promise<{ ok: boolean; error?: string; addedCount?: number }> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   if (storeIds.length === 0) {
     return { ok: false, error: "Choose at least one store." };
@@ -98,7 +102,7 @@ export async function assignMultipleStoresToRoute(
   let count = await db.routeStore.count({ where: { routeId } });
   for (const storeId of toAdd) {
     count += 1;
-    await db.routeStore.create({ data: { routeId, storeId, visitSequence: count } });
+    await db.routeStore.create({ data: { orgId: session.orgId, routeId, storeId, visitSequence: count } });
   }
 
   revalidatePath("/admin/stores");
@@ -109,7 +113,8 @@ export async function removeStoreFromRoute(
   routeId: string,
   storeId: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await db.routeStore.delete({ where: { routeId_storeId: { routeId, storeId } } });
 

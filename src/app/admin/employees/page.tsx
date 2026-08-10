@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
@@ -7,6 +8,8 @@ import { toggleEmployeeActive, deleteEmployee } from "@/actions/employeeActions"
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function EmployeesPage() {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const employees = await db.user.findMany({ orderBy: { createdAt: "desc" } });
 
   return (

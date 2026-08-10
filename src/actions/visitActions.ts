@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { uploadPhoto } from "@/lib/blob";
 import { visitSchema } from "@/lib/validators";
@@ -28,6 +28,7 @@ export async function submitVisit(
   formData: FormData,
 ): Promise<ActionResult> {
   const session = await assertRole(["SALESMAN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const parsed = visitSchema.safeParse({
     storeId: formData.get("storeId"),
@@ -78,6 +79,7 @@ export async function submitVisit(
 
   await db.visit.create({
     data: {
+      orgId: session.orgId,
       userId: session.userId as string,
       storeId: store.id,
       routeId: store.routeId,

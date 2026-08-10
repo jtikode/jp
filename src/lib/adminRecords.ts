@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { storeLabel } from "@/lib/storeLabel";
 
 export interface RecordFilters {
@@ -30,7 +30,8 @@ function dateRange(filters: RecordFilters) {
   return { gte, lte };
 }
 
-export async function getUnifiedRecords(filters: RecordFilters): Promise<UnifiedRecord[]> {
+export async function getUnifiedRecords(orgId: string, filters: RecordFilters): Promise<UnifiedRecord[]> {
+  const db = getOrgScopedDb(orgId);
   const { gte, lte } = dateRange(filters);
 
   let matchingUserIds: Set<string> | null = null;

@@ -1,5 +1,5 @@
 import { format, eachDayOfInterval } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
@@ -16,6 +16,7 @@ export default async function JulyCatchupPage({
   const { storeId } = await searchParams;
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
 
   const assignments = await db.routeAssignment.findMany({

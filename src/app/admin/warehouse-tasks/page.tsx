@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { WarehouseTaskForm } from "@/components/admin/WarehouseTaskForm";
 import { AddStockItemForm } from "@/components/admin/AddStockItemForm";
@@ -21,6 +22,8 @@ function describeRecurrence(task: {
 }
 
 export default async function AdminWarehouseTasksPage() {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const [tasks, stockItems] = await Promise.all([
     db.warehouseTask.findMany({ orderBy: { createdAt: "desc" } }),
     db.stockItem.findMany({

@@ -7,7 +7,12 @@ const db = new PrismaClient({ adapter });
 
 async function main() {
   const active = process.argv[2] === "true";
-  await db.user.update({ where: { username: "testsales" }, data: { active } });
+  const user = await db.user.findFirst({ where: { username: "testsales" } });
+  if (!user) {
+    console.log("No 'testsales' user found.");
+    return;
+  }
+  await db.user.update({ where: { id: user.id }, data: { active } });
   console.log(`testsales active = ${active}`);
 }
 

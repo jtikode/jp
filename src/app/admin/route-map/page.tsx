@@ -1,5 +1,6 @@
 import { format } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
@@ -12,6 +13,8 @@ export default async function RouteMapPage({
 }: {
   searchParams: Promise<{ userId?: string; date?: string }>;
 }) {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const { userId, date: dateParam } = await searchParams;
   const salesmen = await db.user.findMany({
     where: { role: "SALESMAN", active: true },

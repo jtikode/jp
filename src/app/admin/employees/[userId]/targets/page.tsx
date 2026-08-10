@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { TargetForm } from "@/components/admin/TargetForm";
 
@@ -8,6 +9,8 @@ export default async function EmployeeTargetsPage({
 }: {
   params: Promise<{ userId: string }>;
 }) {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const { userId } = await params;
   const employee = await db.user.findUnique({ where: { id: userId } });
   if (!employee) notFound();

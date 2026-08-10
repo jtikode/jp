@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { ROLE_HOME } from "@/lib/permissions";
 
 const loginSchema = z.object({
+  businessCode: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
 });
@@ -15,12 +16,25 @@ export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Username and password are required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Business code, username, and password are required." },
+      { status: 400 }
+    );
   }
 
-  const { username, password } = parsed.data;
+  const { businessCode, username, password } = parsed.data;
 
-  const user = await db.user.findUnique({ where: { username } });
+  const org = await db.organization.findUnique({
+    where: { slug: businessCode.trim().toLowerCase() },
+  });
+
+  if (!org || !org.active) {
+    return NextResponse.json({ error: "Invalid business code." }, { status: 401 });
+  }
+
+  const user = await db.user.findUnique({
+    where: { orgId_username: { orgId: org.id, username } },
+  });
 
   if (!user || !user.active) {
     return NextResponse.json({ error: "Invalid username or password." }, { status: 401 });
@@ -33,6 +47,7 @@ export async function POST(request: Request) {
 
   const session = await getSession();
   session.userId = user.id;
+  session.orgId = org.id;
   session.role = user.role;
   session.name = user.name;
   await session.save();

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { getTodaysTaskOccurrences } from "@/lib/warehouseTasks";
@@ -14,9 +14,11 @@ function startOfToday(): Date {
 export default async function WarehouseDashboardPage() {
   const session = await getSession();
   const userId = session.userId as string;
+  const orgId = session.orgId as string;
+  const db = getOrgScopedDb(orgId);
 
   const [occurrences, attendance] = await Promise.all([
-    getTodaysTaskOccurrences(),
+    getTodaysTaskOccurrences(orgId),
     db.attendance.findUnique({
       where: { userId_date: { userId, date: startOfToday() } },
     }),

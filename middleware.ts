@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
     sessionOptions,
   );
 
-  if (!session.userId || !session.role) {
+  if (!session.userId || !session.orgId || !session.role) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

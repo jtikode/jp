@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import type { AttendanceStatus } from "@/generated/prisma/client";
 
@@ -22,6 +22,7 @@ export interface TourPlanEntry {
  */
 export async function saveTourPlan(entries: TourPlanEntry[]): Promise<{ ok: boolean; error?: string }> {
   const session = await assertRole(["SALESMAN"]);
+  const db = getOrgScopedDb(session.orgId);
   const userId = session.userId as string;
 
   for (const entry of entries) {
@@ -46,6 +47,7 @@ export async function saveTourPlan(entries: TourPlanEntry[]): Promise<{ ok: bool
         note: entry.remark ?? null,
       },
       create: {
+        orgId: session.orgId,
         userId,
         date,
         status,

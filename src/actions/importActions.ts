@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import * as XLSX from "xlsx";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
@@ -48,6 +48,7 @@ export async function importStoreMaster(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -81,9 +82,9 @@ export async function importStoreMaster(
     if (routeName) {
       if (!routeCache.has(routeName)) {
         const route = await db.route.upsert({
-          where: { name: routeName },
+          where: { orgId_name: { orgId: session.orgId, name: routeName } },
           update: {},
-          create: { name: routeName },
+          create: { orgId: session.orgId, name: routeName },
         });
         routeCache.set(routeName, route.id);
       }
@@ -97,19 +98,21 @@ export async function importStoreMaster(
     let store;
     if (code) {
       store = await db.store.upsert({
-        where: { externalCode: code },
+        where: { orgId_externalCode: { orgId: session.orgId, externalCode: code } },
         update: { name, address, phone, routeId, visitSequence },
-        create: { externalCode: code, name, address, phone, routeId, visitSequence },
+        create: { orgId: session.orgId, externalCode: code, name, address, phone, routeId, visitSequence },
       });
     } else {
-      store = await db.store.create({ data: { name, address, phone, routeId, visitSequence } });
+      store = await db.store.create({
+        data: { orgId: session.orgId, name, address, phone, routeId, visitSequence },
+      });
     }
 
     if (routeId) {
       await db.routeStore.upsert({
         where: { routeId_storeId: { routeId, storeId: store.id } },
         update: { visitSequence },
-        create: { routeId, storeId: store.id, visitSequence },
+        create: { orgId: session.orgId, routeId, storeId: store.id, visitSequence },
       });
     }
 
@@ -118,6 +121,7 @@ export async function importStoreMaster(
 
   await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "STORE_MASTER",
       fileName: file.name,
       rowCount: imported,
@@ -144,6 +148,7 @@ export async function importOutstanding(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -200,6 +205,7 @@ export async function importOutstanding(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "OUTSTANDING",
       fileName: file.name,
       rowCount: 0,
@@ -213,7 +219,7 @@ export async function importOutstanding(
 
   for (const row of parsedRows) {
     if (!storeCache.has(row.code)) {
-      const store = await db.store.findUnique({ where: { externalCode: row.code } });
+      const store = await db.store.findFirst({ where: { externalCode: row.code } });
       storeCache.set(row.code, store?.id ?? null);
     }
     const storeId = storeCache.get(row.code);
@@ -235,6 +241,7 @@ export async function importOutstanding(
 
     await db.ledgerEntry.create({
       data: {
+        orgId: session.orgId,
         storeId,
         invoiceNo: row.invoiceNo,
         invoiceDate: row.invoiceDate,
@@ -268,6 +275,7 @@ export async function importPurchaseHistory(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -321,6 +329,7 @@ export async function importPurchaseHistory(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "PURCHASE_HISTORY",
       fileName: file.name,
       rowCount: 0,
@@ -334,7 +343,7 @@ export async function importPurchaseHistory(
 
   for (const row of parsedRows) {
     if (!storeCache.has(row.code)) {
-      const store = await db.store.findUnique({ where: { externalCode: row.code } });
+      const store = await db.store.findFirst({ where: { externalCode: row.code } });
       storeCache.set(row.code, store?.id ?? null);
     }
     const storeId = storeCache.get(row.code);
@@ -355,6 +364,7 @@ export async function importPurchaseHistory(
 
     await db.purchaseHistoryItem.create({
       data: {
+        orgId: session.orgId,
         storeId,
         itemName: row.itemName,
         quantity: row.quantity,
@@ -382,6 +392,7 @@ export async function importExpiryItems(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -410,6 +421,7 @@ export async function importExpiryItems(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "EXPIRY",
       fileName: file.name,
       rowCount: 0,
@@ -423,6 +435,7 @@ export async function importExpiryItems(
 
   await db.expiryItem.createMany({
     data: parsedRows.map((row) => ({
+      orgId: session.orgId,
       itemName: row.itemName,
       expiryDate: row.expiryDate,
       specialRate: row.specialRate,
@@ -447,6 +460,7 @@ export async function importIncentiveItems(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -470,6 +484,7 @@ export async function importIncentiveItems(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "INCENTIVE_ITEMS",
       fileName: file.name,
       rowCount: 0,
@@ -482,6 +497,7 @@ export async function importIncentiveItems(
   await db.incentiveItem.deleteMany({});
   await db.incentiveItem.createMany({
     data: parsedRows.map((row) => ({
+      orgId: session.orgId,
       itemName: row.itemName,
       incentiveAmount: row.incentiveAmount,
       uploadBatchId: batch.id,
@@ -504,6 +520,7 @@ export async function importTelecallerParties(
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -530,6 +547,7 @@ export async function importTelecallerParties(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "TELECALLER_PARTY_LIST",
       fileName: file.name,
       rowCount: 0,
@@ -541,7 +559,7 @@ export async function importTelecallerParties(
   // than only adding to it, so removed parties actually drop off the list.
   await db.telecallerParty.deleteMany({});
   await db.telecallerParty.createMany({
-    data: stores.map((s) => ({ storeId: s.id, uploadBatchId: batch.id })),
+    data: stores.map((s) => ({ orgId: session.orgId, storeId: s.id, uploadBatchId: batch.id })),
   });
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: stores.length } });

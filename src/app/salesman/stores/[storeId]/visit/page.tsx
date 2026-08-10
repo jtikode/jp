@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { VisitForm } from "@/components/forms/VisitForm";
 import { storeLabel } from "@/lib/storeLabel";
@@ -11,6 +12,8 @@ export default async function StoreVisitPage({
 }: {
   params: Promise<{ storeId: string }>;
 }) {
+  const session = await getSession();
+  const db = getOrgScopedDb(session.orgId as string);
   const { storeId } = await params;
   const store = await db.store.findUnique({ where: { id: storeId } });
 

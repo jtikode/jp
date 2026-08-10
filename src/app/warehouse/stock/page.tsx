@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { StockSheetList } from "@/components/warehouse/StockSheetList";
 
@@ -8,6 +9,8 @@ function startOfToday(): Date {
 }
 
 export default async function WarehouseStockPage() {
+  const session = await getSession();
+  const db = getOrgScopedDb(session.orgId as string);
   const [items, todaysCounts] = await Promise.all([
     db.stockItem.findMany({
       where: { active: true },

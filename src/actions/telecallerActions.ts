@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { telecallerLogSchema } from "@/lib/validators";
 import type { ActionResult } from "@/actions/employeeActions";
@@ -11,6 +11,7 @@ export async function logTelecallerContact(
   formData: FormData,
 ): Promise<ActionResult> {
   const session = await assertRole(["TELECALLER"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const parsed = telecallerLogSchema.safeParse({
     storeId: formData.get("storeId"),
@@ -29,6 +30,7 @@ export async function logTelecallerContact(
 
   await db.telecallerLog.create({
     data: {
+      orgId: session.orgId,
       userId: session.userId as string,
       storeId: parsed.data.storeId,
       orderAmount: parsed.data.orderAmount,

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
@@ -15,6 +15,7 @@ export default async function SalesmanRegularItemsPage({
   const { storeId } = await searchParams;
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
 
   const assignments = await db.routeAssignment.findMany({

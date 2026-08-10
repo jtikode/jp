@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
@@ -9,6 +10,8 @@ export default async function StoreOutstandingPage({
 }: {
   params: Promise<{ storeId: string }>;
 }) {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const { storeId } = await params;
 
   const store = await db.store.findUnique({ where: { id: storeId }, include: { route: true } });

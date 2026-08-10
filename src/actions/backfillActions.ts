@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 
 // A real visit photo isn't possible for a retroactively-entered day, so every
@@ -21,6 +21,7 @@ export async function saveBackfillEntries(
   entries: BackfillDayEntry[],
 ): Promise<{ ok: boolean; error?: string; savedCount?: number }> {
   const session = await assertRole(["SALESMAN"]);
+  const db = getOrgScopedDb(session.orgId);
   const userId = session.userId as string;
 
   const store = await db.store.findUnique({ where: { id: storeId } });
@@ -53,6 +54,7 @@ export async function saveBackfillEntries(
     } else {
       await db.visit.create({
         data: {
+          orgId: session.orgId,
           userId,
           storeId,
           routeId: store.routeId,

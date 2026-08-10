@@ -9,7 +9,7 @@ import {
   getDay,
   isSameDay,
 } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { DCRCalendarGrid, type DayCell } from "@/components/calendar/DCRCalendarGrid";
@@ -20,6 +20,7 @@ import { t } from "@/lib/i18n";
 export default async function CalendarPage() {
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
 
   const today = new Date();

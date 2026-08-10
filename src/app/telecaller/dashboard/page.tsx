@@ -1,5 +1,5 @@
 import { startOfDay, endOfDay } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -10,6 +10,7 @@ const DAILY_CALL_GOAL = 30;
 export default async function TelecallerDashboardPage() {
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const today = new Date();
 
   const [partyCount, outstandingGroups, todayCallCount] = await Promise.all([

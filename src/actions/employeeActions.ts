@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { hashPassword } from "@/lib/auth";
 import { createEmployeeSchema } from "@/lib/validators";
@@ -12,7 +12,8 @@ export interface ActionResult {
 }
 
 export async function createEmployee(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const parsed = createEmployeeSchema.safeParse({
     username: formData.get("username"),
@@ -26,13 +27,14 @@ export async function createEmployee(_prevState: ActionResult | null, formData: 
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const existing = await db.user.findUnique({ where: { username: parsed.data.username } });
+  const existing = await db.user.findFirst({ where: { username: parsed.data.username } });
   if (existing) {
     return { ok: false, error: "That username is already taken." };
   }
 
   await db.user.create({
     data: {
+      orgId: session.orgId,
       username: parsed.data.username,
       passwordHash: await hashPassword(parsed.data.password),
       name: parsed.data.name,
@@ -46,7 +48,8 @@ export async function createEmployee(_prevState: ActionResult | null, formData: 
 }
 
 export async function toggleEmployeeActive(userId: string, active: boolean): Promise<void> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await db.user.update({ where: { id: userId }, data: { active } });
 
@@ -54,7 +57,8 @@ export async function toggleEmployeeActive(userId: string, active: boolean): Pro
 }
 
 export async function deleteEmployee(userId: string): Promise<ActionResult> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const [visits, attendances, telecallerLogs, stockCounts] = await Promise.all([
     db.visit.count({ where: { userId } }),

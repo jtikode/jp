@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function OutstandingPage() {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const grouped = await db.ledgerEntry.groupBy({
     by: ["storeId"],
     _sum: { outstandingAmount: true },

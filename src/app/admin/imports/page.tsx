@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { FileImportForm } from "@/components/admin/FileImportForm";
 import {
@@ -11,6 +12,8 @@ import {
 } from "@/actions/importActions";
 
 export default async function ImportsPage() {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const batches = await db.importBatch.findMany({
     orderBy: { createdAt: "desc" },
     include: { uploadedBy: true },

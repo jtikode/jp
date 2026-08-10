@@ -7,10 +7,20 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL as str
 const db = new PrismaClient({ adapter });
 
 async function main() {
+  const orgName = "J.P. Traders";
+  const orgSlug = "jptraders";
   const adminUsername = "admin";
   const adminPassword = "changeme123";
 
-  const existing = await db.user.findUnique({ where: { username: adminUsername } });
+  const org = await db.organization.upsert({
+    where: { slug: orgSlug },
+    update: {},
+    create: { name: orgName, slug: orgSlug },
+  });
+
+  const existing = await db.user.findUnique({
+    where: { orgId_username: { orgId: org.id, username: adminUsername } },
+  });
   if (existing) {
     console.log(`Admin user "${adminUsername}" already exists, skipping.`);
     return;
@@ -18,6 +28,7 @@ async function main() {
 
   await db.user.create({
     data: {
+      orgId: org.id,
       username: adminUsername,
       passwordHash: await hashPassword(adminPassword),
       name: "Owner",
@@ -25,7 +36,7 @@ async function main() {
     },
   });
 
-  console.log(`Seeded admin user -> username: "${adminUsername}", password: "${adminPassword}"`);
+  console.log(`Seeded admin user -> business code: "${orgSlug}", username: "${adminUsername}", password: "${adminPassword}"`);
   console.log("Change this password (or create a new admin) before going live.");
 }
 

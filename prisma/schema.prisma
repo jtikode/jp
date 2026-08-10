@@ -41,9 +41,42 @@ enum NoOrderReason {
   OTHER
 }
 
+// One row per business using the app. Every other model is scoped to one of
+// these via orgId, so no query ever needs to reason about more than one
+// business's data at a time. `slug` is the "Business Code" typed at login
+// and signup — there is no subdomain/custom-domain routing.
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users            User[]
+  routes           Route[]
+  routeAssignments RouteAssignment[]
+  stores           Store[]
+  routeStores      RouteStore[]
+  visits           Visit[]
+  attendances      Attendance[]
+  telecallerLogs   TelecallerLog[]
+  warehouseTasks   WarehouseTask[]
+  warehouseTaskOccurrences WarehouseTaskOccurrence[]
+  stockItems       StockItem[]
+  stockCounts      StockCount[]
+  ledgerEntries    LedgerEntry[]
+  purchaseHistory  PurchaseHistoryItem[]
+  incentiveItems   IncentiveItem[]
+  expiryItems      ExpiryItem[]
+  targets          Target[]
+  telecallerParties TelecallerParty[]
+  importBatches    ImportBatch[]
+}
+
 model User {
   id           String   @id @default(cuid())
-  username     String   @unique
+  orgId        String
+  username     String
   passwordHash String
   name         String
   role         Role
@@ -51,6 +84,7 @@ model User {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
+  org              Organization      @relation(fields: [orgId], references: [id])
   routeAssignments RouteAssignment[]
   visits           Visit[]
   attendances      Attendance[]
@@ -60,35 +94,46 @@ model User {
   importBatches    ImportBatch[]
   workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
 
+  @@unique([orgId, username])
   @@index([role])
+  @@index([orgId])
 }
 
 model Route {
   id          String   @id @default(cuid())
-  name        String   @unique
+  orgId       String
+  name        String
   description String?
   createdAt   DateTime @default(now())
 
+  org         Organization @relation(fields: [orgId], references: [id])
   stores      Store[]
   assignments RouteAssignment[]
   visits      Visit[]
   routeStores RouteStore[]
   attendances Attendance[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
 }
 
 model RouteAssignment {
   id      String @id @default(cuid())
+  orgId   String
   userId  String
   routeId String
+  org     Organization @relation(fields: [orgId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
   route   Route  @relation(fields: [routeId], references: [id])
 
   @@unique([userId, routeId])
+  @@index([orgId])
 }
 
 model Store {
   id           String   @id @default(cuid())
-  externalCode String?  @unique
+  orgId        String
+  externalCode String?
   name         String
   address      String
   phone        String?
@@ -104,6 +149,7 @@ model Store {
   longitude    Float?
   createdAt    DateTime @default(now())
 
+  org              Organization @relation(fields: [orgId], references: [id])
   visits           Visit[]
   telecallerLogs   TelecallerLog[]
   ledgerEntries    LedgerEntry[]
@@ -111,27 +157,33 @@ model Store {
   routeStores      RouteStore[]
   telecallerParty  TelecallerParty?
 
+  @@unique([orgId, externalCode])
   @@index([routeId])
   @@index([name])
+  @@index([orgId])
 }
 
 model RouteStore {
   id            String   @id @default(cuid())
+  orgId         String
   routeId       String
   storeId       String
   visitSequence Int?
   createdAt     DateTime @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   route Route @relation(fields: [routeId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
 
   @@unique([routeId, storeId])
   @@index([routeId])
   @@index([storeId])
+  @@index([orgId])
 }
 
 model Visit {
   id               String         @id @default(cuid())
+  orgId            String
   userId           String
   storeId          String
   routeId          String?
@@ -147,6 +199,7 @@ model Visit {
   notes            String?
   createdAt        DateTime       @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
   route Route? @relation(fields: [routeId], references: [id])
@@ -154,10 +207,12 @@ model Visit {
   @@index([userId, visitDate])
   @@index([storeId])
   @@index([routeId])
+  @@index([orgId])
 }
 
 model Attendance {
   id        String           @id @default(cuid())
+  orgId     String
   userId    String
   date      DateTime
   status    AttendanceStatus
@@ -170,16 +225,19 @@ model Attendance {
   workingWithUserId String?
   createdAt DateTime         @default(now())
 
+  org        Organization @relation(fields: [orgId], references: [id])
   user       User   @relation(fields: [userId], references: [id])
   route      Route? @relation(fields: [routeId], references: [id])
   workingWith User?  @relation("AttendanceWorkingWith", fields: [workingWithUserId], references: [id])
 
   @@unique([userId, date])
   @@index([date])
+  @@index([orgId])
 }
 
 model TelecallerLog {
   id               String         @id @default(cuid())
+  orgId            String
   userId           String
   storeId          String
   contactDate      DateTime       @default(now())
@@ -194,11 +252,13 @@ model TelecallerLog {
   complaintNotes   String?
   createdAt        DateTime       @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
 
   @@index([userId, contactDate])
   @@index([storeId])
+  @@index([orgId])
 }
 
 // Admin-defined recurring task (e.g. "sweep loading bay" every Monday, or
@@ -206,6 +266,7 @@ model TelecallerLog {
 // person — any warehouse staff on shift can complete it.
 model WarehouseTask {
   id          String         @id @default(cuid())
+  orgId       String
   title       String
   description String?
   recurrence  TaskRecurrence
@@ -214,7 +275,10 @@ model WarehouseTask {
   active      Boolean        @default(true)
   createdAt   DateTime       @default(now())
 
+  org         Organization @relation(fields: [orgId], references: [id])
   occurrences WarehouseTaskOccurrence[]
+
+  @@index([orgId])
 }
 
 // One row per time a task actually comes due. scheduledDate starts equal to
@@ -223,6 +287,7 @@ model WarehouseTask {
 // the day it was due had no one marked present.
 model WarehouseTaskOccurrence {
   id            String    @id @default(cuid())
+  orgId         String
   taskId        String
   originalDate  DateTime
   scheduledDate DateTime
@@ -230,28 +295,35 @@ model WarehouseTaskOccurrence {
   completedAt   DateTime?
   completedById String?
 
+  org  Organization @relation(fields: [orgId], references: [id])
   task WarehouseTask @relation(fields: [taskId], references: [id])
 
   @@unique([taskId, originalDate])
   @@index([scheduledDate])
+  @@index([orgId])
 }
 
 // The shelf-stock sheet: one physical count per item per day, regardless of
 // which warehouse staff member recorded it.
 model StockItem {
   id        String   @id @default(cuid())
-  name      String   @unique
+  orgId     String
+  name      String
   company   String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
+  org    Organization @relation(fields: [orgId], references: [id])
   counts StockCount[]
 
+  @@unique([orgId, name])
   @@index([company])
+  @@index([orgId])
 }
 
 model StockCount {
   id            String   @id @default(cuid())
+  orgId         String
   stockItemId   String
   date          DateTime
   quantity      Decimal
@@ -259,15 +331,18 @@ model StockCount {
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
 
+  org        Organization @relation(fields: [orgId], references: [id])
   stockItem  StockItem @relation(fields: [stockItemId], references: [id])
   recordedBy User      @relation(fields: [recordedById], references: [id])
 
   @@unique([stockItemId, date])
   @@index([date])
+  @@index([orgId])
 }
 
 model LedgerEntry {
   id                String    @id @default(cuid())
+  orgId             String
   storeId           String
   invoiceNo         String?
   invoiceDate       DateTime?
@@ -277,14 +352,17 @@ model LedgerEntry {
   uploadBatchId     String
   importedAt        DateTime  @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
 
   @@index([storeId])
   @@index([uploadBatchId])
+  @@index([orgId])
 }
 
 model PurchaseHistoryItem {
   id            String    @id @default(cuid())
+  orgId         String
   storeId       String
   itemName      String
   quantity      Decimal
@@ -297,10 +375,12 @@ model PurchaseHistoryItem {
   uploadBatchId String
   importedAt    DateTime  @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
 
   @@index([storeId])
   @@index([itemName])
+  @@index([orgId])
 }
 
 // Admin-updated incentive scheme: item + incentive amount, shown to
@@ -308,25 +388,35 @@ model PurchaseHistoryItem {
 // replaces the whole list, same as ExpiryItem.
 model IncentiveItem {
   id              String    @id @default(cuid())
+  orgId           String
   itemName        String
   incentiveAmount Decimal
   uploadBatchId   String
   importedAt      DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
 }
 
 model ExpiryItem {
   id            String    @id @default(cuid())
+  orgId         String
   itemName      String
   expiryDate    DateTime
   specialRate   Decimal?
   uploadBatchId String
   importedAt    DateTime  @default(now())
 
+  org Organization @relation(fields: [orgId], references: [id])
+
   @@index([expiryDate])
+  @@index([orgId])
 }
 
 model Target {
   id                String   @id @default(cuid())
+  orgId             String
   userId            String
   periodMonth       Int
   periodYear        Int
@@ -336,9 +426,11 @@ model Target {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  org  Organization @relation(fields: [orgId], references: [id])
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, periodMonth, periodYear])
+  @@index([orgId])
 }
 
 // Admin-uploaded call list ("party list"). If empty, the telecaller
@@ -346,22 +438,29 @@ model Target {
 // the first upload.
 model TelecallerParty {
   id            String   @id @default(cuid())
+  orgId         String
   storeId       String
   uploadBatchId String
   importedAt    DateTime @default(now())
 
+  org   Organization @relation(fields: [orgId], references: [id])
   store Store @relation(fields: [storeId], references: [id])
 
   @@unique([storeId])
+  @@index([orgId])
 }
 
 model ImportBatch {
   id           String   @id @default(cuid())
+  orgId        String
   importType   String
   fileName     String
   rowCount     Int
   uploadedById String
   createdAt    DateTime @default(now())
 
+  org        Organization @relation(fields: [orgId], references: [id])
   uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([orgId])
 }

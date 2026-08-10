@@ -1,5 +1,5 @@
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { Card } from "@/components/ui/Card";
 import { getSession } from "@/lib/session";
 import { getLang } from "@/lib/langCookie";
@@ -14,6 +14,7 @@ export default async function TourPlanPage({
   const { month: monthParam } = await searchParams;
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
 
   const now = new Date();

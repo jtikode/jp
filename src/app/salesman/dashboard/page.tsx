@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { startOfMonth, endOfMonth } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { AttendanceButtons } from "@/components/salesman/AttendanceButtons";
@@ -15,6 +15,7 @@ function formatCurrency(lang: "en" | "mr", value: number | null | undefined): st
 export default async function SalesmanDashboardPage() {
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
   const today = new Date();
   const monthStart = startOfMonth(today);

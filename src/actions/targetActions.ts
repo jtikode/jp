@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { z } from "zod";
 import type { ActionResult } from "@/actions/employeeActions";
@@ -16,7 +16,8 @@ const targetSchema = z.object({
 });
 
 export async function setTarget(_prevState: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const parsed = targetSchema.safeParse({
     userId: formData.get("userId"),
@@ -36,7 +37,7 @@ export async function setTarget(_prevState: ActionResult | null, formData: FormD
   await db.target.upsert({
     where: { userId_periodMonth_periodYear: { userId, periodMonth, periodYear } },
     update: amounts,
-    create: { userId, periodMonth, periodYear, ...amounts },
+    create: { orgId: session.orgId, userId, periodMonth, periodYear, ...amounts },
   });
 
   revalidatePath(`/admin/employees/${userId}/targets`);

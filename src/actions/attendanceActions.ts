@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import type { AttendanceStatus } from "@/generated/prisma/client";
 
@@ -15,6 +15,7 @@ export async function markAttendance(
   routeId?: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await assertRole(["SALESMAN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const date = startOfToday();
   const userId = session.userId as string;
@@ -22,7 +23,7 @@ export async function markAttendance(
   await db.attendance.upsert({
     where: { userId_date: { userId, date } },
     update: { status, routeId: status === "ON_ROUTE" ? routeId : null },
-    create: { userId, date, status, routeId: status === "ON_ROUTE" ? routeId : undefined },
+    create: { orgId: session.orgId, userId, date, status, routeId: status === "ON_ROUTE" ? routeId : undefined },
   });
 
   revalidatePath("/salesman/dashboard");

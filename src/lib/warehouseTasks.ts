@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 
 function startOfToday(): Date {
   const now = new Date();
@@ -28,7 +28,8 @@ function isDueOn(
  * today has an occurrence for every task whose recurrence rule matches
  * today's date, and finally returns everything due today.
  */
-export async function getTodaysTaskOccurrences() {
+export async function getTodaysTaskOccurrences(orgId: string) {
+  const db = getOrgScopedDb(orgId);
   const today = startOfToday();
 
   await db.warehouseTaskOccurrence.updateMany({
@@ -42,7 +43,7 @@ export async function getTodaysTaskOccurrences() {
     await db.warehouseTaskOccurrence.upsert({
       where: { taskId_originalDate: { taskId: task.id, originalDate: today } },
       update: {},
-      create: { taskId: task.id, originalDate: today, scheduledDate: today },
+      create: { orgId, taskId: task.id, originalDate: today, scheduledDate: today },
     });
   }
 
@@ -54,7 +55,8 @@ export async function getTodaysTaskOccurrences() {
 }
 
 /** Pushes every still-open task due today to tomorrow — used when today's attendance is "No". */
-export async function shiftTodaysTasksToTomorrow(): Promise<void> {
+export async function shiftTodaysTasksToTomorrow(orgId: string): Promise<void> {
+  const db = getOrgScopedDb(orgId);
   const today = startOfToday();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);

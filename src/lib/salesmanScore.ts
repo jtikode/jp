@@ -1,5 +1,5 @@
 import { startOfMonth, endOfMonth } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 
 export interface SalesmanScoreBreakdown {
   total: number;
@@ -36,7 +36,8 @@ const WEIGHTS = {
  * - Attendance (10): 10 minus 2 for every Leave/Absent day this month
  *   (Half Leave counts as half), floored at 0.
  */
-export async function computeSalesmanScore(userId: string): Promise<SalesmanScoreBreakdown> {
+export async function computeSalesmanScore(orgId: string, userId: string): Promise<SalesmanScoreBreakdown> {
+  const db = getOrgScopedDb(orgId);
   const today = new Date();
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);

@@ -13,7 +13,7 @@ export const ROLE_HOME: Record<Role, string> = {
 export async function assertRole(allowed: Role[]) {
   const session = await getSession();
 
-  if (!session.userId || !session.role || !allowed.includes(session.role)) {
+  if (!session.userId || !session.orgId || !session.role || !allowed.includes(session.role)) {
     throw new Error("Not authorized.");
   }
 
@@ -23,7 +23,9 @@ export async function assertRole(allowed: Role[]) {
 export async function requireRole(allowed: Role[]) {
   const session = await getSession();
 
-  if (!session.userId || !session.role) {
+  // A session from before multi-tenancy shipped carries no orgId — treat it
+  // the same as logged-out rather than letting an unscoped query happen.
+  if (!session.userId || !session.orgId || !session.role) {
     redirect("/login");
   }
 

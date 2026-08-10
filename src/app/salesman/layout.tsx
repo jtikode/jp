@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function SalesmanLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(["SALESMAN"]);
   const lang = await getLang();
-  const score = await computeSalesmanScore(session.userId as string);
+  const score = await computeSalesmanScore(session.orgId, session.userId as string);
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100">

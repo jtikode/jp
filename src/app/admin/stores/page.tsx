@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +13,8 @@ export default async function AdminStoresPage({
 }: {
   searchParams: Promise<{ routeId?: string }>;
 }) {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const { routeId } = await searchParams;
 
   const routes = await db.route.findMany({ orderBy: { name: "asc" } });

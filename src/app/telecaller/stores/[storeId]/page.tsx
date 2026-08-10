@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { TelecallerLogForm } from "@/components/forms/TelecallerLogForm";
 import { buildTelLink, buildWhatsAppLink, buildRegularItemsMessage } from "@/lib/waLink";
@@ -10,6 +11,8 @@ export default async function TelecallerStorePage({
 }: {
   params: Promise<{ storeId: string }>;
 }) {
+  const session = await getSession();
+  const db = getOrgScopedDb(session.orgId as string);
   const { storeId } = await params;
   const store = await db.store.findUnique({ where: { id: storeId } });
 

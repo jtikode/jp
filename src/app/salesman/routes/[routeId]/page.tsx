@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { subMonths, startOfMonth, endOfMonth, startOfDay, endOfDay, format } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { RouteBarChart, type MonthlyPoint } from "@/components/charts/RouteBarChart";
@@ -18,6 +18,7 @@ export default async function RouteDetailPage({
   const { routeId } = await params;
   const session = await getSession();
   const userId = session.userId as string;
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
 
   const route = await db.route.findUnique({ where: { id: routeId } });

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 
@@ -17,12 +17,13 @@ function startOfToday(): Date {
 
 export async function upsertStockCount(stockItemId: string, quantity: number): Promise<void> {
   const session = await assertRole(["WAREHOUSE"]);
+  const db = getOrgScopedDb(session.orgId);
   const date = startOfToday();
 
   await db.stockCount.upsert({
     where: { stockItemId_date: { stockItemId, date } },
     update: { quantity, recordedById: session.userId as string },
-    create: { stockItemId, date, quantity, recordedById: session.userId as string },
+    create: { orgId: session.orgId, stockItemId, date, quantity, recordedById: session.userId as string },
   });
 
   revalidatePath("/warehouse/stock");
@@ -32,15 +33,16 @@ export async function addStockItem(
   _prevState: { ok: boolean; error?: string } | null,
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const name = (formData.get("name") as string | null)?.trim();
   if (!name) return { ok: false, error: "Item name is required." };
 
-  const existing = await db.stockItem.findUnique({ where: { name } });
+  const existing = await db.stockItem.findFirst({ where: { name } });
   if (existing) return { ok: false, error: "That item already exists." };
 
-  await db.stockItem.create({ data: { name } });
+  await db.stockItem.create({ data: { orgId: session.orgId, name } });
 
   revalidatePath("/admin/warehouse-tasks");
   revalidatePath("/warehouse/stock");
@@ -52,6 +54,7 @@ export async function importStockItems(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string; rowCount?: number }> {
   const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) {
@@ -75,6 +78,7 @@ export async function importStockItems(
 
   const batch = await db.importBatch.create({
     data: {
+      orgId: session.orgId,
       importType: "STOCK_ITEMS",
       fileName: file.name,
       rowCount: 0,
@@ -85,9 +89,9 @@ export async function importStockItems(
   let imported = 0;
   for (const row of parsedRows) {
     await db.stockItem.upsert({
-      where: { name: row.name },
+      where: { orgId_name: { orgId: session.orgId, name: row.name } },
       update: { company: row.company, active: true },
-      create: { name: row.name, company: row.company },
+      create: { orgId: session.orgId, name: row.name, company: row.company },
     });
     imported += 1;
   }
@@ -100,7 +104,8 @@ export async function importStockItems(
 }
 
 export async function deleteStockItem(stockItemId: string): Promise<{ ok: boolean; error?: string }> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await db.stockCount.deleteMany({ where: { stockItemId } });
   await db.stockItem.delete({ where: { id: stockItemId } });

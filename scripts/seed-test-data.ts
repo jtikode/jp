@@ -6,12 +6,13 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL as str
 const db = new PrismaClient({ adapter });
 
 async function main() {
-  const ramesh = await db.user.findUnique({ where: { username: "ramesh" } });
-  const route = await db.route.findUnique({ where: { name: "Route A - City Center" } });
+  const ramesh = await db.user.findFirst({ where: { username: "ramesh" } });
+  const route = await db.route.findFirst({ where: { name: "Route A - City Center" } });
   if (!ramesh || !route) {
     console.log("Expected 'ramesh' user and 'Route A - City Center' route to exist already.");
     return;
   }
+  const orgId = ramesh.orgId;
 
   const stores = [
     { externalCode: "S001", name: "City Medical Store", address: "12 MG Road", phone: "9876543210", routeId: route.id },
@@ -19,7 +20,11 @@ async function main() {
     { externalCode: "S003", name: "Green Cross Pharmacy", address: "7 Market Lane", phone: "9876543212", routeId: route.id },
   ];
   for (const s of stores) {
-    await db.store.upsert({ where: { externalCode: s.externalCode }, update: s, create: s });
+    await db.store.upsert({
+      where: { orgId_externalCode: { orgId, externalCode: s.externalCode } },
+      update: s,
+      create: { ...s, orgId },
+    });
   }
 
   const now = new Date();
@@ -27,6 +32,7 @@ async function main() {
     where: { userId_periodMonth_periodYear: { userId: ramesh.id, periodMonth: now.getMonth() + 1, periodYear: now.getFullYear() } },
     update: {},
     create: {
+      orgId,
       userId: ramesh.id,
       periodMonth: now.getMonth() + 1,
       periodYear: now.getFullYear(),

@@ -8,6 +8,21 @@ export const createEmployeeSchema = z.object({
   phone: z.string().optional(),
 });
 
+export const signupSchema = z.object({
+  businessName: z.string().min(2, "Business name is required."),
+  businessCode: z
+    .string()
+    .min(3, "Business code must be at least 3 characters.")
+    .max(40, "Business code is too long.")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Business code can only contain lowercase letters, numbers, and hyphens."
+    ),
+  adminName: z.string().min(1, "Your name is required."),
+  adminUsername: z.string().min(3, "Username must be at least 3 characters."),
+  adminPassword: z.string().min(6, "Password must be at least 6 characters."),
+});
+
 export const createRouteSchema = z.object({
   name: z.string().min(1, "Route name is required."),
   description: z.string().optional(),

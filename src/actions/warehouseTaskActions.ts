@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { shiftTodaysTasksToTomorrow } from "@/lib/warehouseTasks";
 import { createWarehouseTaskSchema } from "@/lib/validators";
@@ -11,7 +11,8 @@ export async function createWarehouseTask(
   _prevState: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const parsed = createWarehouseTaskSchema.safeParse({
     title: formData.get("title"),
@@ -34,6 +35,7 @@ export async function createWarehouseTask(
 
   await db.warehouseTask.create({
     data: {
+      orgId: session.orgId,
       title: parsed.data.title,
       description: parsed.data.description,
       recurrence: parsed.data.recurrence,
@@ -51,7 +53,8 @@ export async function createAdHocWarehouseTask(
   _prevState: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole(["WAREHOUSE"]);
+  const session = await assertRole(["WAREHOUSE"]);
+  const db = getOrgScopedDb(session.orgId);
 
   const title = (formData.get("title") as string | null)?.trim();
   if (!title) return { ok: false, error: "Title is required." };
@@ -60,10 +63,10 @@ export async function createAdHocWarehouseTask(
   const today = startOfToday();
 
   const task = await db.warehouseTask.create({
-    data: { title, description, recurrence: "ONCE" },
+    data: { orgId: session.orgId, title, description, recurrence: "ONCE" },
   });
   await db.warehouseTaskOccurrence.create({
-    data: { taskId: task.id, originalDate: today, scheduledDate: today },
+    data: { orgId: session.orgId, taskId: task.id, originalDate: today, scheduledDate: today },
   });
 
   revalidatePath("/warehouse");
@@ -71,7 +74,8 @@ export async function createAdHocWarehouseTask(
 }
 
 export async function toggleWarehouseTaskActive(taskId: string, active: boolean): Promise<void> {
-  await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await db.warehouseTask.update({ where: { id: taskId }, data: { active } });
 
@@ -85,6 +89,7 @@ function startOfToday(): Date {
 
 export async function completeWarehouseTask(occurrenceId: string): Promise<void> {
   const session = await assertRole(["WAREHOUSE"]);
+  const db = getOrgScopedDb(session.orgId);
 
   await db.warehouseTaskOccurrence.update({
     where: { id: occurrenceId },
@@ -103,6 +108,7 @@ export async function completeWarehouseTask(occurrenceId: string): Promise<void>
  */
 export async function markWarehouseAttendance(present: boolean): Promise<void> {
   const session = await assertRole(["WAREHOUSE"]);
+  const db = getOrgScopedDb(session.orgId);
   const userId = session.userId as string;
   const date = startOfToday();
 
@@ -112,9 +118,9 @@ export async function markWarehouseAttendance(present: boolean): Promise<void> {
     await db.attendance.upsert({
       where: { userId_date: { userId, date } },
       update: { status: "ABSENT" },
-      create: { userId, date, status: "ABSENT" },
+      create: { orgId: session.orgId, userId, date, status: "ABSENT" },
     });
-    await shiftTodaysTasksToTomorrow();
+    await shiftTodaysTasksToTomorrow(session.orgId);
   }
 
   revalidatePath("/warehouse");

@@ -8,19 +8,19 @@ DROP TYPE "public"."Role_old";
 COMMIT;
 
 -- DropForeignKey
-ALTER TABLE "PaymentEntry" DROP CONSTRAINT "PaymentEntry_clinicId_fkey";
+ALTER TABLE IF EXISTS "PaymentEntry" DROP CONSTRAINT IF EXISTS "PaymentEntry_clinicId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "PaymentEntry" DROP CONSTRAINT "PaymentEntry_collectedById_fkey";
+ALTER TABLE IF EXISTS "PaymentEntry" DROP CONSTRAINT IF EXISTS "PaymentEntry_collectedById_fkey";
 
 -- DropTable
-DROP TABLE "Clinic";
+DROP TABLE IF EXISTS "Clinic";
 
 -- DropTable
-DROP TABLE "Patient";
+DROP TABLE IF EXISTS "Patient";
 
 -- DropTable
-DROP TABLE "PaymentEntry";
+DROP TABLE IF EXISTS "PaymentEntry";
 
 -- DropEnum
-DROP TYPE "PaymentType";
+DROP TYPE IF EXISTS "PaymentType";

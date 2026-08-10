@@ -1,9 +1,12 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
 
 export default async function SalesmanNearExpiryPage() {
+  const session = await getSession();
+  const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
   const nearExpiryItems = await db.expiryItem.findMany({
     orderBy: { expiryDate: "asc" },

@@ -4,6 +4,7 @@ import type { Role } from "@/generated/prisma/client";
 
 export interface SessionData {
   userId?: string;
+  orgId?: string;
   role?: Role;
   name?: string;
 }

@@ -1,5 +1,6 @@
 import { startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { RecordsTable } from "@/components/admin/RecordsTable";
@@ -12,6 +13,8 @@ export default async function AdminDashboardPage({
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const params = await searchParams;
   const today = new Date();
   const monthStart = startOfMonth(today);
@@ -20,7 +23,7 @@ export default async function AdminDashboardPage({
   const [routes, employees, records, salesmen, todayAgg, monthAgg, targets] = await Promise.all([
     db.route.findMany({ orderBy: { name: "asc" } }),
     db.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    getUnifiedRecords(params),
+    getUnifiedRecords(session.orgId, params),
     db.user.findMany({ where: { role: "SALESMAN", active: true }, orderBy: { name: "asc" } }),
     db.visit.groupBy({
       by: ["userId"],

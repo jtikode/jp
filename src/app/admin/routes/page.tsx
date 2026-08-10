@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { RouteForm } from "@/components/admin/RouteForm";
 import { AssignRouteForm } from "@/components/admin/AssignRouteForm";
@@ -6,6 +7,8 @@ import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { unassignRoute, deleteRoute } from "@/actions/routeActions";
 
 export default async function RoutesPage() {
+  const session = await requireRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
   const [routes, salesmen] = await Promise.all([
     db.route.findMany({
       orderBy: { name: "asc" },
