@@ -41,6 +41,18 @@ enum NoOrderReason {
   OTHER
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  FULFILLED
+  CANCELLED
+}
+
+enum BannerPlacement {
+  HERO
+  OFFER
+}
+
 // One row per business using the app. Every other model is scoped to one of
 // these via orgId, so no query ever needs to reason about more than one
 // business's data at a time. `slug` is the "Business Code" typed at login
@@ -51,6 +63,10 @@ model Organization {
   slug      String   @unique
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+  // Fixed UPI ID used to build the retailer shop's "Pay Online" deep link +
+  // QR code — no payment gateway, just opens the retailer's own UPI app.
+  upiVpa       String?
+  upiPayeeName String?
 
   users            User[]
   routes           Route[]
@@ -71,6 +87,12 @@ model Organization {
   targets          Target[]
   telecallerParties TelecallerParty[]
   importBatches    ImportBatch[]
+  products         Product[]
+  orders           Order[]
+  orderItems       OrderItem[]
+  banners          ShopBanner[]
+  loyaltyTiers     LoyaltyTier[]
+  requestedProducts RequestedProduct[]
 }
 
 model User {
@@ -148,6 +170,9 @@ model Store {
   latitude     Float?
   longitude    Float?
   createdAt    DateTime @default(now())
+  // Set once the retailer self-activates e-shop access (Business Code +
+  // their phone on file + a new PIN) — null means they haven't yet.
+  pinHash      String?
 
   org              Organization @relation(fields: [orgId], references: [id])
   visits           Visit[]
@@ -156,6 +181,8 @@ model Store {
   purchaseHistory  PurchaseHistoryItem[]
   routeStores      RouteStore[]
   telecallerParty  TelecallerParty?
+  orders           Order[]
+  requestedProducts RequestedProduct[]
 
   @@unique([orgId, externalCode])
   @@index([routeId])
@@ -463,4 +490,127 @@ model ImportBatch {
   uploadedBy User @relation(fields: [uploadedById], references: [id])
 
   @@index([orgId])
+}
+
+// Sellable catalog item shown to retailers in the self-order shop. Separate
+// from StockItem (the warehouse's internal daily count-sheet dimension) —
+// this one carries a price and is customer-facing.
+model Product {
+  id         String   @id @default(cuid())
+  orgId      String
+  name       String
+  company    String?
+  unit       String?
+  price      Decimal
+  // Reference/pre-discount price shown struck through next to the selling
+  // price, and the applicable GST-style tax rate, both purely informational.
+  mrp        Decimal?
+  taxPercent Decimal?
+  scheme     String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  org        Organization @relation(fields: [orgId], references: [id])
+  orderItems OrderItem[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+// A retailer-placed order from the self-order shop. Payment/collection still
+// happens offline (cash/credit) exactly as it does today — this only tracks
+// what was ordered and its fulfillment status.
+model Order {
+  id          String      @id @default(cuid())
+  orgId       String
+  storeId     String
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+  items OrderItem[]
+
+  @@index([orgId])
+  @@index([storeId])
+}
+
+// productName/unitPrice are snapshots at order time, not live joins to
+// Product — matches LedgerEntry/ImportBatch elsewhere in this schema, so a
+// past order stays accurate even if the product is later renamed, repriced,
+// or deactivated.
+model OrderItem {
+  id          String  @id @default(cuid())
+  orgId       String
+  orderId     String
+  productId   String
+  productName String
+  unitPrice   Decimal
+  quantity    Int
+  lineTotal   Decimal
+
+  org     Organization @relation(fields: [orgId], references: [id])
+  order   Order        @relation(fields: [orderId], references: [id])
+  product Product      @relation(fields: [productId], references: [id])
+
+  @@index([orgId])
+  @@index([orderId])
+}
+
+// Promotional image shown on the retailer shop's home dashboard — HERO for
+// the top carousel, OFFER for the "Special Offers" carousel below the menu
+// grid. One model covers both via `placement` rather than two near-identical
+// models.
+model ShopBanner {
+  id        String          @id @default(cuid())
+  orgId     String
+  placement BannerPlacement
+  imageUrl  String
+  title     String?
+  linkUrl   String?
+  sortOrder Int             @default(0)
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+// Admin-configured reward tiers shown on the retailer shop's home dashboard
+// (e.g. "spend ₹4L this year, get a trolley bag"). Display-only — no
+// automatic tracking of a retailer's cumulative spend against these yet.
+model LoyaltyTier {
+  id              String   @id @default(cuid())
+  orgId           String
+  thresholdAmount Decimal
+  rewardText      String
+  sortOrder       Int      @default(0)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+}
+
+// A retailer asking for a product that isn't in the catalog yet. Reviewed
+// manually by admin — no notification wiring, just a list to check.
+model RequestedProduct {
+  id          String   @id @default(cuid())
+  orgId       String
+  storeId     String
+  productName String
+  note        String?
+  reviewed    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@index([orgId])
+  @@index([storeId])
 }

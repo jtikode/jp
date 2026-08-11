@@ -23,6 +23,12 @@ const TENANT_MODELS = new Set([
   "target",
   "telecallerParty",
   "importBatch",
+  "product",
+  "order",
+  "orderItem",
+  "shopBanner",
+  "loyaltyTier",
+  "requestedProduct",
 ]);
 
 const WHERE_SCOPED_OPERATIONS = new Set([

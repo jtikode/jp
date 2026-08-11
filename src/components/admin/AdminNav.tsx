@@ -10,10 +10,16 @@ const LINKS = [
   { href: "/admin/routes", label: "Routes" },
   { href: "/admin/stores", label: "Stores" },
   { href: "/admin/imports", label: "Imports" },
+  { href: "/admin/products", label: "Products" },
+  { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/banners", label: "Banners" },
+  { href: "/admin/loyalty-tiers", label: "Loyalty Tiers" },
+  { href: "/admin/requested-products", label: "Requested Products" },
   { href: "/admin/warehouse-tasks", label: "Warehouse Tasks" },
   { href: "/admin/outstanding", label: "Outstanding" },
   { href: "/admin/intelligence", label: "Intelligence" },
   { href: "/admin/route-map", label: "Route Map" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export function AdminNav() {

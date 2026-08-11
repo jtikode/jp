@@ -177,9 +177,101 @@ export const translations = {
   todays_visit_order: { en: "Today's Visit Order", mr: "आजचा भेट क्रम" },
   visited: { en: "Visited", mr: "भेट दिली" },
   no_stores_on_route: { en: "No stores on this route yet.", mr: "या मार्गावर अजून दुकान नाही." },
+
+  // --- Retailer shop ---
+  shop_catalog: { en: "Catalog", mr: "यादी" },
+  shop_cart: { en: "Cart", mr: "कार्ट" },
+  shop_my_orders: { en: "My Orders", mr: "माझ्या ऑर्डर्स" },
+  shop_catalog_heading: { en: "Catalog", mr: "उत्पादन यादी" },
+  shop_catalog_subtitle: {
+    en: "Add items to your cart, then check out.",
+    mr: "वस्तू कार्टमध्ये टाका, मग ऑर्डर करा.",
+  },
+  shop_search_products: { en: "Search products...", mr: "उत्पादन शोधा..." },
+  shop_no_products_found: { en: "No products found.", mr: "उत्पादन सापडले नाही." },
+  shop_your_cart: { en: "Your Cart", mr: "तुमचा कार्ट" },
+  shop_cart_empty: { en: "Your cart is empty.", mr: "तुमचा कार्ट रिकामा आहे." },
+  shop_browse_catalog: { en: "Browse catalog", mr: "यादी पहा" },
+  shop_item: { en: "Item", mr: "वस्तू" },
+  shop_qty: { en: "Qty", mr: "प्रमाण" },
+  shop_line_total: { en: "Line Total", mr: "एकूण" },
+  shop_remove: { en: "Remove", mr: "काढा" },
+  shop_total: { en: "Total", mr: "एकूण रक्कम" },
+  shop_notes_optional: { en: "Notes (optional)", mr: "टीप (ऐच्छिक)" },
+  shop_notes_placeholder: {
+    en: "Any special instructions for this order...",
+    mr: "या ऑर्डरसाठी विशेष सूचना असल्यास...",
+  },
+  shop_place_order: { en: "Place Order", mr: "ऑर्डर द्या" },
+  shop_placing_order: { en: "Placing order...", mr: "ऑर्डर देत आहे..." },
+  shop_my_orders_heading: { en: "My Orders", mr: "माझ्या ऑर्डर्स" },
+  shop_no_orders_yet: { en: "No orders placed yet.", mr: "अजून कोणतीही ऑर्डर दिली नाही." },
+  shop_order_status_pending: { en: "PENDING", mr: "प्रलंबित" },
+  shop_order_status_confirmed: { en: "CONFIRMED", mr: "स्वीकृत" },
+  shop_order_status_fulfilled: { en: "FULFILLED", mr: "पूर्ण" },
+  shop_order_status_cancelled: { en: "CANCELLED", mr: "रद्द" },
+  shop_unit_price: { en: "Unit Price", mr: "प्रति नग किंमत" },
+  shop_note_prefix: { en: "Note:", mr: "टीप:" },
+
+  // --- Retailer shop v2: home dashboard, pending bills, offers, loyalty, request product, pay online ---
+  shop_home: { en: "Home", mr: "मुख्यपृष्ठ" },
+  shop_company: { en: "Company", mr: "कंपनी" },
+  shop_menu: { en: "Menu", mr: "मेनू" },
+  shop_menu_order: { en: "Order", mr: "ऑर्डर" },
+  shop_menu_order_history: { en: "Order History", mr: "ऑर्डर इतिहास" },
+  shop_menu_pending_bills: { en: "Pending Bills", mr: "थकीत बिले" },
+  shop_menu_offers: { en: "Offers", mr: "ऑफर्स" },
+  shop_menu_request_product: { en: "Request Product", mr: "उत्पादनाची मागणी" },
+  shop_menu_pay_online: { en: "Pay Online", mr: "ऑनलाइन पेमेंट" },
+  shop_special_offers: { en: "Special Offers", mr: "खास ऑफर्स" },
+  shop_loyalty_heading: { en: "Yearly Gift on Sale", mr: "वार्षिक विक्रीवर भेट" },
+  shop_tax: { en: "Tax", mr: "कर" },
+  shop_scheme: { en: "Scheme", mr: "स्कीम" },
+  shop_pending_bills_heading: { en: "Pending Bills", mr: "थकीत बिले" },
+  shop_total_outstanding: { en: "Total Outstanding", mr: "एकूण थकबाकी" },
+  shop_invoice_no: { en: "Invoice #", mr: "बिल क्र." },
+  shop_date: { en: "Date", mr: "दिनांक" },
+  shop_bill_amount: { en: "Bill Amount", mr: "बिल रक्कम" },
+  shop_balance_due: { en: "Balance Due", mr: "देय रक्कम" },
+  shop_no_pending_bills: { en: "No pending bills.", mr: "कोणतेही थकीत बिल नाही." },
+  shop_no_offers: { en: "No offers right now.", mr: "सध्या कोणतीही ऑफर नाही." },
+  shop_product_name: { en: "Product Name", mr: "उत्पादनाचे नाव" },
+  shop_note_optional: { en: "Note (optional)", mr: "टीप (ऐच्छिक)" },
+  shop_request_sent: { en: "Request sent.", mr: "विनंती पाठवली." },
+  shop_sending: { en: "Sending...", mr: "पाठवत आहे..." },
+  shop_send_request: { en: "Send Request", mr: "विनंती पाठवा" },
+  shop_request_product_heading: { en: "Request a Product", mr: "उत्पादनाची मागणी करा" },
+  shop_request_product_subtitle: {
+    en: "Can't find what you're looking for? Let us know and we'll review it.",
+    mr: "तुम्हाला हवं ते सापडत नाही? आम्हाला कळवा, आम्ही ते तपासू.",
+  },
+  shop_pay_online_not_configured: {
+    en: "Online payment isn't set up yet. Please contact your distributor.",
+    mr: "ऑनलाइन पेमेंट अजून सुरू केलेले नाही. कृपया तुमच्या वितरकाशी संपर्क साधा.",
+  },
+  shop_pay_online_heading: { en: "Pay Online", mr: "ऑनलाइन पेमेंट" },
+  shop_pay_online_subtitle: {
+    en: "Scan the QR code or tap the button to pay via UPI.",
+    mr: "QR कोड स्कॅन करा किंवा UPI ने पेमेंट करण्यासाठी बटण दाबा.",
+  },
+  shop_pay_now: { en: "Pay Now", mr: "आता पेमेंट करा" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
+
+const ORDER_STATUS_KEYS = {
+  PENDING: "shop_order_status_pending",
+  CONFIRMED: "shop_order_status_confirmed",
+  FULFILLED: "shop_order_status_fulfilled",
+  CANCELLED: "shop_order_status_cancelled",
+} as const;
+
+export function orderStatusLabel(
+  lang: Lang,
+  status: keyof typeof ORDER_STATUS_KEYS,
+): string {
+  return t(lang, ORDER_STATUS_KEYS[status]);
+}
 
 export function t(lang: Lang, key: TranslationKey): string {
   return translations[key][lang] ?? translations[key].en;
