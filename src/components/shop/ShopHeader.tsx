@@ -14,16 +14,16 @@ export function ShopHeader({ storeName, lang }: { storeName: string; lang: Lang 
   }
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+    <header className="flex flex-wrap items-center justify-between gap-2 bg-blue-700 px-4 py-3 shadow-sm sm:px-6">
       <div>
-        <p className="text-lg font-bold text-slate-900">Shop</p>
-        <p className="text-sm text-slate-500">{storeName}</p>
+        <p className="text-lg font-bold text-white">MedPoint Shop</p>
+        <p className="text-sm text-blue-100">{storeName}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <LanguageToggle initialLang={lang} />
         <button
           onClick={handleLogout}
-          className="min-h-11 rounded-lg border-2 border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="min-h-11 rounded-lg border-2 border-blue-400 bg-blue-800 px-4 text-sm font-semibold text-white hover:bg-blue-900"
         >
           {t(lang, "log_out")}
         </button>

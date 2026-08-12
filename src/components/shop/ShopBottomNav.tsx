@@ -16,7 +16,7 @@ export function ShopBottomNav({ lang }: { lang: Lang }) {
   ];
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white">
+    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.05)]">
       {tabs.map((tab) => {
         const active = pathname.startsWith(tab.href);
         return (
@@ -28,10 +28,15 @@ export function ShopBottomNav({ lang }: { lang: Lang }) {
               active ? "text-blue-700" : "text-slate-500",
             )}
           >
-            <span className="relative text-xl leading-none">
+            <span
+              className={clsx(
+                "relative flex h-8 w-12 items-center justify-center rounded-full text-xl leading-none",
+                active && "bg-blue-100",
+              )}
+            >
               {tab.icon}
               {tab.badge ? (
-                <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] text-white">
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] text-white">
                   {tab.badge}
                 </span>
               ) : null}

@@ -210,7 +210,7 @@ export const translations = {
   shop_order_status_confirmed: { en: "CONFIRMED", mr: "स्वीकृत" },
   shop_order_status_fulfilled: { en: "FULFILLED", mr: "पूर्ण" },
   shop_order_status_cancelled: { en: "CANCELLED", mr: "रद्द" },
-  shop_unit_price: { en: "Unit Price", mr: "प्रति नग किंमत" },
+  shop_unit_price: { en: "Unit Rate", mr: "प्रति नग दर" },
   shop_note_prefix: { en: "Note:", mr: "टीप:" },
 
   // --- Retailer shop v2: home dashboard, pending bills, offers, loyalty, request product, pay online ---
@@ -255,6 +255,34 @@ export const translations = {
     mr: "QR कोड स्कॅन करा किंवा UPI ने पेमेंट करण्यासाठी बटण दाबा.",
   },
   shop_pay_now: { en: "Pay Now", mr: "आता पेमेंट करा" },
+  shop_low_stock: { en: "Low Stock", mr: "मर्यादित साठा" },
+  shop_in_stock: { en: "In Stock", mr: "साठा" },
+  shop_show_alternatives: { en: "Show alternatives", mr: "पर्याय दाखवा" },
+  shop_hide_alternatives: { en: "Hide alternatives", mr: "पर्याय लपवा" },
+  shop_reorder: { en: "Reorder", mr: "पुन्हा ऑर्डर करा" },
+  shop_reordering: { en: "Adding to cart...", mr: "कार्टमध्ये टाकत आहे..." },
+  shop_reorder_unavailable: {
+    en: "No longer available and skipped",
+    mr: "आता उपलब्ध नाही, वगळले",
+  },
+  shop_enable_notifications: { en: "Enable order updates", mr: "ऑर्डर सूचना सुरू करा" },
+  shop_notifications_enabled: { en: "Order updates enabled", mr: "ऑर्डर सूचना सुरू आहेत" },
+  shop_notifications_blocked: {
+    en: "Notifications are blocked in your browser settings",
+    mr: "तुमच्या ब्राउझर सेटिंगमध्ये सूचना बंद आहेत",
+  },
+  shop_menu_fast_order: { en: "Fast Order", mr: "जलद ऑर्डर" },
+  shop_fast_order_heading: { en: "Fast Order", mr: "जलद ऑर्डर" },
+  shop_fast_order_subtitle: {
+    en: "Your regular items — just enter quantity and go.",
+    mr: "तुमचा नियमित माल — फक्त प्रमाण टाका आणि पुढे जा.",
+  },
+  shop_no_fast_order_items: {
+    en: "No regular items found yet. Order a few times and they'll show up here.",
+    mr: "अजून नियमित माल सापडला नाही. काही वेळा ऑर्डर केल्यावर इथे दिसेल.",
+  },
+  shop_usual_qty: { en: "Usual qty", mr: "नेहमीचे प्रमाण" },
+  shop_add_to_cart_checkout: { en: "Add to Cart & Checkout", mr: "कार्टमध्ये टाका आणि पुढे जा" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

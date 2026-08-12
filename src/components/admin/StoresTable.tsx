@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
 import { storeLabel } from "@/lib/storeLabel";
+import { shopActivityStatus } from "@/lib/shopActivity";
 
 interface StoreRow {
   id: string;
@@ -13,6 +14,8 @@ interface StoreRow {
   address: string;
   phone: string | null;
   routeNames: string | null;
+  shopActivated: boolean;
+  lastLoginAt: string | null;
 }
 
 export function StoresTable({ stores }: { stores: StoreRow[] }) {
@@ -43,10 +46,17 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((s) => (
+            {filtered.map((s) => {
+              const activity = shopActivityStatus(s.shopActivated, s.lastLoginAt);
+              return (
               <tr key={s.id} className="border-b border-slate-100">
                 <td className="py-2 pr-4 font-medium text-slate-900">
-                  {storeLabel(s.name, s.externalCode)}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{storeLabel(s.name, s.externalCode)}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${activity.className}`}>
+                      {activity.label}
+                    </span>
+                  </div>
                 </td>
                 <td className="py-2 pr-4 text-slate-600">{s.address}</td>
                 <td className="py-2 pr-4 text-slate-600">{s.phone ?? "—"}</td>
@@ -72,7 +82,8 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-6 text-center text-slate-400">

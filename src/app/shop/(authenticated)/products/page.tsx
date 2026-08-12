@@ -30,7 +30,7 @@ export default async function ShopProductsPage({
       <Card>
         <ProductList
           lang={lang}
-          initialQuery={company ?? ""}
+          companyFilter={company}
           products={products.map((p) => ({
             id: p.id,
             name: p.name,
@@ -40,6 +40,8 @@ export default async function ShopProductsPage({
             mrp: p.mrp != null ? Number(p.mrp) : null,
             taxPercent: p.taxPercent != null ? Number(p.taxPercent) : null,
             scheme: p.scheme,
+            composition: p.composition,
+            stock: p.stock,
           }))}
         />
       </Card>

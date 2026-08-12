@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "J.P. Traders Operations Hub",
-  description: "Field terminal, telecalling, warehouse and admin operations hub for J.P. Traders.",
+  title: "MedPoint",
+  description: "Field terminal, telecalling, warehouse and admin operations hub for pharma distributors.",
 };
 
 export const viewport: Viewport = {

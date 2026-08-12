@@ -5,14 +5,16 @@ import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { BannerCarousel } from "@/components/shop/BannerCarousel";
+import { NotificationOptIn } from "@/components/shop/NotificationOptIn";
 
 const MENU_TILES = [
-  { href: "/shop/products", key: "shop_menu_order", icon: "📝" },
-  { href: "/shop/orders", key: "shop_menu_order_history", icon: "🧾" },
-  { href: "/shop/pending-bills", key: "shop_menu_pending_bills", icon: "💳" },
-  { href: "/shop/offers", key: "shop_menu_offers", icon: "🏷️" },
-  { href: "/shop/request-product", key: "shop_menu_request_product", icon: "📋" },
-  { href: "/shop/pay-online", key: "shop_menu_pay_online", icon: "📱" },
+  { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: "⚡", bg: "bg-amber-100" },
+  { href: "/shop/products", key: "shop_menu_order", icon: "📝", bg: "bg-blue-100" },
+  { href: "/shop/orders", key: "shop_menu_order_history", icon: "🧾", bg: "bg-purple-100" },
+  { href: "/shop/pending-bills", key: "shop_menu_pending_bills", icon: "💳", bg: "bg-rose-100" },
+  { href: "/shop/offers", key: "shop_menu_offers", icon: "🏷️", bg: "bg-orange-100" },
+  { href: "/shop/request-product", key: "shop_menu_request_product", icon: "📋", bg: "bg-teal-100" },
+  { href: "/shop/pay-online", key: "shop_menu_pay_online", icon: "📱", bg: "bg-green-100" },
 ] as const;
 
 export default async function ShopHomePage() {
@@ -41,6 +43,8 @@ export default async function ShopHomePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      <NotificationOptIn lang={lang} />
+
       <BannerCarousel
         banners={heroBanners.map((b) => ({
           id: b.id,
@@ -61,7 +65,7 @@ export default async function ShopHomePage() {
                 className="flex shrink-0 flex-col items-center gap-1"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-700 text-lg font-bold text-white">
-                  JP
+                  MP
                 </span>
                 <span className="max-w-16 truncate text-center text-xs text-slate-600">
                   {c.company}
@@ -78,7 +82,9 @@ export default async function ShopHomePage() {
           {MENU_TILES.map((tile) => (
             <Link key={tile.href} href={tile.href}>
               <Card className="flex items-center gap-3 hover:bg-slate-50">
-                <span className="text-2xl">{tile.icon}</span>
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${tile.bg}`}>
+                  {tile.icon}
+                </span>
                 <span className="font-semibold text-slate-900">{t(lang, tile.key)}</span>
               </Card>
             </Link>

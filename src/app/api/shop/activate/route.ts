@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   }
 
   const pinHash = await hashPassword(pin);
-  await db.store.update({ where: { id: store.id }, data: { pinHash } });
+  await db.store.update({ where: { id: store.id }, data: { pinHash, lastLoginAt: new Date() } });
 
   const session = await getRetailerSession();
   session.storeId = store.id;

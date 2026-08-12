@@ -4,6 +4,7 @@ import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
 import { t, orderStatusLabel } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
+import { ReorderButton } from "@/components/shop/ReorderButton";
 
 export default async function ShopOrderDetailPage({
   params,
@@ -71,7 +72,8 @@ export default async function ShopOrderDetailPage({
             ))}
           </tbody>
         </table>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <ReorderButton orderId={order.id} lang={lang} />
           <p className="text-lg font-bold text-slate-900">
             {t(lang, "shop_total")}: ₹{Number(order.totalAmount).toLocaleString("en-IN")}
           </p>

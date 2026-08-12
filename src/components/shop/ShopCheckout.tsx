@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCart } from "@/components/shop/CartProvider";
 import { placeOrder } from "@/actions/orderActions";
@@ -53,7 +52,7 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4 pb-20">
       <Card>
         <h1 className="text-xl font-bold text-slate-900">{t(lang, "shop_your_cart")}</h1>
       </Card>
@@ -123,9 +122,16 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
 
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
-      <Button onClick={handlePlaceOrder} disabled={placing} className="w-full">
-        {placing ? t(lang, "shop_placing_order") : t(lang, "shop_place_order")}
-      </Button>
+      <div className="fixed inset-x-0 bottom-16 z-10 border-t-2 border-slate-200 bg-white p-3">
+        <button
+          type="button"
+          onClick={handlePlaceOrder}
+          disabled={placing}
+          className="mx-auto flex w-full max-w-2xl items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-base font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {placing ? t(lang, "shop_placing_order") : `${t(lang, "shop_place_order")} — ₹${total.toLocaleString("en-IN")}`}
+        </button>
+      </div>
     </div>
   );
 }

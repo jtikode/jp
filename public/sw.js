@@ -53,3 +53,37 @@ async function cacheFirstThenNetwork(request) {
   if (response.ok) cache.put(request, response.clone());
   return response;
 }
+
+// Retailer order-status notifications (Web Push). Unrelated to the
+// salesman offline-cache logic above — this only reacts to push/click
+// events, it never intercepts fetches.
+self.addEventListener("push", (event) => {
+  let payload = { title: "J.P. Traders", body: "" };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch {
+    payload.body = event.data ? event.data.text() : "";
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/icon.svg",
+      data: { url: payload.url || "/shop/orders" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/shop/orders";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(url) && "focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    }),
+  );
+});

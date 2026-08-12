@@ -20,7 +20,7 @@ export function AddProductForm() {
         type="number"
         min="0"
         step="0.01"
-        placeholder="Price"
+        placeholder="Rate"
         required
         className="w-28"
       />
@@ -34,6 +34,8 @@ export function AddProductForm() {
         className="w-28"
       />
       <Input name="scheme" placeholder="Scheme (optional)" className="w-36" />
+      <Input name="composition" placeholder="Composition (optional)" className="flex-1 min-w-[180px]" />
+      <Input name="stock" type="number" min="0" step="1" placeholder="Stock (optional)" className="w-28" />
       <Button type="submit" disabled={pending} className="min-h-11 px-6 py-2 text-sm">
         {pending ? "Adding..." : "Add"}
       </Button>

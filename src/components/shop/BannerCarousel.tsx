@@ -7,6 +7,17 @@ export interface BannerCarouselItem {
   linkUrl: string | null;
 }
 
+// Banner links are admin-entered free text — only ever render them as a
+// clickable href if they're a genuine http(s) URL, so a stray "javascript:"
+// or "data:" value can't execute in a retailer's browser.
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
 export function BannerCarousel({ banners }: { banners: BannerCarouselItem[] }) {
   if (banners.length === 0) return null;
 
@@ -25,7 +36,7 @@ export function BannerCarousel({ banners }: { banners: BannerCarouselItem[] }) {
         );
         return (
           <div key={b.id} className="w-[85%] shrink-0 snap-center sm:w-[60%]">
-            {b.linkUrl ? (
+            {b.linkUrl && isSafeHttpUrl(b.linkUrl) ? (
               <a href={b.linkUrl} target="_blank" rel="noopener noreferrer">
                 {img}
               </a>

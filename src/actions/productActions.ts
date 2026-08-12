@@ -10,9 +10,11 @@ const PRODUCT_ALIASES = {
   company: ["company", "company name", "manufacturer", "brand"],
   unit: ["unit", "uom", "pack", "pack size"],
   price: ["price", "rate", "unit price", "selling price"],
-  mrp: ["mrp", "m.r.p", "max retail price"],
-  taxPercent: ["tax", "tax %", "gst", "gst %"],
+  mrp: ["mrp", "m.r.p", "m.r.p.", "max retail price"],
+  taxPercent: ["tax", "tax %", "gst", "gst %", "igst"],
   scheme: ["scheme"],
+  composition: ["composition", "salt", "salt composition", "molecule"],
+  stock: ["stock", "qty", "quantity", "stock qty"],
 };
 
 export async function createProduct(
@@ -26,23 +28,26 @@ export async function createProduct(
   const company = (formData.get("company") as string | null)?.trim() || undefined;
   const unit = (formData.get("unit") as string | null)?.trim() || undefined;
   const scheme = (formData.get("scheme") as string | null)?.trim() || undefined;
+  const composition = (formData.get("composition") as string | null)?.trim() || undefined;
   const priceRaw = formData.get("price") as string | null;
   const price = priceRaw ? Number(priceRaw) : NaN;
   const mrpRaw = formData.get("mrp") as string | null;
   const mrp = mrpRaw ? Number(mrpRaw) : undefined;
   const taxPercentRaw = formData.get("taxPercent") as string | null;
   const taxPercent = taxPercentRaw ? Number(taxPercentRaw) : undefined;
+  const stockRaw = formData.get("stock") as string | null;
+  const stock = stockRaw ? Number(stockRaw) : undefined;
 
   if (!name) return { ok: false, error: "Product name is required." };
   if (!priceRaw || Number.isNaN(price) || price < 0) {
-    return { ok: false, error: "A valid price is required." };
+    return { ok: false, error: "A valid rate is required." };
   }
 
   const existing = await db.product.findFirst({ where: { name } });
   if (existing) return { ok: false, error: "That product already exists." };
 
   await db.product.create({
-    data: { orgId: session.orgId, name, company, unit, price, mrp, taxPercent, scheme },
+    data: { orgId: session.orgId, name, company, unit, price, mrp, taxPercent, scheme, composition, stock },
   });
 
   revalidatePath("/admin/products");
@@ -73,6 +78,8 @@ export async function importProducts(
     mrp?: number;
     taxPercent?: number;
     scheme?: string;
+    composition?: string;
+    stock?: number;
   }> = [];
   for (const row of rows) {
     const name = findColumn(row, PRODUCT_ALIASES.name);
@@ -86,6 +93,8 @@ export async function importProducts(
     const mrpRaw = findColumn(row, PRODUCT_ALIASES.mrp);
     const taxPercentRaw = findColumn(row, PRODUCT_ALIASES.taxPercent);
     const scheme = findColumn(row, PRODUCT_ALIASES.scheme);
+    const composition = findColumn(row, PRODUCT_ALIASES.composition);
+    const stockRaw = findColumn(row, PRODUCT_ALIASES.stock);
     parsedRows.push({
       name,
       company,
@@ -94,6 +103,8 @@ export async function importProducts(
       mrp: mrpRaw ? Number(mrpRaw) : undefined,
       taxPercent: taxPercentRaw ? Number(taxPercentRaw) : undefined,
       scheme,
+      composition,
+      stock: stockRaw ? Number(stockRaw) : undefined,
     });
   }
 
@@ -122,6 +133,8 @@ export async function importProducts(
         mrp: row.mrp,
         taxPercent: row.taxPercent,
         scheme: row.scheme,
+        composition: row.composition,
+        stock: row.stock,
         active: true,
       },
       create: {
@@ -133,6 +146,8 @@ export async function importProducts(
         mrp: row.mrp,
         taxPercent: row.taxPercent,
         scheme: row.scheme,
+        composition: row.composition,
+        stock: row.stock,
       },
     });
     imported += 1;

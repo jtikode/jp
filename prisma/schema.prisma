@@ -93,6 +93,7 @@ model Organization {
   banners          ShopBanner[]
   loyaltyTiers     LoyaltyTier[]
   requestedProducts RequestedProduct[]
+  pushSubscriptions PushSubscription[]
 }
 
 model User {
@@ -173,6 +174,9 @@ model Store {
   // Set once the retailer self-activates e-shop access (Business Code +
   // their phone on file + a new PIN) — null means they haven't yet.
   pinHash      String?
+  // Updated on every successful shop activation/login, so admin can see
+  // which retailers are actually using the app vs. never activated/gone quiet.
+  lastLoginAt  DateTime?
 
   org              Organization @relation(fields: [orgId], references: [id])
   visits           Visit[]
@@ -183,6 +187,7 @@ model Store {
   telecallerParty  TelecallerParty?
   orders           Order[]
   requestedProducts RequestedProduct[]
+  pushSubscriptions PushSubscription[]
 
   @@unique([orgId, externalCode])
   @@index([routeId])
@@ -496,19 +501,27 @@ model ImportBatch {
 // from StockItem (the warehouse's internal daily count-sheet dimension) —
 // this one carries a price and is customer-facing.
 model Product {
-  id         String   @id @default(cuid())
-  orgId      String
-  name       String
-  company    String?
-  unit       String?
-  price      Decimal
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  company     String?
+  unit        String?
+  price       Decimal
   // Reference/pre-discount price shown struck through next to the selling
   // price, and the applicable GST-style tax rate, both purely informational.
-  mrp        Decimal?
-  taxPercent Decimal?
-  scheme     String?
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
+  mrp         Decimal?
+  taxPercent  Decimal?
+  scheme      String?
+  // Salt/molecule composition (e.g. "AMOXYCILLIN+POTASSIUM CLAVULANATE") —
+  // lets a retailer or telecaller find/verify a product by its salt, not
+  // just its brand name.
+  composition String?
+  // Admin-uploaded shelf quantity. Retailers see the exact number once it's
+  // 3 or more; below that, the shop shows a plain "Low Stock" warning
+  // instead of the number itself. Null means stock hasn't been set yet.
+  stock       Int?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
   org        Organization @relation(fields: [orgId], references: [id])
   orderItems OrderItem[]
@@ -607,6 +620,25 @@ model RequestedProduct {
   note        String?
   reviewed    Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@index([orgId])
+  @@index([storeId])
+}
+
+// A retailer's browser Push API subscription, used to send order-status
+// updates. `endpoint` is unique per browser install (not per store), so a
+// retailer opting in on two devices gets two rows and a push on both.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  orgId     String
+  storeId   String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
   store Store        @relation(fields: [storeId], references: [id])

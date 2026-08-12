@@ -47,6 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid phone number or PIN." }, { status: 401 });
   }
 
+  await db.store.update({ where: { id: store.id }, data: { lastLoginAt: new Date() } });
+
   const session = await getRetailerSession();
   session.storeId = store.id;
   session.orgId = org.id;

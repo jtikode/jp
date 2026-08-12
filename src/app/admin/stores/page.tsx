@@ -77,7 +77,15 @@ export default async function AdminStoresPage({
           </p>
           <StoreSequenceList
             routeId={routeId}
-            stores={routeStores.map((rs) => rs.store)}
+            stores={routeStores.map((rs) => ({
+              id: rs.store.id,
+              externalCode: rs.store.externalCode,
+              name: rs.store.name,
+              address: rs.store.address,
+              phone: rs.store.phone,
+              shopActivated: rs.store.pinHash != null,
+              lastLoginAt: rs.store.lastLoginAt ? rs.store.lastLoginAt.toISOString() : null,
+            }))}
           />
         </Card>
       </div>
@@ -132,6 +140,8 @@ export default async function AdminStoresPage({
             address: s.address,
             phone: s.phone,
             routeNames: [...new Set(s.routeStores.map((rs) => rs.route.name))].join(", ") || null,
+            shopActivated: s.pinHash != null,
+            lastLoginAt: s.lastLoginAt ? s.lastLoginAt.toISOString() : null,
           }))}
         />
       </Card>

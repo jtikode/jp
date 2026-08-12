@@ -18,7 +18,7 @@ export function UpiSettingsForm({
     <form action={formAction} className="flex flex-col gap-3">
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">UPI ID (VPA)</label>
-        <Input name="upiVpa" placeholder="jptraders@okhdfcbank" defaultValue={defaults.upiVpa} />
+        <Input name="upiVpa" placeholder="yourbusiness@okhdfcbank" defaultValue={defaults.upiVpa} />
         <p className="mt-1 text-xs text-slate-500">
           Retailers tap &quot;Pay Online&quot; in the shop to pay this UPI ID directly from their
           own bank app — no payment gateway involved.
@@ -26,7 +26,7 @@ export function UpiSettingsForm({
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">Payee Name</label>
-        <Input name="upiPayeeName" placeholder="J.P. Traders" defaultValue={defaults.upiPayeeName} />
+        <Input name="upiPayeeName" placeholder="Your Business Name" defaultValue={defaults.upiPayeeName} />
       </div>
       <div>
         <Button type="submit" disabled={pending} className="min-h-11 px-6 py-2 text-sm">

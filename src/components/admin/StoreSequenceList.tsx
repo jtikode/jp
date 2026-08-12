@@ -10,6 +10,7 @@ import {
 } from "@/actions/storeActions";
 import { buildWhatsAppLink, buildVisitReminderMessage } from "@/lib/waLink";
 import { storeLabel } from "@/lib/storeLabel";
+import { shopActivityStatus } from "@/lib/shopActivity";
 
 interface StoreRow {
   id: string;
@@ -17,6 +18,8 @@ interface StoreRow {
   name: string;
   address: string;
   phone: string | null;
+  shopActivated: boolean;
+  lastLoginAt: string | null;
 }
 
 export function StoreSequenceList({ routeId, stores }: { routeId: string; stores: StoreRow[] }) {
@@ -99,8 +102,16 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-slate-900">
-                {storeLabel(store.name, store.externalCode)}
+              <p className="flex flex-wrap items-center gap-2 truncate font-semibold text-slate-900">
+                <span>{storeLabel(store.name, store.externalCode)}</span>
+                {(() => {
+                  const activity = shopActivityStatus(store.shopActivated, store.lastLoginAt);
+                  return (
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${activity.className}`}>
+                      {activity.label}
+                    </span>
+                  );
+                })()}
               </p>
               <p className="truncate text-sm text-slate-500">{store.address}</p>
             </div>
