@@ -16,6 +16,7 @@ interface ProductRow {
   scheme: string | null;
   stock: number | null;
   active: boolean;
+  hot: boolean;
 }
 
 export function ProductsTable({ products }: { products: ProductRow[] }) {
@@ -60,7 +61,16 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
             {filtered.map((p) => (
               <tr key={p.id} className="border-b border-slate-100">
                 <td className="py-2 pr-4 text-slate-600">{p.company ?? "—"}</td>
-                <td className="py-2 pr-4 font-medium text-slate-900">{p.name}</td>
+                <td className="py-2 pr-4 font-medium text-slate-900">
+                  <span className="flex items-center gap-1.5">
+                    {p.name}
+                    {p.hot && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+                        🔥 Hot
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td className="py-2 pr-4 text-slate-600">{p.composition ?? "—"}</td>
                 <td className="py-2 pr-4 text-slate-600">{p.unit ?? "—"}</td>
                 <td className="py-2 pr-4 text-slate-600">₹{p.price.toLocaleString("en-IN")}</td>

@@ -11,5 +11,5 @@ export default async function RootPage() {
     redirect(ROLE_HOME[session.role]);
   }
 
-  redirect("/login");
+  redirect("/team/login");
 }

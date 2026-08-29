@@ -26,7 +26,7 @@ export async function upsertStockCount(stockItemId: string, quantity: number): P
     create: { orgId: session.orgId, stockItemId, date, quantity, recordedById: session.userId as string },
   });
 
-  revalidatePath("/warehouse/stock");
+  revalidatePath("/team/warehouse/stock");
 }
 
 export async function addStockItem(
@@ -44,8 +44,8 @@ export async function addStockItem(
 
   await db.stockItem.create({ data: { orgId: session.orgId, name } });
 
-  revalidatePath("/admin/warehouse-tasks");
-  revalidatePath("/warehouse/stock");
+  revalidatePath("/team/admin/warehouse-tasks");
+  revalidatePath("/team/warehouse/stock");
   return { ok: true };
 }
 
@@ -98,8 +98,8 @@ export async function importStockItems(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
-  revalidatePath("/admin/warehouse-tasks");
-  revalidatePath("/warehouse/stock");
+  revalidatePath("/team/admin/warehouse-tasks");
+  revalidatePath("/team/warehouse/stock");
   return { ok: true, rowCount: imported };
 }
 
@@ -110,7 +110,7 @@ export async function deleteStockItem(stockItemId: string): Promise<{ ok: boolea
   await db.stockCount.deleteMany({ where: { stockItemId } });
   await db.stockItem.delete({ where: { id: stockItemId } });
 
-  revalidatePath("/admin/warehouse-tasks");
-  revalidatePath("/warehouse/stock");
+  revalidatePath("/team/admin/warehouse-tasks");
+  revalidatePath("/team/warehouse/stock");
   return { ok: true };
 }

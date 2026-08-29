@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { t, type Lang } from "@/lib/i18n";
@@ -20,6 +21,14 @@ export function ShopHeader({ storeName, lang }: { storeName: string; lang: Lang 
         <p className="text-sm text-blue-100">{storeName}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        <Link
+          href="/shop/quick-check"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border-2 border-blue-400 bg-blue-800 text-lg text-white hover:bg-blue-900"
+          aria-label="Quick Check"
+          title="Quick Check"
+        >
+          🔍
+        </Link>
         <LanguageToggle initialLang={lang} />
         <button
           onClick={handleLogout}

@@ -33,7 +33,7 @@ export async function reorderStoreSequence(
     db.routeStore.update({ where: { id: b.id }, data: { visitSequence: aSeq } }),
   ]);
 
-  revalidatePath("/admin/stores");
+  revalidatePath("/team/admin/stores");
 }
 
 export async function assignStoreToRoute(
@@ -56,7 +56,7 @@ export async function assignStoreToRoute(
     data: { orgId: session.orgId, routeId, storeId, visitSequence: count + 1 },
   });
 
-  revalidatePath("/admin/stores");
+  revalidatePath("/team/admin/stores");
   return { ok: true };
 }
 
@@ -74,7 +74,7 @@ export async function reorderAllStores(routeId: string, orderedStoreIds: string[
     ),
   );
 
-  revalidatePath("/admin/stores");
+  revalidatePath("/team/admin/stores");
 }
 
 export async function assignMultipleStoresToRoute(
@@ -105,7 +105,7 @@ export async function assignMultipleStoresToRoute(
     await db.routeStore.create({ data: { orgId: session.orgId, routeId, storeId, visitSequence: count } });
   }
 
-  revalidatePath("/admin/stores");
+  revalidatePath("/team/admin/stores");
   return { ok: true, addedCount: toAdd.length };
 }
 
@@ -118,6 +118,6 @@ export async function removeStoreFromRoute(
 
   await db.routeStore.delete({ where: { routeId_storeId: { routeId, storeId } } });
 
-  revalidatePath("/admin/stores");
+  revalidatePath("/team/admin/stores");
   return { ok: true };
 }

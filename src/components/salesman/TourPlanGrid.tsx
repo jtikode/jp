@@ -54,7 +54,7 @@ export function TourPlanGrid({
   }
 
   function handleMonthChange(value: string) {
-    router.push(`/salesman/tour-plan?month=${value}`);
+    router.push(`/team/salesman/tour-plan?month=${value}`);
   }
 
   function handleSubmit() {

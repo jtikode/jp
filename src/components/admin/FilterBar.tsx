@@ -90,7 +90,7 @@ export function FilterBar({ routes, employees, values }: FilterBarProps) {
           Apply filters
         </Button>
         <a
-          href="/admin/dashboard"
+          href="/team/admin/dashboard"
           className="flex min-h-11 items-center rounded-xl border-2 border-slate-300 px-6 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           Clear

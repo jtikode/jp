@@ -27,11 +27,14 @@ const retailerSessionOptions = {
 };
 
 const ROLE_PREFIX: Record<string, string> = {
-  "/salesman": "SALESMAN",
-  "/telecaller": "TELECALLER",
-  "/warehouse": "WAREHOUSE",
-  "/admin": "ADMIN",
+  "/team/salesman": "SALESMAN",
+  "/team/telecaller": "TELECALLER",
+  "/team/warehouse": "WAREHOUSE",
+  "/team/admin": "ADMIN",
 };
+
+// Team pages that don't require a staff session to reach.
+const TEAM_PUBLIC_PATHS = ["/team/login", "/team/signup"];
 
 // Public shop pages — no retailer session required to reach these.
 const SHOP_PUBLIC_PATHS = ["/shop/login", "/shop/activate"];
@@ -59,6 +62,10 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  if (TEAM_PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
   const matchedPrefix = Object.keys(ROLE_PREFIX).find((prefix) =>
     pathname.startsWith(prefix),
   );
@@ -74,7 +81,7 @@ export async function middleware(request: NextRequest) {
   );
 
   if (!session.userId || !session.orgId || !session.role) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/team/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -88,10 +95,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/salesman/:path*",
-    "/telecaller/:path*",
-    "/warehouse/:path*",
-    "/admin/:path*",
+    "/team/:path*",
     "/shop/:path*",
   ],
 };

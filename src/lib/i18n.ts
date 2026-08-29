@@ -283,6 +283,65 @@ export const translations = {
   },
   shop_usual_qty: { en: "Usual qty", mr: "नेहमीचे प्रमाण" },
   shop_add_to_cart_checkout: { en: "Add to Cart & Checkout", mr: "कार्टमध्ये टाका आणि पुढे जा" },
+  shop_hot_selling: { en: "Hot Selling", mr: "जास्त खपणारे" },
+  shop_menu_hot_selling: { en: "Hot Selling", mr: "जास्त खपणारे" },
+  shop_menu_lowest_rate: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
+  shop_lowest_rate_heading: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
+  shop_lowest_rate_subtitle: {
+    en: "Same composition, sorted cheapest first — in-stock only.",
+    mr: "एकाच घटकाचे पर्याय, सर्वात स्वस्त आधी — फक्त उपलब्ध साठा.",
+  },
+  shop_search_composition: { en: "Search by composition or product name...", mr: "घटक किंवा उत्पादनाच्या नावाने शोधा..." },
+  shop_best_price: { en: "Best Price", mr: "सर्वोत्तम दर" },
+  shop_no_lowest_rate_items: {
+    en: "No comparable items found yet.",
+    mr: "अजून तुलना करण्यासारखे उत्पादन सापडले नाही.",
+  },
+  shop_menu_clearance: { en: "Clearance", mr: "क्लिअरन्स" },
+  shop_clearance_heading: { en: "Clearance", mr: "क्लिअरन्स" },
+  shop_clearance_subtitle: {
+    en: "Near-expiry stock at a special rate — first come, first served.",
+    mr: "एक्सपायरी जवळ असलेला माल खास दरात — आधी येईल त्याला आधी.",
+  },
+  shop_clearance: { en: "Clearance", mr: "क्लिअरन्स" },
+  shop_expires: { en: "Expires", mr: "एक्सपायरी" },
+  shop_menu_quick_check: { en: "Quick Check", mr: "पटकन तपासा" },
+  shop_quick_check_heading: { en: "Quick Check", mr: "पटकन तपासा" },
+  shop_quick_check_subtitle: {
+    en: "Type a medicine name to instantly see your rate, MRP, and stock.",
+    mr: "औषधाचे नाव टाका — दर, MRP आणि साठा लगेच दिसेल.",
+  },
+  shop_quick_check_placeholder: { en: "Type a product name...", mr: "उत्पादनाचे नाव टाका..." },
+  shop_quick_check_prompt: {
+    en: "Start typing to look up a product.",
+    mr: "उत्पादन शोधण्यासाठी टाइप करायला सुरुवात करा.",
+  },
+  shop_your_rate: { en: "Your Rate", mr: "तुमचा दर" },
+  shop_cheaper_alternatives: { en: "Cheaper alternatives", mr: "स्वस्त पर्याय" },
+  shop_loyalty_spend_so_far: { en: "This year's purchases", mr: "या वर्षीची खरेदी" },
+  shop_loyalty_more_to_reach: { en: "more to reach", mr: "अधिक खर्च केल्यास मिळेल" },
+  shop_loyalty_unlocked: { en: "You've unlocked", mr: "तुम्ही मिळवले आहे" },
+
+  // --- Offline order sync ---
+  shop_order_saved_offline: {
+    en: "No internet right now — your order is saved on this phone and will be sent automatically once you're back online.",
+    mr: "सध्या इंटरनेट नाही — तुमची ऑर्डर या फोनवर सेव्ह झाली आहे आणि इंटरनेट परत आल्यावर आपोआप पाठवली जाईल.",
+  },
+  shop_pending_orders_label: {
+    en: "Orders waiting to sync",
+    mr: "पाठवायच्या राहिलेल्या ऑर्डर्स",
+  },
+  shop_retry_now: { en: "Retry now", mr: "पुन्हा प्रयत्न करा" },
+  shop_syncing: { en: "Sending...", mr: "पाठवत आहे..." },
+  shop_offline_indicator: {
+    en: "📡 No internet — showing saved data",
+    mr: "📡 इंटरनेट नाही — सेव्ह केलेला डेटा दाखवत आहे",
+  },
+
+  // --- Wednesday Deals ---
+  shop_wednesday_deals_heading: { en: "Wednesday Deals", mr: "बुधवार डील्स" },
+  shop_wednesday_deal: { en: "Wednesday Deal", mr: "बुधवार डील" },
+  shop_deal_limit_left: { en: "Left today", mr: "आज शिल्लक" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

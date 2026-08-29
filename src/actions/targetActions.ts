@@ -40,6 +40,6 @@ export async function setTarget(_prevState: ActionResult | null, formData: FormD
     create: { orgId: session.orgId, userId, periodMonth, periodYear, ...amounts },
   });
 
-  revalidatePath(`/admin/employees/${userId}/targets`);
+  revalidatePath(`/team/admin/employees/${userId}/targets`);
   return { ok: true };
 }

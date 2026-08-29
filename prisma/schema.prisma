@@ -18,9 +18,17 @@ enum Role {
 }
 
 enum TaskRecurrence {
+  DAILY
   WEEKLY
   MONTHLY
   ONCE
+}
+
+enum TaskStatus {
+  PENDING
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
 }
 
 enum AttendanceStatus {
@@ -76,8 +84,9 @@ model Organization {
   visits           Visit[]
   attendances      Attendance[]
   telecallerLogs   TelecallerLog[]
-  warehouseTasks   WarehouseTask[]
-  warehouseTaskOccurrences WarehouseTaskOccurrence[]
+  telecallerCallSchedules TelecallerCallSchedule[]
+  tasks            Task[]
+  taskOccurrences  TaskOccurrence[]
   stockItems       StockItem[]
   stockCounts      StockCount[]
   ledgerEntries    LedgerEntry[]
@@ -88,6 +97,7 @@ model Organization {
   telecallerParties TelecallerParty[]
   importBatches    ImportBatch[]
   products         Product[]
+  wednesdayDeals   WednesdayDeal[]
   orders           Order[]
   orderItems       OrderItem[]
   banners          ShopBanner[]
@@ -116,6 +126,7 @@ model User {
   targets          Target[]
   importBatches    ImportBatch[]
   workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
+  assignedTasks    Task[]
 
   @@unique([orgId, username])
   @@index([role])
@@ -129,15 +140,32 @@ model Route {
   description String?
   createdAt   DateTime @default(now())
 
-  org         Organization @relation(fields: [orgId], references: [id])
-  stores      Store[]
-  assignments RouteAssignment[]
-  visits      Visit[]
-  routeStores RouteStore[]
-  attendances Attendance[]
+  org           Organization @relation(fields: [orgId], references: [id])
+  stores        Store[]
+  assignments   RouteAssignment[]
+  visits        Visit[]
+  routeStores   RouteStore[]
+  attendances   Attendance[]
+  callSchedule  TelecallerCallSchedule?
 
   @@unique([orgId, name])
   @@index([orgId])
+}
+
+// Which day of the week a telecaller calls a given route on — a simple
+// recurring weekly pattern (not date-specific), self-managed by the
+// telecaller from their own Calendar page.
+model TelecallerCallSchedule {
+  id        String @id @default(cuid())
+  orgId     String
+  routeId   String @unique
+  dayOfWeek Int // 0=Sunday..6=Saturday
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  route Route @relation(fields: [routeId], references: [id])
+
+  @@index([orgId])
+  @@index([dayOfWeek])
 }
 
 model RouteAssignment {
@@ -160,6 +188,10 @@ model Store {
   name         String
   address      String
   phone        String?
+  // Name of whoever the phone number actually reaches (owner/manager) — kept
+  // separate from `phone` so a telecaller can record who they're calling,
+  // not just the number.
+  contactPersonName String?
   // Primary route, set by store-master import. A store can additionally be
   // assigned to other routes via RouteStore (e.g. two salesmen covering
   // different product lines both visit the same medical store).
@@ -293,42 +325,53 @@ model TelecallerLog {
   @@index([orgId])
 }
 
-// Admin-defined recurring task (e.g. "sweep loading bay" every Monday, or
-// "count fast-movers" on the 1st of the month). Not assigned to a specific
-// person — any warehouse staff on shift can complete it.
-model WarehouseTask {
-  id          String         @id @default(cuid())
-  orgId       String
-  title       String
-  description String?
-  recurrence  TaskRecurrence
-  dayOfWeek   Int? // 0=Sunday..6=Saturday, used when recurrence=WEEKLY
-  dayOfMonth  Int? // 1-31, used when recurrence=MONTHLY
-  active      Boolean        @default(true)
-  createdAt   DateTime       @default(now())
+// Admin-defined task, daily/weekly/monthly/one-time, for any employee across
+// any role. assignedToId targets one specific person; when it's null the
+// task is scoped to assignedRole instead (e.g. every WAREHOUSE staffer sees
+// it) — this is what preserves the original "any warehouse staff on shift
+// can complete it" behavior for tasks nobody assigned to a named person.
+model Task {
+  id            String         @id @default(cuid())
+  orgId         String
+  title         String
+  description   String?
+  recurrence    TaskRecurrence
+  // Optional "HH:mm" — display/ordering hint only, not enforced.
+  scheduledTime String?
+  dayOfWeek     Int? // 0=Sunday..6=Saturday, used when recurrence=WEEKLY
+  dayOfMonth    Int? // 1-31, used when recurrence=MONTHLY
+  assignedToId  String?
+  assignedRole  Role?
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
 
   org         Organization @relation(fields: [orgId], references: [id])
-  occurrences WarehouseTaskOccurrence[]
+  assignedTo  User?        @relation(fields: [assignedToId], references: [id])
+  occurrences TaskOccurrence[]
 
   @@index([orgId])
+  @@index([assignedToId])
 }
 
-// One row per time a task actually comes due. scheduledDate starts equal to
-// originalDate but rolls forward a day at a time — automatically, whenever
-// the warehouse dashboard is loaded — for as long as it stays incomplete or
-// the day it was due had no one marked present.
-model WarehouseTaskOccurrence {
-  id            String    @id @default(cuid())
+// One row per time a task actually comes due. Tied to its own due date —
+// unlike the old warehouse-only version, a missed occurrence does NOT roll
+// forward to the next day; it just stays PENDING against its original date,
+// which is what makes a missed day read as blank in the completion chart
+// instead of silently reappearing later.
+model TaskOccurrence {
+  id            String     @id @default(cuid())
   orgId         String
   taskId        String
   originalDate  DateTime
   scheduledDate DateTime
-  completed     Boolean   @default(false)
+  status        TaskStatus @default(PENDING)
   completedAt   DateTime?
   completedById String?
+  approvedAt    DateTime?
+  approvedById  String?
 
   org  Organization @relation(fields: [orgId], references: [id])
-  task WarehouseTask @relation(fields: [taskId], references: [id])
+  task Task @relation(fields: [taskId], references: [id])
 
   @@unique([taskId, originalDate])
   @@index([scheduledDate])
@@ -523,10 +566,30 @@ model Product {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  org        Organization @relation(fields: [orgId], references: [id])
-  orderItems OrderItem[]
+  org            Organization @relation(fields: [orgId], references: [id])
+  orderItems     OrderItem[]
+  wednesdayDeal  WednesdayDeal?
 
   @@unique([orgId, name])
+  @@index([orgId])
+}
+
+// Admin-defined weekly deal: this product sells at dealPrice, capped at
+// maxQtyPerStore per retailer, every Wednesday — a recurring config, not a
+// one-off dated banner, so one row per product covers "the current deal".
+model WednesdayDeal {
+  id             String   @id @default(cuid())
+  orgId          String
+  productId      String   @unique
+  dealPrice      Decimal
+  maxQtyPerStore Int
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  org        Organization @relation(fields: [orgId], references: [id])
+  product    Product      @relation(fields: [productId], references: [id])
+  orderItems OrderItem[]
+
   @@index([orgId])
 }
 
@@ -564,13 +627,19 @@ model OrderItem {
   unitPrice   Decimal
   quantity    Int
   lineTotal   Decimal
+  // Set when this line was bought at a Wednesday Deal price — lets placeOrder
+  // sum up how much of a deal's max-qty-per-store cap a retailer has already
+  // used today.
+  dealId      String?
 
-  org     Organization @relation(fields: [orgId], references: [id])
-  order   Order        @relation(fields: [orderId], references: [id])
-  product Product      @relation(fields: [productId], references: [id])
+  org     Organization   @relation(fields: [orgId], references: [id])
+  order   Order          @relation(fields: [orderId], references: [id])
+  product Product        @relation(fields: [productId], references: [id])
+  deal    WednesdayDeal? @relation(fields: [dealId], references: [id])
 
   @@index([orgId])
   @@index([orderId])
+  @@index([dealId])
 }
 
 // Promotional image shown on the retailer shop's home dashboard — HERO for
@@ -587,6 +656,10 @@ model ShopBanner {
   sortOrder Int             @default(0)
   active    Boolean         @default(true)
   createdAt DateTime        @default(now())
+  // Set only for a time-boxed "flash deal" — retailers get a push
+  // notification when one is created, and the banner stops showing once
+  // this passes. Null means an ordinary, non-expiring banner.
+  expiresAt DateTime?
 
   org Organization @relation(fields: [orgId], references: [id])
 
@@ -594,8 +667,8 @@ model ShopBanner {
 }
 
 // Admin-configured reward tiers shown on the retailer shop's home dashboard
-// (e.g. "spend ₹4L this year, get a trolley bag"). Display-only — no
-// automatic tracking of a retailer's cumulative spend against these yet.
+// (e.g. "spend ₹4L this year, get a trolley bag"), with the retailer's own
+// progress toward the next one computed live from their order history.
 model LoyaltyTier {
   id              String   @id @default(cuid())
   orgId           String

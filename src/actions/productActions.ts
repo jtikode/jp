@@ -50,7 +50,7 @@ export async function createProduct(
     data: { orgId: session.orgId, name, company, unit, price, mrp, taxPercent, scheme, composition, stock },
   });
 
-  revalidatePath("/admin/products");
+  revalidatePath("/team/admin/products");
   revalidatePath("/shop/products");
   return { ok: true };
 }
@@ -155,7 +155,7 @@ export async function importProducts(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
-  revalidatePath("/admin/products");
+  revalidatePath("/team/admin/products");
   revalidatePath("/shop/products");
   return { ok: true, rowCount: imported };
 }
@@ -166,6 +166,6 @@ export async function toggleProductActive(productId: string, active: boolean): P
 
   await db.product.update({ where: { id: productId }, data: { active } });
 
-  revalidatePath("/admin/products");
+  revalidatePath("/team/admin/products");
   revalidatePath("/shop/products");
 }

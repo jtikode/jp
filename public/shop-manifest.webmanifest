@@ -1,0 +1,16 @@
+{
+  "name": "MedPoint Retailer",
+  "short_name": "MedPoint",
+  "description": "Order medicines, track outstanding bills, and get flash-deal alerts from your distributor.",
+  "start_url": "/shop/home",
+  "scope": "/shop/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/retailer-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/retailer-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/retailer-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

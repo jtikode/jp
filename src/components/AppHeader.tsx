@@ -18,7 +18,7 @@ export function AppHeader({ title, name, lang, logOutLabel = "Log out", extra }:
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/team/login");
     router.refresh();
   }
 

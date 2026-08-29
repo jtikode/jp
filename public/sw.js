@@ -1,6 +1,10 @@
-const CACHE_NAME = "jptraders-offline-v1";
+const CACHE_NAME = "jptraders-offline-v2";
+const OFFLINE_URL = "/offline.html";
 
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL)));
+  self.skipWaiting();
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -11,11 +15,14 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Read-only offline support for the salesman app only: a salesman can view
-// their already-loaded routes, store sequence, regular items, and
-// outstanding data with no signal. Submitting a visit (photo/GPS/amounts) is
-// a POST and always falls through to the network untouched, so it still
-// requires connectivity — this never caches or intercepts writes.
+// Read-only offline support for the salesman app and the retailer shop: the
+// last page a device successfully loaded (routes/stores/regular-items for a
+// salesman; catalog/home/orders for a retailer) stays viewable with no
+// signal. Every write — a salesman's visit submission, a retailer's
+// placeOrder — is a POST and always falls through to the network untouched,
+// so it still requires connectivity; this never caches or intercepts
+// writes. Order submission while offline is instead queued client-side
+// (see src/lib/pendingOrders.ts) and retried once the network returns.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -23,12 +30,16 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  const isSalesmanPage = url.pathname.startsWith("/salesman");
+  const isSalesmanPage = url.pathname.startsWith("/team/salesman");
+  const isShopPage =
+    url.pathname.startsWith("/shop") &&
+    !url.pathname.startsWith("/shop/login") &&
+    !url.pathname.startsWith("/shop/activate");
   const isStaticAsset = url.pathname.startsWith("/_next/static/");
-  if (!isSalesmanPage && !isStaticAsset) return;
+  if (!isSalesmanPage && !isShopPage && !isStaticAsset) return;
 
   event.respondWith(
-    isSalesmanPage ? networkFirstThenCache(request) : cacheFirstThenNetwork(request),
+    isSalesmanPage || isShopPage ? networkFirstThenCache(request) : cacheFirstThenNetwork(request),
   );
 });
 
@@ -41,6 +52,10 @@ async function networkFirstThenCache(request) {
   } catch (err) {
     const cached = await cache.match(request);
     if (cached) return cached;
+    // A page this device has never loaded before, with no signal to fetch
+    // it now — show the friendly offline card instead of the browser's own
+    // ugly "no internet" error page.
+    if (request.mode === "navigate") return cache.match(OFFLINE_URL);
     throw err;
   }
 }

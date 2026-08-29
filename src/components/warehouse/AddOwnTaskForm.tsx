@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { createAdHocWarehouseTask } from "@/actions/warehouseTaskActions";
+import { createOwnTask } from "@/actions/taskActions";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 const initialState = { ok: false, error: undefined };
 
 export function AddOwnTaskForm() {
-  const [state, formAction, pending] = useActionState(createAdHocWarehouseTask, initialState);
+  const [state, formAction, pending] = useActionState(createOwnTask, initialState);
 
   return (
     <form action={formAction} className="flex flex-col gap-3">

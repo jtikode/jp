@@ -1,10 +1,12 @@
 import Image from "next/image";
+import { formatCountdown } from "@/lib/formatCountdown";
 
 export interface BannerCarouselItem {
   id: string;
   imageUrl: string;
   title: string | null;
   linkUrl: string | null;
+  expiresAt?: string | null;
 }
 
 // Banner links are admin-entered free text — only ever render them as a
@@ -24,15 +26,23 @@ export function BannerCarousel({ banners }: { banners: BannerCarouselItem[] }) {
   return (
     <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1">
       {banners.map((b) => {
+        const countdown = b.expiresAt ? formatCountdown(new Date(b.expiresAt)) : "";
         const img = (
-          <Image
-            src={b.imageUrl}
-            alt={b.title ?? "Banner"}
-            width={640}
-            height={280}
-            className="h-40 w-full shrink-0 snap-center rounded-2xl object-cover sm:h-48"
-            unoptimized
-          />
+          <div className="relative">
+            <Image
+              src={b.imageUrl}
+              alt={b.title ?? "Banner"}
+              width={640}
+              height={280}
+              className="h-40 w-full shrink-0 snap-center rounded-2xl object-cover sm:h-48"
+              unoptimized
+            />
+            {countdown && (
+              <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
+                ⏰ Ends in {countdown}
+              </span>
+            )}
+          </div>
         );
         return (
           <div key={b.id} className="w-[85%] shrink-0 snap-center sm:w-[60%]">

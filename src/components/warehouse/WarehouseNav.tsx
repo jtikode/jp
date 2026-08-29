@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { clsx } from "@/lib/clsx";
 
 const LINKS = [
-  { href: "/warehouse", label: "Tasks" },
-  { href: "/warehouse/stock", label: "Stock Sheet" },
+  { href: "/team/warehouse", label: "Tasks" },
+  { href: "/team/warehouse/stock", label: "Stock Sheet" },
+  { href: "/team/board", label: "Task Board" },
 ];
 
 export function WarehouseNav() {
@@ -20,7 +21,7 @@ export function WarehouseNav() {
           href={link.href}
           className={clsx(
             "whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold",
-            (link.href === "/warehouse" ? pathname === link.href : pathname.startsWith(link.href))
+            (link.href === "/team/warehouse" ? pathname === link.href : pathname.startsWith(link.href))
               ? "border-blue-700 text-blue-700"
               : "border-transparent text-slate-500 hover:text-slate-800",
           )}

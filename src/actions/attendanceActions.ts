@@ -26,7 +26,7 @@ export async function markAttendance(
     create: { orgId: session.orgId, userId, date, status, routeId: status === "ON_ROUTE" ? routeId : undefined },
   });
 
-  revalidatePath("/salesman/dashboard");
-  revalidatePath("/salesman/calendar");
+  revalidatePath("/team/salesman/dashboard");
+  revalidatePath("/team/salesman/calendar");
   return { ok: true };
 }

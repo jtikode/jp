@@ -38,7 +38,7 @@ export function StoreSearchList({ lang, stores }: { lang: Lang; stores: StoreIte
           return (
             <Card key={store.id} className="transition-colors hover:bg-slate-50">
               <div className="flex items-start justify-between gap-2">
-                <Link href={`/salesman/stores/${store.id}/visit`} className="min-w-0 flex-1">
+                <Link href={`/team/salesman/stores/${store.id}/visit`} className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 font-semibold text-slate-900">
                     {storeLabel(store.name, store.externalCode)}
                     {located && (

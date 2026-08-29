@@ -129,8 +129,8 @@ export async function importStoreMaster(
     },
   });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/admin/routes");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/admin/routes");
   return { ok: true, rowCount: imported };
 }
 
@@ -255,8 +255,8 @@ export async function importOutstanding(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/admin/outstanding");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/admin/outstanding");
   return { ok: true, rowCount: imported };
 }
 
@@ -376,8 +376,8 @@ export async function importPurchaseHistory(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/admin/intelligence");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/admin/intelligence");
   return { ok: true, rowCount: imported };
 }
 
@@ -445,8 +445,8 @@ export async function importExpiryItems(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/admin/intelligence");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/admin/intelligence");
   return { ok: true, rowCount: parsedRows.length };
 }
 
@@ -506,8 +506,8 @@ export async function importIncentiveItems(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/salesman/dashboard");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/salesman/dashboard");
   return { ok: true, rowCount: parsedRows.length };
 }
 
@@ -564,7 +564,7 @@ export async function importTelecallerParties(
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: stores.length } });
 
-  revalidatePath("/admin/imports");
-  revalidatePath("/telecaller/dashboard");
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/telecaller/dashboard");
   return { ok: true, rowCount: stores.length };
 }

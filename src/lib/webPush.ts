@@ -55,3 +55,36 @@ export async function sendPushToStore(
     }),
   );
 }
+
+// Broadcasts to every subscribed retailer across the whole org — used for
+// org-wide announcements like a time-boxed flash deal, as opposed to
+// sendPushToStore's single-retailer order-status updates.
+export async function sendPushToOrg(
+  orgId: string,
+  payload: { title: string; body: string; url?: string },
+): Promise<void> {
+  if (!isWebPushConfigured()) return;
+  ensureConfigured();
+
+  const db = getOrgScopedDb(orgId);
+  const subscriptions = await db.pushSubscription.findMany({});
+  if (subscriptions.length === 0) return;
+
+  const body = JSON.stringify(payload);
+
+  await Promise.all(
+    subscriptions.map(async (sub) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          body,
+        );
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          await db.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+        }
+      }
+    }),
+  );
+}

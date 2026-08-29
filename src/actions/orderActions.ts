@@ -6,11 +6,22 @@ import { assertStoreSession } from "@/lib/retailerPermissions";
 import { assertRole } from "@/lib/permissions";
 import { sendPushToStore } from "@/lib/webPush";
 import { orderStatusLabel } from "@/lib/i18n";
+import { normalizeName } from "@/lib/normalizeName";
+import { getActiveCatalog } from "@/lib/productCatalog";
+import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 export interface CartLine {
   productId: string;
   quantity: number;
+  // Present when this line was added from the Clearance (near-expiry)
+  // screen — the server re-resolves the actual discounted price from this
+  // deal's own record, it never trusts a price the client sends.
+  expiryItemId?: string;
+  // Present when this line was added at a Wednesday Deal price — same
+  // never-trust-the-client rule: re-verified against the live deal record,
+  // today's day-of-week, and the store's remaining quota for it.
+  dealId?: string;
 }
 
 export async function placeOrder(
@@ -33,17 +44,72 @@ export async function placeOrder(
     return { ok: false, error: "Some items in your cart are no longer available. Please refresh and try again." };
   }
 
+  const expiryItemIds = [...new Set(cleanLines.map((l) => l.expiryItemId).filter((id): id is string => !!id))];
+  const expiryItemMap = expiryItemIds.length
+    ? new Map((await db.expiryItem.findMany({ where: { id: { in: expiryItemIds } } })).map((e) => [e.id, e]))
+    : new Map<string, Awaited<ReturnType<typeof db.expiryItem.findFirst>>>();
+
+  const dealIds = [...new Set(cleanLines.map((l) => l.dealId).filter((id): id is string => !!id))];
+  const dealMap = dealIds.length
+    ? new Map((await db.wednesdayDeal.findMany({ where: { id: { in: dealIds } } })).map((d) => [d.id, d]))
+    : new Map<string, Awaited<ReturnType<typeof db.wednesdayDeal.findFirst>>>();
+  const wednesdayNow = isWednesdayToday();
+
+  function dealIsValidFor(line: CartLine, product: { id: string }): boolean {
+    if (!line.dealId) return false;
+    const deal = dealMap.get(line.dealId);
+    return deal != null && deal.active && wednesdayNow && deal.productId === product.id;
+  }
+
+  // A deal's per-retailer cap is rejected outright rather than silently
+  // billed at normal price for the overflow — that would charge more than
+  // the retailer expected when they added it at the deal price.
+  for (const line of cleanLines) {
+    const product = productMap.get(line.productId)!;
+    if (!dealIsValidFor(line, product)) continue;
+    const deal = dealMap.get(line.dealId!)!;
+    const remaining = await getRemainingDealQty(session.orgId, session.storeId, deal.id, deal.maxQtyPerStore);
+    if (line.quantity > remaining) {
+      return {
+        ok: false,
+        error:
+          remaining > 0
+            ? `Only ${remaining} left of today's Wednesday Deal price for ${product.name}. Please reduce the quantity.`
+            : `You've reached today's Wednesday Deal limit for ${product.name}.`,
+      };
+    }
+  }
+
   // Prices are always taken from the current catalog on the server — never
-  // trust a client-submitted price.
+  // trust a client-submitted price. A clearance/deal line only gets the
+  // special rate if the deal it points at is still live AND actually names
+  // this same product — otherwise a client could pair a cheap deal's id
+  // with an unrelated, expensive product to buy it at the wrong price.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const orderLines = cleanLines.map((l) => {
     const product = productMap.get(l.productId)!;
-    const unitPrice = Number(product.price);
+    const expiryItem = l.expiryItemId ? expiryItemMap.get(l.expiryItemId) : undefined;
+    const expiryDealIsValid =
+      expiryItem != null &&
+      expiryItem.specialRate != null &&
+      expiryItem.expiryDate >= today &&
+      normalizeName(expiryItem.itemName) === normalizeName(product.name);
+    const weeklyDealIsValid = dealIsValidFor(l, product);
+
+    const unitPrice = expiryDealIsValid
+      ? Number(expiryItem!.specialRate)
+      : weeklyDealIsValid
+        ? Number(dealMap.get(l.dealId!)!.dealPrice)
+        : Number(product.price);
+
     return {
       productId: product.id,
       productName: product.name,
       unitPrice,
       quantity: l.quantity,
       lineTotal: unitPrice * l.quantity,
+      dealId: weeklyDealIsValid ? l.dealId : undefined,
     };
   });
   const totalAmount = orderLines.reduce((sum, l) => sum + l.lineTotal, 0);
@@ -64,7 +130,7 @@ export async function placeOrder(
   });
 
   revalidatePath("/shop/orders");
-  revalidatePath("/admin/orders");
+  revalidatePath("/team/admin/orders");
   return { ok: true, orderId: order.id };
 }
 
@@ -126,10 +192,6 @@ export interface FastOrderItem {
   source: "ordered" | "history";
 }
 
-function normalizeName(name: string): string {
-  return name.trim().toUpperCase().replace(/\s+/g, " ");
-}
-
 // Combines two sources of "what this retailer regularly needs": their own
 // past in-app orders (a direct productId link) and admin-uploaded historical
 // purchase data (free-text item names, matched against the catalog by exact
@@ -139,7 +201,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
   const session = await assertStoreSession();
   const db = getOrgScopedDb(session.orgId);
 
-  const [orderedGroups, historyGroups, products] = await Promise.all([
+  const [orderedGroups, historyGroups, catalog] = await Promise.all([
     db.orderItem.groupBy({
       by: ["productId"],
       where: { order: { storeId: session.storeId } },
@@ -154,11 +216,11 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       orderBy: { _sum: { totalValue: "desc" } },
       take: 100,
     }),
-    db.product.findMany({ where: { active: true } }),
+    getActiveCatalog(session.orgId),
   ]);
 
-  const productById = new Map(products.map((p) => [p.id, p]));
-  const productByNormalizedName = new Map(products.map((p) => [normalizeName(p.name), p]));
+  const productById = new Map(catalog.map((p) => [p.id, p]));
+  const productByNormalizedName = new Map(catalog.map((p) => [normalizeName(p.name), p]));
 
   const items: FastOrderItem[] = [];
   const seenProductIds = new Set<string>();
@@ -171,7 +233,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       productId: product.id,
       name: product.name,
       company: product.company,
-      unitPrice: Number(product.price),
+      unitPrice: product.price,
       stock: product.stock,
       usualQuantity: Math.round(Number(g._sum.quantity ?? 0)),
       source: "ordered",
@@ -186,7 +248,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       productId: product.id,
       name: product.name,
       company: product.company,
-      unitPrice: Number(product.price),
+      unitPrice: product.price,
       stock: product.stock,
       usualQuantity: Math.round(Number(g._sum.quantity ?? 0)),
       source: "history",
@@ -202,7 +264,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
 
   const order = await db.order.update({ where: { id: orderId }, data: { status } });
 
-  revalidatePath("/admin/orders");
+  revalidatePath("/team/admin/orders");
 
   // Best-effort — a retailer with no push subscription (or a push-service
   // hiccup) must never block the admin from updating an order's status.

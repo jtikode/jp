@@ -20,7 +20,7 @@ export async function updateUpiSettings(
     data: { upiVpa, upiPayeeName },
   });
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/team/admin/settings");
   revalidatePath("/shop/pay-online");
   return { ok: true };
 }

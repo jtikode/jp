@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { useCart } from "@/components/shop/CartProvider";
+import { QuantityStepper } from "@/components/shop/QuantityStepper";
 import { t, type Lang } from "@/lib/i18n";
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 
@@ -17,6 +18,10 @@ export interface ProductListItem {
   scheme: string | null;
   composition: string | null;
   stock: number | null;
+  hot: boolean;
+  // Present only when it's Wednesday and this product has an active deal
+  // the store hasn't fully used up yet.
+  deal?: { id: string; price: number; remainingQty: number } | null;
 }
 
 const LOW_STOCK_THRESHOLD = 3;
@@ -26,11 +31,13 @@ export function ProductList({
   lang,
   initialQuery = "",
   companyFilter,
+  hotOnly = false,
 }: {
   products: ProductListItem[];
   lang: Lang;
   initialQuery?: string;
   companyFilter?: string;
+  hotOnly?: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [expandedAlternatives, setExpandedAlternatives] = useState<Set<string>>(new Set());
@@ -40,10 +47,12 @@ export function ProductList({
     [items],
   );
 
-  const companyScoped = useMemo(
-    () => (companyFilter ? products.filter((p) => p.company === companyFilter) : products),
-    [products, companyFilter],
-  );
+  const companyScoped = useMemo(() => {
+    let scoped = products;
+    if (companyFilter) scoped = scoped.filter((p) => p.company === companyFilter);
+    if (hotOnly) scoped = scoped.filter((p) => p.hot);
+    return scoped;
+  }, [products, companyFilter, hotOnly]);
 
   const filtered = useMemo(
     () => cascadingProductSearch(companyScoped, query, (p) => p.name, (p) => p.composition),
@@ -91,18 +100,37 @@ export function ProductList({
             <div key={p.id} className="rounded-xl border-2 border-slate-200 bg-white p-3">
               <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-900">{p.name}</p>
+                <p className="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900">
+                  <span>{p.name}</span>
+                  {p.hot && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
+                      🔥 {t(lang, "shop_hot_selling")}
+                    </span>
+                  )}
+                </p>
                 {p.composition && <p className="text-xs text-slate-400">{p.composition}</p>}
                 <p className="text-sm text-slate-500">
                   {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
                 </p>
                 <p className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-bold text-blue-700">
-                    ₹{p.price.toLocaleString("en-IN")}
+                    ₹{(p.deal ? p.deal.price : p.price).toLocaleString("en-IN")}
                   </span>
-                  {p.mrp != null && p.mrp > p.price && (
+                  {p.deal ? (
                     <span className="text-xs text-slate-400 line-through">
-                      ₹{p.mrp.toLocaleString("en-IN")}
+                      ₹{p.price.toLocaleString("en-IN")}
+                    </span>
+                  ) : (
+                    p.mrp != null &&
+                    p.mrp > p.price && (
+                      <span className="text-xs text-slate-400 line-through">
+                        ₹{p.mrp.toLocaleString("en-IN")}
+                      </span>
+                    )
+                  )}
+                  {p.deal && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
+                      🎉 {t(lang, "shop_wednesday_deal")}
                     </span>
                   )}
                   {p.taxPercent != null && (
@@ -124,6 +152,11 @@ export function ProductList({
                     {p.scheme}
                   </span>
                 )}
+                {p.deal && (
+                  <p className="mt-1 text-xs font-semibold text-purple-700">
+                    {t(lang, "shop_deal_limit_left")}: {p.deal.remainingQty}
+                  </p>
+                )}
                 {alternatives.length > 0 && (
                   <button
                     type="button"
@@ -136,29 +169,22 @@ export function ProductList({
                   </button>
                 )}
               </div>
-              <div className="flex shrink-0 items-center gap-1 rounded-full border-2 border-slate-200 p-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQuantity({ productId: p.id, name: p.name, unitPrice: p.price }, Math.max(0, quantity - 1))
-                  }
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-slate-700 hover:bg-slate-100"
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
-                <span className="w-8 text-center text-lg font-semibold text-slate-900">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQuantity({ productId: p.id, name: p.name, unitPrice: p.price }, quantity + 1)
-                  }
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-700 text-lg font-bold text-white hover:bg-blue-800"
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
-              </div>
+              <QuantityStepper
+                quantity={quantity}
+                onChange={(q) =>
+                  setQuantity(
+                    {
+                      productId: p.id,
+                      name: p.name,
+                      unitPrice: p.deal ? p.deal.price : p.price,
+                      dealId: p.deal?.id,
+                    },
+                    q,
+                  )
+                }
+                max={p.deal?.remainingQty}
+                accentClassName={p.deal ? "bg-purple-700 hover:bg-purple-800" : undefined}
+              />
               </div>
               {isExpanded && alternatives.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
@@ -176,18 +202,11 @@ export function ProductList({
                             ₹{alt.price.toLocaleString("en-IN")}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setQuantity(
-                              { productId: alt.id, name: alt.name, unitPrice: alt.price },
-                              altQuantity + 1,
-                            )
-                          }
-                          className="shrink-0 rounded-lg border-2 border-blue-700 bg-blue-700 px-3 py-1 text-xs font-bold text-white hover:bg-blue-800"
-                        >
-                          {altQuantity > 0 ? `${t(lang, "shop_qty")}: ${altQuantity}` : "+"}
-                        </button>
+                        <QuantityStepper
+                          quantity={altQuantity}
+                          onChange={(q) => setQuantity({ productId: alt.id, name: alt.name, unitPrice: alt.price }, q)}
+                          compact
+                        />
                       </div>
                     );
                   })}

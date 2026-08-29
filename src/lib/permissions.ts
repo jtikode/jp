@@ -3,10 +3,10 @@ import { getSession } from "@/lib/session";
 import type { Role } from "@/generated/prisma/client";
 
 export const ROLE_HOME: Record<Role, string> = {
-  SALESMAN: "/salesman/dashboard",
-  TELECALLER: "/telecaller/dashboard",
-  WAREHOUSE: "/warehouse",
-  ADMIN: "/admin/dashboard",
+  SALESMAN: "/team/salesman/dashboard",
+  TELECALLER: "/team/telecaller/dashboard",
+  WAREHOUSE: "/team/warehouse",
+  ADMIN: "/team/admin/dashboard",
 };
 
 /** For use inside Server Actions: throws instead of redirecting. */
@@ -26,7 +26,7 @@ export async function requireRole(allowed: Role[]) {
   // A session from before multi-tenancy shipped carries no orgId — treat it
   // the same as logged-out rather than letting an unscoped query happen.
   if (!session.userId || !session.orgId || !session.role) {
-    redirect("/login");
+    redirect("/team/login");
   }
 
   if (!allowed.includes(session.role)) {

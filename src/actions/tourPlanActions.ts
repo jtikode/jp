@@ -58,8 +58,8 @@ export async function saveTourPlan(entries: TourPlanEntry[]): Promise<{ ok: bool
     });
   }
 
-  revalidatePath("/salesman/tour-plan");
-  revalidatePath("/salesman/dashboard");
-  revalidatePath("/salesman/calendar");
+  revalidatePath("/team/salesman/tour-plan");
+  revalidatePath("/team/salesman/dashboard");
+  revalidatePath("/team/salesman/calendar");
   return { ok: true };
 }

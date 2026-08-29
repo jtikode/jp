@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { markWarehouseAttendance } from "@/actions/warehouseTaskActions";
+import { markWarehouseAttendance } from "@/actions/taskActions";
 import { Button } from "@/components/ui/Button";
 
 export function WarehouseAttendanceButtons({ present }: { present: boolean }) {
@@ -29,11 +29,6 @@ export function WarehouseAttendanceButtons({ present }: { present: boolean }) {
           No, absent
         </Button>
       </div>
-      {!present && (
-        <p className="text-xs font-medium text-amber-700">
-          Marked absent — today&apos;s open tasks have moved to tomorrow.
-        </p>
-      )}
     </div>
   );
 }

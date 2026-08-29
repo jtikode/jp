@@ -7,6 +7,13 @@ export interface CartItem {
   name: string;
   unitPrice: number;
   quantity: number;
+  // Set when this item was added at a clearance (near-expiry) special rate —
+  // carried through so checkout can tell placeOrder which deal to re-verify
+  // and price from, instead of the normal catalog price.
+  expiryItemId?: string;
+  // Set when this item was added at a Wednesday Deal price — same purpose as
+  // expiryItemId, for the weekly-deal pricing/quantity-cap instead.
+  dealId?: string;
 }
 
 interface CartContextValue {
@@ -28,8 +35,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      // sessionStorage only exists client-side, so this one-time sync from it
+      // localStorage (not sessionStorage) so the cart survives the app being
+      // fully closed/killed by Android and reopened later — the retailer
+      // shouldn't lose their in-progress order to a dropped connection or a
+      // backgrounded app getting evicted.
+      const raw = localStorage.getItem(STORAGE_KEY);
+      // localStorage only exists client-side, so this one-time sync from it
       // can't be done as a lazy useState initializer without a hydration
       // mismatch — an effect is the correct place for it here.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -42,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
   function setQuantity(product: Omit<CartItem, "quantity">, quantity: number) {

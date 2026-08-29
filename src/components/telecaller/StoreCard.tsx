@@ -15,7 +15,7 @@ interface StoreCardProps {
 export function StoreCard({ id, name, externalCode, address, phone, outstanding }: StoreCardProps) {
   return (
     <Card>
-      <Link href={`/telecaller/stores/${id}`}>
+      <Link href={`/team/telecaller/stores/${id}`}>
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="font-semibold text-slate-900">{storeLabel(name, externalCode)}</p>

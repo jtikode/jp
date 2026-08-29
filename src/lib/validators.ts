@@ -53,10 +53,11 @@ const optionalNoOrderReason = z.preprocess(emptyToUndefined, z.enum(NO_ORDER_REA
 // would incorrectly coerce "false" to true, since Boolean("false") is truthy.
 const booleanFromRadio = z.enum(["true", "false"]).transform((v) => v === "true");
 
-export const createWarehouseTaskSchema = z.object({
+export const createTaskSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: optionalString,
-  recurrence: z.enum(["WEEKLY", "MONTHLY"]),
+  recurrence: z.enum(["DAILY", "WEEKLY", "MONTHLY", "ONCE"]),
+  scheduledTime: optionalString,
   dayOfWeek: optionalNumber,
   dayOfMonth: optionalNumber,
 });

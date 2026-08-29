@@ -23,7 +23,7 @@ export async function requestProduct(
     data: { orgId: session.orgId, storeId: session.storeId, productName, note },
   });
 
-  revalidatePath("/admin/requested-products");
+  revalidatePath("/team/admin/requested-products");
   return { ok: true };
 }
 
@@ -36,5 +36,5 @@ export async function toggleRequestedProductReviewed(
 
   await db.requestedProduct.update({ where: { id: requestId }, data: { reviewed } });
 
-  revalidatePath("/admin/requested-products");
+  revalidatePath("/team/admin/requested-products");
 }

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCart } from "@/components/shop/CartProvider";
 import { placeOrder } from "@/actions/orderActions";
+import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
 
 export function ShopCheckout({ lang }: { lang: Lang }) {
@@ -15,24 +16,55 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
 
   async function handlePlaceOrder() {
     setError(null);
     setPlacing(true);
+    const lines = items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+      expiryItemId: i.expiryItemId,
+      dealId: i.dealId,
+    }));
     try {
-      const result = await placeOrder(
-        items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        notes,
-      );
+      const result = await placeOrder(lines, notes);
       if (!result.ok) {
         setError(result.error ?? "Could not place order.");
         return;
       }
       clear();
       router.push(`/shop/orders/${result.orderId}`);
+    } catch (err) {
+      // No network reached the server at all (offline, or connection dropped
+      // mid-request) — save the order on the device instead of losing it.
+      // PendingOrdersSync retries it automatically once back online.
+      if (isLikelyNetworkError(err)) {
+        addPendingOrder(lines, notes);
+        clear();
+        setSavedOffline(true);
+      } else {
+        setError("Could not place order.");
+      }
     } finally {
       setPlacing(false);
     }
+  }
+
+  if (savedOffline) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Card>
+          <p className="py-6 text-center font-medium text-slate-700">{t(lang, "shop_order_saved_offline")}</p>
+          <Link
+            href="/shop/home"
+            className="mx-auto block w-fit rounded-lg bg-blue-700 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          >
+            {t(lang, "shop_home")}
+          </Link>
+        </Card>
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -70,7 +102,19 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
           <tbody>
             {items.map((i) => (
               <tr key={i.productId} className="border-b border-slate-100">
-                <td className="py-2 pr-4 font-medium text-slate-900">{i.name}</td>
+                <td className="py-2 pr-4 font-medium text-slate-900">
+                  {i.name}
+                  {i.expiryItemId && (
+                    <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">
+                      {t(lang, "shop_clearance")}
+                    </span>
+                  )}
+                  {i.dealId && (
+                    <span className="ml-1.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
+                      {t(lang, "shop_wednesday_deal")}
+                    </span>
+                  )}
+                </td>
                 <td className="py-2 pr-4">
                   <input
                     type="number"

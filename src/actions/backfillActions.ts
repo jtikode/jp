@@ -69,9 +69,9 @@ export async function saveBackfillEntries(
     savedCount += 1;
   }
 
-  revalidatePath("/salesman/dashboard");
-  revalidatePath("/salesman/calendar");
-  revalidatePath("/salesman/july-catchup");
-  revalidatePath("/admin/dashboard");
+  revalidatePath("/team/salesman/dashboard");
+  revalidatePath("/team/salesman/calendar");
+  revalidatePath("/team/salesman/july-catchup");
+  revalidatePath("/team/admin/dashboard");
   return { ok: true, savedCount };
 }

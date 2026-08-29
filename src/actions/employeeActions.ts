@@ -43,7 +43,7 @@ export async function createEmployee(_prevState: ActionResult | null, formData: 
     },
   });
 
-  revalidatePath("/admin/employees");
+  revalidatePath("/team/admin/employees");
   return { ok: true };
 }
 
@@ -53,7 +53,7 @@ export async function toggleEmployeeActive(userId: string, active: boolean): Pro
 
   await db.user.update({ where: { id: userId }, data: { active } });
 
-  revalidatePath("/admin/employees");
+  revalidatePath("/team/admin/employees");
 }
 
 export async function deleteEmployee(userId: string): Promise<ActionResult> {
@@ -80,6 +80,6 @@ export async function deleteEmployee(userId: string): Promise<ActionResult> {
     db.user.delete({ where: { id: userId } }),
   ]);
 
-  revalidatePath("/admin/employees");
+  revalidatePath("/team/admin/employees");
   return { ok: true };
 }

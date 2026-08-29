@@ -104,8 +104,8 @@ export async function submitVisit(
     });
   }
 
-  revalidatePath("/salesman/calendar");
-  revalidatePath(`/salesman/routes/${store.routeId}`);
-  revalidatePath("/salesman/stores");
-  redirect("/salesman/stores?visitSubmitted=1");
+  revalidatePath("/team/salesman/calendar");
+  revalidatePath(`/team/salesman/routes/${store.routeId}`);
+  revalidatePath("/team/salesman/stores");
+  redirect("/team/salesman/stores?visitSubmitted=1");
 }

@@ -9,12 +9,13 @@ export function SalesmanNav({ lang }: { lang: Lang }) {
   const pathname = usePathname();
 
   const links = [
-    { href: "/salesman/dashboard", label: t(lang, "nav_home") },
-    { href: "/salesman/calendar", label: t(lang, "nav_calendar") },
-    { href: "/salesman/stores", label: t(lang, "nav_stores") },
-    { href: "/salesman/tour-plan", label: t(lang, "nav_tour_plan") },
-    { href: "/salesman/near-expiry", label: t(lang, "nav_near_expiry") },
-    { href: "/salesman/regular-items", label: t(lang, "nav_regular_items") },
+    { href: "/team/salesman/dashboard", label: t(lang, "nav_home") },
+    { href: "/team/salesman/calendar", label: t(lang, "nav_calendar") },
+    { href: "/team/salesman/stores", label: t(lang, "nav_stores") },
+    { href: "/team/salesman/tour-plan", label: t(lang, "nav_tour_plan") },
+    { href: "/team/salesman/near-expiry", label: t(lang, "nav_near_expiry") },
+    { href: "/team/salesman/regular-items", label: t(lang, "nav_regular_items") },
+    { href: "/team/board", label: "Task Board" },
   ];
 
   return (

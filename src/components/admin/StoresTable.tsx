@@ -74,7 +74,7 @@ export function StoresTable({ stores }: { stores: StoreRow[] }) {
                       </a>
                     )}
                     <Link
-                      href={`/admin/outstanding/${s.id}`}
+                      href={`/team/admin/outstanding/${s.id}`}
                       className="rounded-lg bg-amber-600 px-2 py-1 text-xs font-semibold text-white hover:bg-amber-700"
                     >
                       Outstanding

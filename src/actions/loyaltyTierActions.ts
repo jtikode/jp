@@ -28,7 +28,7 @@ export async function createLoyaltyTier(
     data: { orgId: session.orgId, thresholdAmount, rewardText, sortOrder },
   });
 
-  revalidatePath("/admin/loyalty-tiers");
+  revalidatePath("/team/admin/loyalty-tiers");
   revalidatePath("/shop/home");
   return { ok: true };
 }
@@ -39,6 +39,6 @@ export async function toggleLoyaltyTierActive(tierId: string, active: boolean): 
 
   await db.loyaltyTier.update({ where: { id: tierId }, data: { active } });
 
-  revalidatePath("/admin/loyalty-tiers");
+  revalidatePath("/team/admin/loyalty-tiers");
   revalidatePath("/shop/home");
 }

@@ -146,7 +146,7 @@ export function StoreSequenceList({ routeId, stores }: { routeId: string; stores
               </a>
             )}
             <Link
-              href={`/admin/outstanding/${store.id}`}
+              href={`/team/admin/outstanding/${store.id}`}
               className="flex h-10 items-center rounded-lg bg-amber-600 px-3 text-sm font-semibold text-white hover:bg-amber-700"
             >
               Outstanding
