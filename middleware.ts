@@ -11,6 +11,7 @@ const sessionOptions = {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24 * 90,
   },
 };
 
@@ -23,6 +24,7 @@ const retailerSessionOptions = {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24 * 90,
   },
 };
 
@@ -37,7 +39,7 @@ const ROLE_PREFIX: Record<string, string> = {
 const TEAM_PUBLIC_PATHS = ["/team/login", "/team/signup"];
 
 // Public shop pages — no retailer session required to reach these.
-const SHOP_PUBLIC_PATHS = ["/shop/login", "/shop/activate"];
+const SHOP_PUBLIC_PATHS = ["/shop/login", "/shop/register"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

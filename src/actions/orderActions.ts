@@ -5,6 +5,7 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertStoreSession } from "@/lib/retailerPermissions";
 import { assertRole } from "@/lib/permissions";
 import { sendPushToStore } from "@/lib/webPush";
+import { sendOrderNotificationEmail } from "@/lib/orderEmail";
 import { orderStatusLabel } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
@@ -131,6 +132,27 @@ export async function placeOrder(
 
   revalidatePath("/shop/orders");
   revalidatePath("/team/admin/orders");
+
+  // Best-effort — a failed/misconfigured email send must never block the
+  // order itself, which is already committed above.
+  const orderingStore = await db.store.findUnique({
+    where: { id: session.storeId },
+    select: { orderGiverWhatsapp: true },
+  });
+  sendOrderNotificationEmail({
+    orderId: order.id,
+    storeName: session.storeName ?? "Retailer",
+    orderGiverWhatsapp: orderingStore?.orderGiverWhatsapp,
+    totalAmount,
+    notes: notes?.trim() || undefined,
+    lines: orderLines.map((l) => ({
+      productName: l.productName,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      lineTotal: l.lineTotal,
+    })),
+  }).catch(() => {});
+
   return { ok: true, orderId: order.id };
 }
 
@@ -271,7 +293,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
   // No stored language preference per store, so this defaults to the
   // project's default language (Marathi) same as a fresh, unconfigured session.
   sendPushToStore(session.orgId, order.storeId, {
-    title: "MedPoint",
+    title: "J P Traders",
     body: `${orderStatusLabel("mr", status)} — ₹${Number(order.totalAmount).toLocaleString("en-IN")}`,
     url: `/shop/orders/${order.id}`,
   }).catch(() => {});

@@ -24,8 +24,8 @@ export default async function OutstandingPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Card className="overflow-x-auto">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-lg font-bold text-slate-900">Live Outstanding</h1>
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-bold text-slate-900">Outstanding</h1>
           <ExportExcelButton
             data={grouped
               .map((g) => {
@@ -42,6 +42,9 @@ export default async function OutstandingPage() {
             filename="live-outstanding"
           />
         </div>
+        <p className="mb-4 text-xs font-medium text-amber-700">
+          Updated weekly from the last uploaded statement — not real-time.
+        </p>
         <table className="w-full min-w-[600px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">

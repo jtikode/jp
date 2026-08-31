@@ -42,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <Card className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-bold text-slate-900">MedPoint</h1>
+        <h1 className="mb-1 text-2xl font-bold text-slate-900">J P Traders</h1>
         <p className="mb-6 text-slate-500">Sign in to your business account</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

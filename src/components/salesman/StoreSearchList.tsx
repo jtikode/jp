@@ -15,6 +15,7 @@ interface StoreItem {
   routeName?: string;
   latitude?: number | null;
   longitude?: number | null;
+  outstandingAmount?: number;
 }
 
 export function StoreSearchList({ lang, stores }: { lang: Lang; stores: StoreItem[] }) {
@@ -50,6 +51,11 @@ export function StoreSearchList({ lang, stores }: { lang: Lang; stores: StoreIte
                   <p className="text-sm text-slate-500">{store.address}</p>
                   {store.routeName && (
                     <p className="mt-1 text-xs font-medium text-blue-700">{store.routeName}</p>
+                  )}
+                  {!!store.outstandingAmount && (
+                    <p className="mt-1 text-xs font-semibold text-red-700">
+                      {t(lang, "total_outstanding")}: ₹{store.outstandingAmount.toLocaleString("en-IN")}
+                    </p>
                   )}
                 </Link>
                 {located && (

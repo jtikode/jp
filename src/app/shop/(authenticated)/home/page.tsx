@@ -1,4 +1,18 @@
 import Link from "next/link";
+import {
+  ScanSearch,
+  Zap,
+  FileText,
+  Flame,
+  Percent,
+  Clock,
+  Package,
+  Receipt,
+  Gift,
+  ClipboardList,
+  Wallet,
+  Sparkles,
+} from "lucide-react";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
@@ -6,21 +20,22 @@ import { t } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { BannerCarousel } from "@/components/shop/BannerCarousel";
 import { NotificationOptIn } from "@/components/shop/NotificationOptIn";
+import { ShopSearchBar } from "@/components/shop/ShopSearchBar";
 import { WednesdayDealsStrip } from "@/components/shop/WednesdayDealsStrip";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 
 const MENU_TILES = [
-  { href: "/shop/quick-check", key: "shop_menu_quick_check", icon: "🔍", bg: "bg-cyan-100" },
-  { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: "⚡", bg: "bg-amber-100" },
-  { href: "/shop/products", key: "shop_menu_order", icon: "📝", bg: "bg-blue-100" },
-  { href: "/shop/products?filter=hot", key: "shop_menu_hot_selling", icon: "🔥", bg: "bg-red-100" },
-  { href: "/shop/lowest-rate", key: "shop_menu_lowest_rate", icon: "💰", bg: "bg-lime-100" },
-  { href: "/shop/clearance", key: "shop_menu_clearance", icon: "⏳", bg: "bg-pink-100" },
-  { href: "/shop/orders", key: "shop_menu_order_history", icon: "🧾", bg: "bg-purple-100" },
-  { href: "/shop/pending-bills", key: "shop_menu_pending_bills", icon: "💳", bg: "bg-rose-100" },
-  { href: "/shop/offers", key: "shop_menu_offers", icon: "🏷️", bg: "bg-orange-100" },
-  { href: "/shop/request-product", key: "shop_menu_request_product", icon: "📋", bg: "bg-teal-100" },
-  { href: "/shop/pay-online", key: "shop_menu_pay_online", icon: "📱", bg: "bg-green-100" },
+  { href: "/shop/quick-check", key: "shop_menu_quick_check", icon: ScanSearch, bg: "bg-cyan-50", fg: "text-cyan-600" },
+  { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
+  { href: "/shop/products", key: "shop_menu_order", icon: FileText, bg: "bg-blue-50", fg: "text-blue-600" },
+  { href: "/shop/products?filter=hot", key: "shop_menu_hot_selling", icon: Flame, bg: "bg-red-50", fg: "text-red-600" },
+  { href: "/shop/lowest-rate", key: "shop_menu_lowest_rate", icon: Percent, bg: "bg-lime-50", fg: "text-lime-700" },
+  { href: "/shop/clearance", key: "shop_menu_clearance", icon: Clock, bg: "bg-pink-50", fg: "text-pink-600" },
+  { href: "/shop/orders", key: "shop_menu_order_history", icon: Package, bg: "bg-purple-50", fg: "text-purple-600" },
+  { href: "/shop/pending-bills", key: "shop_menu_pending_bills", icon: Receipt, bg: "bg-rose-50", fg: "text-rose-600" },
+  { href: "/shop/offers", key: "shop_menu_offers", icon: Gift, bg: "bg-orange-50", fg: "text-orange-600" },
+  { href: "/shop/request-product", key: "shop_menu_request_product", icon: ClipboardList, bg: "bg-teal-50", fg: "text-teal-600" },
+  { href: "/shop/pay-online", key: "shop_menu_pay_online", icon: Wallet, bg: "bg-green-50", fg: "text-green-600" },
 ] as const;
 
 export default async function ShopHomePage() {
@@ -32,7 +47,7 @@ export default async function ShopHomePage() {
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 
-  const [heroBanners, offerBanners, companies, loyaltyTiers, yearSpendResult] = await Promise.all([
+  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult] = await Promise.all([
     db.shopBanner.findMany({
       where: { placement: "HERO", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
@@ -41,12 +56,6 @@ export default async function ShopHomePage() {
       where: { placement: "OFFER", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
       take: 4,
-    }),
-    db.product.findMany({
-      where: { active: true, company: { not: null } },
-      select: { company: true },
-      distinct: ["company"],
-      orderBy: { company: "asc" },
     }),
     db.loyaltyTier.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     db.order.aggregate({
@@ -75,6 +84,10 @@ export default async function ShopHomePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      <p className="text-center text-xs font-medium text-blue-700">{t(lang, "shop_ai_tagline")}</p>
+
+      <ShopSearchBar lang={lang} />
+
       <WednesdayDealsStrip
         lang={lang}
         deals={wednesdayDeals
@@ -100,43 +113,27 @@ export default async function ShopHomePage() {
         }))}
       />
 
-      {companies.length > 0 && (
-        <div>
-          <h2 className="mb-2 text-sm font-semibold text-slate-500">{t(lang, "shop_company")}</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {companies.map((c) => (
-              <Link
-                key={c.company}
-                href={`/shop/products?company=${encodeURIComponent(c.company!)}`}
-                className="flex shrink-0 flex-col items-center gap-1"
-              >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-700 text-lg font-bold text-white">
-                  MP
+      <Card>
+        <h2 className="mb-3 text-base font-bold text-slate-900">{t(lang, "shop_explore")}</h2>
+        <div
+          className="grid gap-y-4 text-center"
+          style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+        >
+          {MENU_TILES.map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <Link key={tile.href} href={tile.href} className="group flex flex-col items-center gap-1.5">
+                <span
+                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 group-active:scale-95 ${tile.bg}`}
+                >
+                  <Icon className={tile.fg} size={24} strokeWidth={1.75} />
                 </span>
-                <span className="max-w-16 truncate text-center text-xs text-slate-600">
-                  {c.company}
-                </span>
+                <span className="text-xs font-semibold leading-tight text-slate-700">{t(lang, tile.key)}</span>
               </Link>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
-
-      <div>
-        <h2 className="mb-2 text-sm font-semibold text-slate-500">{t(lang, "shop_menu")}</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {MENU_TILES.map((tile) => (
-            <Link key={tile.href} href={tile.href}>
-              <Card className="flex items-center gap-3 hover:bg-slate-50">
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${tile.bg}`}>
-                  {tile.icon}
-                </span>
-                <span className="font-semibold text-slate-900">{t(lang, tile.key)}</span>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
+      </Card>
 
       {offerBanners.length > 0 && (
         <div>
@@ -174,8 +171,9 @@ export default async function ShopHomePage() {
               <span className="font-bold text-green-700">{nextTier.rewardText}</span>
             </p>
           ) : achievedTier ? (
-            <p className="mb-3 text-sm font-bold text-green-700">
-              🎉 {t(lang, "shop_loyalty_unlocked")}: {achievedTier.rewardText}
+            <p className="mb-3 flex items-center gap-1.5 text-sm font-bold text-green-700">
+              <Sparkles size={16} strokeWidth={1.75} />
+              {t(lang, "shop_loyalty_unlocked")}: {achievedTier.rewardText}
             </p>
           ) : null}
 

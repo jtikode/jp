@@ -6,7 +6,7 @@ import { getRetailerSession } from "@/lib/retailerSession";
 
 const loginSchema = z.object({
   businessCode: z.string().min(1),
-  phone: z.string().min(1),
+  loginId: z.string().min(1),
   pin: z.string().min(1),
 });
 
@@ -16,12 +16,12 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Business code, phone number, and PIN are required." },
+      { error: "Business code, Login Id, and Password are required." },
       { status: 400 }
     );
   }
 
-  const { businessCode, phone, pin } = parsed.data;
+  const { businessCode, loginId, pin } = parsed.data;
 
   const org = await db.organization.findUnique({
     where: { slug: businessCode.trim().toLowerCase() },
@@ -31,20 +31,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid business code." }, { status: 401 });
   }
 
+  // Look up by the 4-digit login code first (the bulk-issued credential
+  // every store now has); fall back to phone for any pre-existing account
+  // that self-activated before this scheme, so it doesn't get locked out.
   const store = await db.store.findFirst({
-    where: { orgId: org.id, phone: phone.trim() },
+    where: { orgId: org.id, OR: [{ loginCode: loginId.trim() }, { phone: loginId.trim() }] },
   });
 
   if (!store || !store.pinHash) {
     return NextResponse.json(
-      { error: "No activated shop account found for that phone number." },
+      { error: "No activated shop account found for that Login Id." },
       { status: 401 }
     );
   }
 
   const valid = await verifyPassword(pin, store.pinHash);
   if (!valid) {
-    return NextResponse.json({ error: "Invalid phone number or PIN." }, { status: 401 });
+    return NextResponse.json({ error: "Invalid Login Id or Password." }, { status: 401 });
   }
 
   await db.store.update({ where: { id: store.id }, data: { lastLoginAt: new Date() } });

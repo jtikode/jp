@@ -67,7 +67,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <Card className="w-full max-w-sm">
         <h1 className="mb-1 text-2xl font-bold text-slate-900">Create your account</h1>
-        <p className="mb-6 text-slate-500">Set up your business on MedPoint</p>
+        <p className="mb-6 text-slate-500">Set up your business on J P Traders</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

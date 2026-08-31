@@ -9,7 +9,13 @@ import { t, type Lang } from "@/lib/i18n";
 
 const initialState = { ok: false, error: undefined };
 
-export function RequestProductForm({ lang }: { lang: Lang }) {
+export function RequestProductForm({
+  lang,
+  initialProductName,
+}: {
+  lang: Lang;
+  initialProductName?: string;
+}) {
   const [state, formAction, pending] = useActionState(requestProduct, initialState);
 
   return (
@@ -18,7 +24,7 @@ export function RequestProductForm({ lang }: { lang: Lang }) {
         <label className="mb-1 block text-sm font-medium text-slate-700">
           {t(lang, "shop_product_name")}
         </label>
-        <Input name="productName" required />
+        <Input name="productName" defaultValue={initialProductName} required />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">{t(lang, "shop_note_optional")}</label>

@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 
+// Temporary: this deployment only serves J P Traders, so the multi-tenant
+// Business Code field is hidden from the form and hardcoded here instead.
+// Revert to a visible field (see git history) once this app serves more
+// than one distributor.
+const BUSINESS_CODE = "jptraders";
+
 export default function ShopLoginPage() {
   const router = useRouter();
-  const [businessCode, setBusinessCode] = useState("");
-  const [phone, setPhone] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +28,7 @@ export default function ShopLoginPage() {
       const res = await fetch("/api/shop/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessCode, phone, pin }),
+        body: JSON.stringify({ businessCode: BUSINESS_CODE, loginId, pin }),
       });
       const data = await res.json();
 
@@ -42,45 +47,39 @@ export default function ShopLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <Card className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-bold text-slate-900">Shop</h1>
-        <p className="mb-6 text-slate-500">Sign in to order from your distributor</p>
+        <h1 className="mb-1 text-2xl font-bold text-slate-900">Shop Generic Medicines</h1>
+        <p className="mb-2 text-slate-500">Sign in to order from your distributor</p>
+        <p className="mb-6 text-xs font-medium text-blue-700">
+          India&apos;s first AI-based ordering platform, personalized to your store&apos;s buying history.
+        </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="businessCode" className="mb-1 block text-sm font-medium text-slate-700">
-              Business Code
+            <label htmlFor="loginId" className="mb-1 block text-sm font-medium text-slate-700">
+              Login Id
             </label>
             <Input
-              id="businessCode"
-              autoComplete="organization"
-              value={businessCode}
-              onChange={(e) => setBusinessCode(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="mb-1 block text-sm font-medium text-slate-700">
-              Phone Number
-            </label>
-            <Input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              id="loginId"
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="4-digit code"
+              autoComplete="username"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label htmlFor="pin" className="mb-1 block text-sm font-medium text-slate-700">
-              PIN
+              Password
             </label>
             <Input
               id="pin"
               type="password"
               inputMode="numeric"
+              maxLength={4}
               autoComplete="current-password"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
@@ -97,8 +96,8 @@ export default function ShopLoginPage() {
 
         <p className="mt-4 text-center text-sm text-slate-500">
           First time ordering online?{" "}
-          <a href="/shop/activate" className="font-medium text-slate-700 underline">
-            Activate your account
+          <a href="/shop/register" className="font-medium text-slate-700 underline">
+            Register Account
           </a>
         </p>
       </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
 import { subscribeToPush } from "@/actions/pushActions";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -66,9 +67,10 @@ export function NotificationOptIn({ lang }: { lang: Lang }) {
       type="button"
       onClick={handleEnable}
       disabled={status === "blocked"}
-      className="w-full rounded-xl border-2 border-blue-200 bg-blue-50 p-3 text-left text-sm font-semibold text-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
+      className="flex w-full items-center gap-2 rounded-xl border-2 border-blue-200 bg-blue-50 p-3 text-left text-sm font-semibold text-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
     >
-      🔔 {status === "blocked" ? t(lang, "shop_notifications_blocked") : t(lang, "shop_enable_notifications")}
+      <Bell size={18} strokeWidth={1.75} className="shrink-0" />
+      {status === "blocked" ? t(lang, "shop_notifications_blocked") : t(lang, "shop_enable_notifications")}
     </button>
   );
 }

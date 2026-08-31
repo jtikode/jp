@@ -22,7 +22,7 @@ export default async function StoreVisitPage({
 
   // Highest-value items first, so the salesman can open the visit already
   // knowing what this store usually orders before logging today's numbers.
-  const [regularItems, lastTelecallerLog, nearExpiryItems] = await Promise.all([
+  const [regularItems, lastTelecallerLog, nearExpiryItems, ledgerEntries] = await Promise.all([
     db.purchaseHistoryItem.groupBy({
       by: ["itemName", "unit"],
       where: { storeId },
@@ -35,13 +35,23 @@ export default async function StoreVisitPage({
       orderBy: { contactDate: "desc" },
     }),
     db.expiryItem.findMany({ orderBy: { expiryDate: "asc" }, take: 15 }),
+    db.ledgerEntry.findMany({ where: { storeId }, select: { outstandingAmount: true } }),
   ]);
+  const totalOutstanding = ledgerEntries.reduce((sum, e) => sum + Number(e.outstandingAmount), 0);
 
   return (
     <div className="mx-auto max-w-md space-y-4">
       <Card>
         <p className="font-semibold text-slate-900">{storeLabel(store.name, store.externalCode)}</p>
         <p className="text-sm text-slate-500">{store.address}</p>
+        {ledgerEntries.length > 0 && (
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <p className="text-xs font-medium text-slate-500">{t(lang, "total_outstanding")}</p>
+            <p className="text-lg font-bold text-red-700">
+              ₹{totalOutstanding.toLocaleString("en-IN")}
+            </p>
+          </div>
+        )}
       </Card>
 
       {lastTelecallerLog && (

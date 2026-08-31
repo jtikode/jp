@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { t, type Lang } from "@/lib/i18n";
 
 export interface WednesdayDealCard {
@@ -19,7 +20,8 @@ export function WednesdayDealsStrip({ deals, lang }: { deals: WednesdayDealCard[
   return (
     <div className="rounded-2xl border-2 border-purple-300 bg-purple-50 p-3">
       <p className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-purple-800">
-        🎉 {t(lang, "shop_wednesday_deals_heading")}
+        <Sparkles size={16} strokeWidth={2} />
+        {t(lang, "shop_wednesday_deals_heading")}
       </p>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {deals.map((d) => (

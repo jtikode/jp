@@ -203,12 +203,23 @@ model Store {
   latitude     Float?
   longitude    Float?
   createdAt    DateTime @default(now())
-  // Set once the retailer self-activates e-shop access (Business Code +
-  // their phone on file + a new PIN) — null means they haven't yet.
+  // 4-digit shop login code, admin-issued in bulk (see generateShopLoginCredentials)
+  // instead of requiring retailer self-registration — works even for the many
+  // stores with no phone on file. The shop login password is always this
+  // code's digits reversed, so no separate plaintext password needs storing.
+  loginCode    String?
+  // Set once the retailer has shop access — either via bulk-issued loginCode
+  // or (legacy) self-activation with Business Code + phone + PIN. Null means
+  // they haven't yet.
   pinHash      String?
   // Updated on every successful shop activation/login, so admin can see
   // which retailers are actually using the app vs. never activated/gone quiet.
   lastLoginAt  DateTime?
+  // Captured once, on the retailer's first shop login — the personal WhatsApp
+  // number of whoever is actually placing orders (not necessarily the shop's
+  // own registered `phone`), since one shared login can be used by different
+  // staff at the store. Null means we haven't asked yet.
+  orderGiverWhatsapp String?
 
   org              Organization @relation(fields: [orgId], references: [id])
   visits           Visit[]
@@ -222,6 +233,7 @@ model Store {
   pushSubscriptions PushSubscription[]
 
   @@unique([orgId, externalCode])
+  @@unique([orgId, loginCode])
   @@index([routeId])
   @@index([name])
   @@index([orgId])

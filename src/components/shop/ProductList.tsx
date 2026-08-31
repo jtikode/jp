@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { Flame, Sparkles, ClipboardList } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { SearchableSelect } from "@/components/shop/SearchableSelect";
 import { useCart } from "@/components/shop/CartProvider";
 import { QuantityStepper } from "@/components/shop/QuantityStepper";
 import { t, type Lang } from "@/lib/i18n";
@@ -22,6 +25,7 @@ export interface ProductListItem {
   // Present only when it's Wednesday and this product has an active deal
   // the store hasn't fully used up yet.
   deal?: { id: string; price: number; remainingQty: number } | null;
+  expiryDate?: string | null;
 }
 
 const LOW_STOCK_THRESHOLD = 3;
@@ -30,16 +34,20 @@ export function ProductList({
   products,
   lang,
   initialQuery = "",
+  autoFocus = false,
   companyFilter,
   hotOnly = false,
 }: {
   products: ProductListItem[];
   lang: Lang;
   initialQuery?: string;
+  autoFocus?: boolean;
   companyFilter?: string;
   hotOnly?: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
+  const [companyPick, setCompanyPick] = useState(companyFilter ?? "");
+  const [saltPick, setSaltPick] = useState("");
   const [expandedAlternatives, setExpandedAlternatives] = useState<Set<string>>(new Set());
   const { items, setQuantity } = useCart();
   const cartQuantities = useMemo(
@@ -47,16 +55,37 @@ export function ProductList({
     [items],
   );
 
+  const companies = useMemo(
+    () => [...new Set(products.map((p) => p.company).filter((c): c is string => !!c))].sort(),
+    [products],
+  );
+  const salts = useMemo(
+    () => [...new Set(products.map((p) => p.composition).filter((c): c is string => !!c))].sort(),
+    [products],
+  );
+
   const companyScoped = useMemo(() => {
     let scoped = products;
-    if (companyFilter) scoped = scoped.filter((p) => p.company === companyFilter);
+    if (companyPick) scoped = scoped.filter((p) => p.company === companyPick);
+    if (saltPick) scoped = scoped.filter((p) => p.composition === saltPick);
     if (hotOnly) scoped = scoped.filter((p) => p.hot);
     return scoped;
-  }, [products, companyFilter, hotOnly]);
+  }, [products, companyPick, saltPick, hotOnly]);
+
+  // Out-of-stock products are hidden from ordinary browsing/search — they
+  // only reappear when the retailer types the exact product name, so an
+  // exact lookup still confirms the item exists (as "Low Stock") without
+  // cluttering everyday browsing with things that can't be fulfilled.
+  const stockVisible = useMemo(() => {
+    const exactQuery = query.trim().toLowerCase();
+    return companyScoped.filter(
+      (p) => p.stock == null || p.stock > 0 || (exactQuery.length > 0 && p.name.trim().toLowerCase() === exactQuery),
+    );
+  }, [companyScoped, query]);
 
   const filtered = useMemo(
-    () => cascadingProductSearch(companyScoped, query, (p) => p.name, (p) => p.composition),
-    [companyScoped, query],
+    () => cascadingProductSearch(stockVisible, query, (p) => p.name, (p) => p.composition),
+    [stockVisible, query],
   );
 
   const alternativesByComposition = useMemo(() => {
@@ -86,7 +115,25 @@ export function ProductList({
         placeholder={t(lang, "shop_search_products")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        autoFocus={autoFocus}
       />
+
+      <div className="grid grid-cols-2 gap-2">
+        <SearchableSelect
+          value={companyPick}
+          onChange={setCompanyPick}
+          options={companies}
+          placeholder={t(lang, "shop_company")}
+          allLabel={t(lang, "shop_all_companies")}
+        />
+        <SearchableSelect
+          value={saltPick}
+          onChange={setSaltPick}
+          options={salts}
+          placeholder={t(lang, "shop_salt")}
+          allLabel={t(lang, "shop_all_salts")}
+        />
+      </div>
 
       <div className="flex flex-col gap-2">
         {filtered.map((p) => {
@@ -103,8 +150,9 @@ export function ProductList({
                 <p className="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900">
                   <span>{p.name}</span>
                   {p.hot && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
-                      🔥 {t(lang, "shop_hot_selling")}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
+                      <Flame size={12} strokeWidth={2} />
+                      {t(lang, "shop_hot_selling")}
                     </span>
                   )}
                 </p>
@@ -129,8 +177,9 @@ export function ProductList({
                     )
                   )}
                   {p.deal && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
-                      🎉 {t(lang, "shop_wednesday_deal")}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
+                      <Sparkles size={12} strokeWidth={2} />
+                      {t(lang, "shop_wednesday_deal")}
                     </span>
                   )}
                   {p.taxPercent != null && (
@@ -147,9 +196,14 @@ export function ProductList({
                       </span>
                     ))}
                 </p>
+                {p.expiryDate && (
+                  <p className="text-xs text-slate-400">
+                    {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                  </p>
+                )}
                 {p.scheme && (
                   <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                    {p.scheme}
+                    {t(lang, "shop_scheme")}: {p.scheme}
                   </span>
                 )}
                 {p.deal && (
@@ -216,7 +270,16 @@ export function ProductList({
           );
         })}
         {filtered.length === 0 && (
-          <p className="py-6 text-center text-slate-400">{t(lang, "shop_no_products_found")}</p>
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <p className="text-slate-400">{t(lang, "shop_no_products_found")}</p>
+            <Link
+              href={`/shop/request-product${query.trim() ? `?product=${encodeURIComponent(query.trim())}` : ""}`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-700 hover:bg-teal-100"
+            >
+              <ClipboardList size={16} strokeWidth={1.75} />
+              {t(lang, "shop_recommend_product")}
+            </Link>
+          </div>
         )}
       </div>
     </div>

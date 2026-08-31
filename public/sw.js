@@ -34,7 +34,8 @@ self.addEventListener("fetch", (event) => {
   const isShopPage =
     url.pathname.startsWith("/shop") &&
     !url.pathname.startsWith("/shop/login") &&
-    !url.pathname.startsWith("/shop/activate");
+    !url.pathname.startsWith("/shop/register") &&
+    !url.pathname.startsWith("/shop/who-is-ordering");
   const isStaticAsset = url.pathname.startsWith("/_next/static/");
   if (!isSalesmanPage && !isShopPage && !isStaticAsset) return;
 

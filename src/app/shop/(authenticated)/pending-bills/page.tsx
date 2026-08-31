@@ -23,6 +23,7 @@ export default async function ShopPendingBillsPage() {
         <h1 className="text-xl font-bold text-slate-900">{t(lang, "shop_pending_bills_heading")}</h1>
         <p className="mt-2 text-sm font-medium text-slate-500">{t(lang, "shop_total_outstanding")}</p>
         <p className="text-2xl font-bold text-red-700">₹{totalOutstanding.toLocaleString("en-IN")}</p>
+        <p className="mt-2 text-xs font-medium text-amber-700">{t(lang, "shop_outstanding_weekly_note")}</p>
       </Card>
 
       <Card className="overflow-x-auto">

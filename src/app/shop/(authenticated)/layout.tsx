@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { requireStoreSession } from "@/lib/retailerPermissions";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getLang } from "@/lib/langCookie";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { ShopBottomNav } from "@/components/shop/ShopBottomNav";
@@ -11,6 +13,19 @@ export const dynamic = "force-dynamic";
 export default async function ShopAuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const session = await requireStoreSession();
   const lang = await getLang();
+
+  // Asked exactly once, right after the very first login — everything under
+  // this layout is gated on it being answered first (see the standalone
+  // /shop/who-is-ordering page, which sits outside this layout so it can't
+  // trigger this same redirect back onto itself).
+  const db = getOrgScopedDb(session.orgId);
+  const store = await db.store.findUnique({
+    where: { id: session.storeId },
+    select: { orderGiverWhatsapp: true },
+  });
+  if (!store?.orderGiverWhatsapp) {
+    redirect("/shop/who-is-ordering");
+  }
 
   return (
     <CartProvider>

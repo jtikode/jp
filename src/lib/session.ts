@@ -16,6 +16,9 @@ const sessionOptions = {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax" as const,
+    // See retailerSession.ts — without this, mobile browsers can drop the
+    // session cookie far sooner than intended, logging staff out unexpectedly.
+    maxAge: 60 * 60 * 24 * 90,
   },
 };
 

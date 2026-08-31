@@ -1,22 +1,23 @@
 import sharp from "sharp";
 import { mkdirSync } from "fs";
 
-// Solid edge-to-edge background (required for Android adaptive/maskable icons —
-// the OS applies its own mask shape, so content must sit inside the ~80% safe zone).
-const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1d4ed8"/>
-  <text x="256" y="300" font-family="Arial, sans-serif" font-size="180" font-weight="700"
-        fill="white" text-anchor="middle">MP</text>
-</svg>
-`;
+// The source logo is an opaque JPEG (no alpha, light-grey background) — for
+// PWA/maskable icons Android requires a solid edge-to-edge background anyway
+// (it applies its own mask shape, so content must sit inside the ~80% safe
+// zone), so we composite the logo onto a plain white square rather than try
+// to matte out its background.
+const LOGO = "public/brand/jp-logo.jpg";
 
 mkdirSync("public/icons", { recursive: true });
 
 const sizes = [192, 512];
 for (const size of sizes) {
-  await sharp(Buffer.from(svg))
-    .resize(size, size)
+  const logoSize = Math.round(size * 0.72);
+  const logo = await sharp(LOGO).resize(logoSize, logoSize, { fit: "contain" }).toBuffer();
+  await sharp({
+    create: { width: size, height: size, channels: 3, background: "#ffffff" },
+  })
+    .composite([{ input: logo, gravity: "center" }])
     .png()
     .toFile(`public/icons/retailer-${size}.png`);
   console.log(`wrote public/icons/retailer-${size}.png`);

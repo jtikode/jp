@@ -1,6 +1,8 @@
 import { requireStoreSession } from "@/lib/retailerPermissions";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import { normalizeName } from "@/lib/normalizeName";
 import { Card } from "@/components/ui/Card";
 import { ProductList } from "@/components/shop/ProductList";
 import { getHotSellingProductIds } from "@/lib/hotSelling";
@@ -10,17 +12,30 @@ import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } fro
 export default async function ShopProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ company?: string; filter?: string; q?: string }>;
+  searchParams: Promise<{ company?: string; filter?: string; q?: string; focus?: string }>;
 }) {
   const session = await requireStoreSession();
   const lang = await getLang();
-  const { company, filter, q } = await searchParams;
+  const { company, filter, q, focus } = await searchParams;
 
-  const [catalog, hotIds, deals] = await Promise.all([
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const db = getOrgScopedDb(session.orgId);
+  const [catalog, hotIds, deals, expiryItems] = await Promise.all([
     getActiveCatalog(session.orgId),
     getHotSellingProductIds(session.orgId),
     isWednesdayToday() ? getActiveWednesdayDeals(session.orgId) : Promise.resolve([]),
+    db.expiryItem.findMany({
+      where: { expiryDate: { gte: today } },
+      orderBy: { expiryDate: "asc" },
+    }),
   ]);
+  const expiryByNormalizedName = new Map<string, string>();
+  for (const e of expiryItems) {
+    const key = normalizeName(e.itemName);
+    if (!expiryByNormalizedName.has(key)) expiryByNormalizedName.set(key, e.expiryDate.toISOString());
+  }
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, deals);
   const dealByProductId = new Map(
     deals
@@ -43,12 +58,14 @@ export default async function ShopProductsPage({
         <ProductList
           lang={lang}
           initialQuery={q}
+          autoFocus={focus === "search"}
           companyFilter={company}
           hotOnly={filter === "hot"}
           products={products.map((p) => ({
             ...p,
             hot: hotIds.has(p.id),
             deal: dealByProductId.get(p.id) ?? null,
+            expiryDate: expiryByNormalizedName.get(normalizeName(p.name)) ?? null,
           }))}
         />
       </Card>

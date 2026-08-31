@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Clock } from "lucide-react";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
@@ -41,8 +42,9 @@ export default async function ShopOffersPage() {
                   unoptimized
                 />
                 {countdown && (
-                  <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
-                    ⏰ Ends in {countdown}
+                  <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
+                    <Clock size={12} strokeWidth={2} />
+                    Ends in {countdown}
                   </span>
                 )}
               </div>

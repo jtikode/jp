@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MedPoint",
+  title: "J P Traders",
   description: "Field terminal, telecalling, warehouse and admin operations hub for pharma distributors.",
 };
 

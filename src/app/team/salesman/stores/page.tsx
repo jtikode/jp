@@ -21,6 +21,15 @@ export default async function SalesmanStoresPage() {
     orderBy: { name: "asc" },
   });
 
+  const outstandingByStore = await db.ledgerEntry.groupBy({
+    by: ["storeId"],
+    where: { storeId: { in: stores.map((s) => s.id) } },
+    _sum: { outstandingAmount: true },
+  });
+  const outstandingMap = new Map(
+    outstandingByStore.map((o) => [o.storeId, Number(o._sum.outstandingAmount ?? 0)]),
+  );
+
   return (
     <div className="mx-auto max-w-md">
       <h1 className="mb-4 text-xl font-bold text-slate-900">{t(lang, "chemist_list")}</h1>
@@ -34,6 +43,7 @@ export default async function SalesmanStoresPage() {
           routeName: s.route?.name,
           latitude: s.latitude,
           longitude: s.longitude,
+          outstandingAmount: outstandingMap.get(s.id) ?? 0,
         }))}
       />
     </div>

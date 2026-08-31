@@ -1,6 +1,6 @@
 {
-  "name": "MedPoint Retailer",
-  "short_name": "MedPoint",
+  "name": "J P Traders Retailer",
+  "short_name": "JP Traders",
   "description": "Order medicines, track outstanding bills, and get flash-deal alerts from your distributor.",
   "start_url": "/shop/home",
   "scope": "/shop/",
