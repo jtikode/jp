@@ -57,20 +57,22 @@ export async function sendPushToStore(
 }
 
 // Broadcasts to every subscribed retailer across the whole org — used for
-// org-wide announcements like a time-boxed flash deal, as opposed to
-// sendPushToStore's single-retailer order-status updates.
+// org-wide announcements like a time-boxed flash deal or an admin-composed
+// notice, as opposed to sendPushToStore's single-retailer order-status
+// updates. Returns delivery counts so the sender can confirm reach.
 export async function sendPushToOrg(
   orgId: string,
   payload: { title: string; body: string; url?: string },
-): Promise<void> {
-  if (!isWebPushConfigured()) return;
+): Promise<{ sentCount: number; storeCount: number }> {
+  if (!isWebPushConfigured()) return { sentCount: 0, storeCount: 0 };
   ensureConfigured();
 
   const db = getOrgScopedDb(orgId);
   const subscriptions = await db.pushSubscription.findMany({});
-  if (subscriptions.length === 0) return;
+  if (subscriptions.length === 0) return { sentCount: 0, storeCount: 0 };
 
   const body = JSON.stringify(payload);
+  let sentCount = 0;
 
   await Promise.all(
     subscriptions.map(async (sub) => {
@@ -79,6 +81,7 @@ export async function sendPushToOrg(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           body,
         );
+        sentCount += 1;
       } catch (err) {
         const statusCode = (err as { statusCode?: number }).statusCode;
         if (statusCode === 404 || statusCode === 410) {
@@ -87,4 +90,7 @@ export async function sendPushToOrg(
       }
     }),
   );
+
+  const storeCount = new Set(subscriptions.map((s) => s.storeId)).size;
+  return { sentCount, storeCount };
 }

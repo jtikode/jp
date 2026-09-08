@@ -21,8 +21,10 @@ import { Card } from "@/components/ui/Card";
 import { BannerCarousel } from "@/components/shop/BannerCarousel";
 import { NotificationOptIn } from "@/components/shop/NotificationOptIn";
 import { ShopSearchBar } from "@/components/shop/ShopSearchBar";
+import { OneTapReorderCard } from "@/components/shop/OneTapReorderCard";
 import { WednesdayDealsStrip } from "@/components/shop/WednesdayDealsStrip";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
+import { getOneTapReorderData } from "@/actions/orderActions";
 
 const MENU_TILES = [
   { href: "/shop/quick-check", key: "shop_menu_quick_check", icon: ScanSearch, bg: "bg-cyan-50", fg: "text-cyan-600" },
@@ -47,7 +49,7 @@ export default async function ShopHomePage() {
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 
-  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult] = await Promise.all([
+  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, oneTapReorder] = await Promise.all([
     db.shopBanner.findMany({
       where: { placement: "HERO", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
@@ -62,6 +64,7 @@ export default async function ShopHomePage() {
       where: { storeId: session.storeId, status: { not: "CANCELLED" }, createdAt: { gte: startOfYear } },
       _sum: { totalAmount: true },
     }),
+    getOneTapReorderData(),
   ]);
 
   const yearSpend = Number(yearSpendResult._sum.totalAmount ?? 0);
@@ -87,6 +90,8 @@ export default async function ShopHomePage() {
       <p className="text-center text-xs font-medium text-blue-700">{t(lang, "shop_ai_tagline")}</p>
 
       <ShopSearchBar lang={lang} />
+
+      <OneTapReorderCard data={oneTapReorder} lang={lang} />
 
       <WednesdayDealsStrip
         lang={lang}

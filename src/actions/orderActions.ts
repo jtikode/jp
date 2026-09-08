@@ -163,26 +163,21 @@ export interface ReorderLine {
   quantity: number;
 }
 
-export async function getReorderLines(
-  orderId: string,
-): Promise<{ ok: boolean; error?: string; lines?: ReorderLine[]; unavailable?: string[] }> {
-  const session = await assertStoreSession();
-  const db = getOrgScopedDb(session.orgId);
-
-  const order = await db.order.findFirst({
-    where: { id: orderId, storeId: session.storeId },
-    include: { items: true },
-  });
-  if (!order) return { ok: false, error: "Order not found." };
-
+// Re-prices an order's items from the current catalog, never the order's old
+// snapshot — the same rule placeOrder uses when the cart is actually
+// submitted. Shared by the per-order Reorder button and the home page's
+// one-tap reorder.
+async function buildReorderLines(
+  orgId: string,
+  order: { items: Array<{ productId: string; productName: string; quantity: number }> },
+): Promise<{ lines: ReorderLine[]; unavailable: string[] }> {
+  const db = getOrgScopedDb(orgId);
   const productIds = order.items.map((i) => i.productId);
   const products = await db.product.findMany({ where: { id: { in: productIds }, active: true } });
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   const lines: ReorderLine[] = [];
   const unavailable: string[] = [];
-  // Re-priced from the current catalog, never the order's old snapshot —
-  // the same rule placeOrder uses when the cart is actually submitted.
   for (const item of order.items) {
     const product = productMap.get(item.productId);
     if (!product) {
@@ -196,12 +191,67 @@ export async function getReorderLines(
       quantity: item.quantity,
     });
   }
+  return { lines, unavailable };
+}
+
+export async function getReorderLines(
+  orderId: string,
+): Promise<{ ok: boolean; error?: string; lines?: ReorderLine[]; unavailable?: string[] }> {
+  const session = await assertStoreSession();
+  const db = getOrgScopedDb(session.orgId);
+
+  const order = await db.order.findFirst({
+    where: { id: orderId, storeId: session.storeId },
+    include: { items: true },
+  });
+  if (!order) return { ok: false, error: "Order not found." };
+
+  const { lines, unavailable } = await buildReorderLines(session.orgId, order);
 
   if (lines.length === 0) {
     return { ok: false, error: "None of the items in this order are available anymore." };
   }
 
   return { ok: true, lines, unavailable };
+}
+
+export interface OneTapReorderData {
+  source: "last_order" | "frequent_items" | "none";
+  orderDate?: string;
+  lines: ReorderLine[];
+  unavailable: string[];
+}
+
+// Powers the shop home page's one-tap Reorder card: the retailer's own last
+// order if they've placed one through the app before, falling back to their
+// frequently-bought items (own order history + admin-uploaded purchase
+// history) for a store that's never ordered through the app yet.
+export async function getOneTapReorderData(): Promise<OneTapReorderData> {
+  const session = await assertStoreSession();
+  const db = getOrgScopedDb(session.orgId);
+
+  const lastOrder = await db.order.findFirst({
+    where: { storeId: session.storeId },
+    orderBy: { createdAt: "desc" },
+    include: { items: true },
+  });
+
+  if (lastOrder) {
+    const { lines, unavailable } = await buildReorderLines(session.orgId, lastOrder);
+    if (lines.length > 0) {
+      return { source: "last_order", orderDate: lastOrder.createdAt.toISOString(), lines, unavailable };
+    }
+  }
+
+  const frequentItems = await getFastOrderItems();
+  const lines: ReorderLine[] = frequentItems.slice(0, 10).map((item) => ({
+    productId: item.productId,
+    name: item.name,
+    unitPrice: item.unitPrice,
+    quantity: Math.max(1, item.usualQuantity),
+  }));
+
+  return { source: lines.length > 0 ? "frequent_items" : "none", lines, unavailable: [] };
 }
 
 export interface FastOrderItem {

@@ -288,6 +288,14 @@ export const translations = {
     en: "No longer available and skipped",
     mr: "आता उपलब्ध नाही, वगळले",
   },
+  shop_onetap_reorder_heading: { en: "One-Tap Reorder", mr: "एका क्लिकवर पुन्हा ऑर्डर" },
+  shop_onetap_reorder_last_order: { en: "Same as your last order", mr: "तुमच्या शेवटच्या ऑर्डरप्रमाणे" },
+  shop_onetap_reorder_frequent: {
+    en: "Based on what you usually buy",
+    mr: "तुम्ही नेहमी घेता त्या वस्तूंनुसार",
+  },
+  shop_onetap_reorder_items: { en: "items", mr: "वस्तू" },
+  shop_onetap_reorder_button: { en: "Reorder Now", mr: "आत्ता पुन्हा ऑर्डर करा" },
   shop_enable_notifications: { en: "Enable order updates", mr: "ऑर्डर सूचना सुरू करा" },
   shop_notifications_enabled: { en: "Order updates enabled", mr: "ऑर्डर सूचना सुरू आहेत" },
   shop_notifications_blocked: {

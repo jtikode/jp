@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { BrandBar } from "@/components/BrandBar";
 import { BrandFooter } from "@/components/BrandFooter";
@@ -42,6 +43,9 @@ export default function RootLayout({
         <div className="flex flex-1 flex-col">{children}</div>
         <BrandFooter />
       </body>
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+      )}
     </html>
   );
 }

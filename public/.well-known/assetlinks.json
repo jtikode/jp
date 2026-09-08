@@ -1,10 +1,8 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "REPLACE_WITH_YOUR_PACKAGE_NAME",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_YOUR_KEYSTORE_SHA256_FINGERPRINT"]
-    }
-  }
-]
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "in.jpkop.app.twa",
+        "sha256_cert_fingerprints": ["BC:08:88:75:D9:3C:FD:38:1F:B2:DF:4C:7B:20:9A:A3:80:BA:0B:DA:3F:D8:A0:5D:0A:88:67:EF:AB:7E:CA:D6"]
+      }
+    }]

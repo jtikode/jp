@@ -32,6 +32,7 @@ const TENANT_MODELS = new Set([
   "loyaltyTier",
   "requestedProduct",
   "pushSubscription",
+  "scheduledNotification",
 ]);
 
 const WHERE_SCOPED_OPERATIONS = new Set([

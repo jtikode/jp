@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { uploadPhoto } from "@/lib/blob";
-import { sendPushToOrg } from "@/lib/webPush";
+import { sendPushToOrg, isWebPushConfigured } from "@/lib/webPush";
 import type { BannerPlacement } from "@/generated/prisma/client";
 
 export async function createBanner(
@@ -56,6 +56,62 @@ export async function createBanner(
   }
 
   return { ok: true };
+}
+
+export interface SendNotificationState {
+  ok: boolean;
+  error?: string;
+  sentCount?: number;
+  storeCount?: number;
+  scheduled?: boolean;
+  scheduledAt?: string;
+}
+
+export async function sendAnnouncementNotification(
+  _prevState: SendNotificationState | null,
+  formData: FormData,
+): Promise<SendNotificationState> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const title = (formData.get("title") as string | null)?.trim();
+  const body = (formData.get("body") as string | null)?.trim();
+  const url = (formData.get("url") as string | null)?.trim() || undefined;
+  const sendAtRaw = (formData.get("sendAt") as string | null)?.trim();
+
+  if (!title || !body) {
+    return { ok: false, error: "Title and message are both required." };
+  }
+  if (!isWebPushConfigured()) {
+    return { ok: false, error: "Push notifications aren't configured on this server." };
+  }
+
+  // No date/time given, or one already in the past — send immediately, same
+  // as before scheduling existed.
+  const sendAt = sendAtRaw ? new Date(sendAtRaw) : undefined;
+  if (!sendAt || sendAt.getTime() <= Date.now()) {
+    const { sentCount, storeCount } = await sendPushToOrg(session.orgId, { title, body, url });
+    return { ok: true, sentCount, storeCount };
+  }
+
+  await db.scheduledNotification.create({
+    data: { orgId: session.orgId, title, body, url, scheduledAt: sendAt, createdById: session.userId },
+  });
+
+  revalidatePath("/team/admin/banners");
+  return { ok: true, scheduled: true, scheduledAt: sendAt.toISOString() };
+}
+
+export async function cancelScheduledNotification(id: string): Promise<void> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  await db.scheduledNotification.updateMany({
+    where: { id, status: "PENDING" },
+    data: { status: "CANCELLED" },
+  });
+
+  revalidatePath("/team/admin/banners");
 }
 
 export async function toggleBannerActive(bannerId: string, active: boolean): Promise<void> {

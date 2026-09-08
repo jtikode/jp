@@ -104,6 +104,7 @@ model Organization {
   loyaltyTiers     LoyaltyTier[]
   requestedProducts RequestedProduct[]
   pushSubscriptions PushSubscription[]
+  scheduledNotifications ScheduledNotification[]
 }
 
 model User {
@@ -127,6 +128,7 @@ model User {
   importBatches    ImportBatch[]
   workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
   assignedTasks    Task[]
+  scheduledNotifications ScheduledNotification[]
 
   @@unique([orgId, username])
   @@index([role])
@@ -676,6 +678,38 @@ model ShopBanner {
   org Organization @relation(fields: [orgId], references: [id])
 
   @@index([orgId])
+}
+
+enum ScheduledNotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+// An admin-composed push notification to send at a future time. The
+// scheduler (src/lib/notificationScheduler.ts, started once from
+// instrumentation.ts) polls for PENDING rows whose scheduledAt has passed —
+// there's no other job runner in this app, so this table is the only queue.
+model ScheduledNotification {
+  id          String                       @id @default(cuid())
+  orgId       String
+  title       String
+  body        String
+  url         String?
+  scheduledAt DateTime
+  status      ScheduledNotificationStatus  @default(PENDING)
+  sentAt      DateTime?
+  sentCount   Int?
+  storeCount  Int?
+  createdById String
+  createdAt   DateTime                     @default(now())
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  createdBy User         @relation(fields: [createdById], references: [id])
+
+  @@index([orgId])
+  @@index([status, scheduledAt])
 }
 
 // Admin-configured reward tiers shown on the retailer shop's home dashboard

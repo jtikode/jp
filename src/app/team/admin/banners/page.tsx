@@ -3,18 +3,52 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { AddBannerForm } from "@/components/admin/AddBannerForm";
+import { SendNotificationForm } from "@/components/admin/SendNotificationForm";
+import { ScheduledNotificationsList } from "@/components/admin/ScheduledNotificationsList";
 import { toggleBannerActive } from "@/actions/bannerActions";
 
 export default async function AdminBannersPage() {
   const session = await requireRole(["ADMIN"]);
   const db = getOrgScopedDb(session.orgId);
 
-  const banners = await db.shopBanner.findMany({
-    orderBy: [{ placement: "asc" }, { sortOrder: "asc" }],
-  });
+  const [banners, scheduledNotifications] = await Promise.all([
+    db.shopBanner.findMany({
+      orderBy: [{ placement: "asc" }, { sortOrder: "asc" }],
+    }),
+    db.scheduledNotification.findMany({
+      orderBy: { scheduledAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Send Notification</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Sends an instant push notification to every retailer who has notifications enabled on the
+          shop app — for one-off announcements, unlike the automatic order-status pushes.
+        </p>
+        <SendNotificationForm />
+      </Card>
+
+      <Card>
+        <h2 className="mb-4 text-lg font-bold text-slate-900">
+          Scheduled Notifications ({scheduledNotifications.length})
+        </h2>
+        <ScheduledNotificationsList
+          notifications={scheduledNotifications.map((n) => ({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            scheduledAt: n.scheduledAt.toISOString(),
+            status: n.status,
+            sentCount: n.sentCount,
+            storeCount: n.storeCount,
+          }))}
+        />
+      </Card>
+
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-900">Add banner</h2>
         <AddBannerForm />
