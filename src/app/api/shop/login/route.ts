@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth";
 import { getRetailerSession } from "@/lib/retailerSession";
+import { getClientIp } from "@/lib/requestInfo";
 
 const loginSchema = z.object({
   businessCode: z.string().min(1),
@@ -51,6 +52,16 @@ export async function POST(request: Request) {
   }
 
   await db.store.update({ where: { id: store.id }, data: { lastLoginAt: new Date() } });
+  await db.loginEvent.create({
+    data: {
+      orgId: org.id,
+      accountType: "RETAILER",
+      storeId: store.id,
+      displayName: store.name,
+      ipAddress: getClientIp(request),
+      userAgent: request.headers.get("user-agent"),
+    },
+  });
 
   const session = await getRetailerSession();
   session.storeId = store.id;

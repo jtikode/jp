@@ -1,5 +1,19 @@
-const CACHE_NAME = "jptraders-offline-v2";
+const CACHE_NAME = "jptraders-offline-v3";
 const OFFLINE_URL = "/offline.html";
+
+// Catalog/item-listing pages: what a retailer actually wants fast is the
+// product list, not the freshest-possible price. Serve the copy already on
+// the phone instantly, then refresh it in the background for next time
+// (stale-while-revalidate) instead of making them wait on the network first.
+const CATALOG_PATHS = [
+  "/shop/home",
+  "/shop/products",
+  "/shop/fast-order",
+  "/shop/quick-check",
+  "/shop/lowest-rate",
+  "/shop/clearance",
+  "/shop/offers",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL)));
@@ -36,8 +50,14 @@ self.addEventListener("fetch", (event) => {
     !url.pathname.startsWith("/shop/login") &&
     !url.pathname.startsWith("/shop/register") &&
     !url.pathname.startsWith("/shop/who-is-ordering");
+  const isCatalogPage = CATALOG_PATHS.some((p) => url.pathname.startsWith(p));
   const isStaticAsset = url.pathname.startsWith("/_next/static/");
   if (!isSalesmanPage && !isShopPage && !isStaticAsset) return;
+
+  if (isCatalogPage) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
 
   event.respondWith(
     isSalesmanPage || isShopPage ? networkFirstThenCache(request) : cacheFirstThenNetwork(request),
@@ -59,6 +79,30 @@ async function networkFirstThenCache(request) {
     if (request.mode === "navigate") return cache.match(OFFLINE_URL);
     throw err;
   }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const networkFetch = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    // Don't block the response on the network — that's the whole point.
+    // Refresh the cache for next time, but let this navigation resolve now.
+    networkFetch.catch(() => {});
+    return cached;
+  }
+
+  const fresh = await networkFetch;
+  if (fresh) return fresh;
+  if (request.mode === "navigate") return cache.match(OFFLINE_URL);
+  return Response.error();
 }
 
 async function cacheFirstThenNetwork(request) {

@@ -151,7 +151,9 @@ export async function placeOrder(
       unitPrice: l.unitPrice,
       lineTotal: l.lineTotal,
     })),
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error("sendOrderNotificationEmail failed for order", order.id, err);
+  });
 
   return { ok: true, orderId: order.id };
 }

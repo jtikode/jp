@@ -252,9 +252,19 @@ export function ProductList({
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-slate-900">{alt.name}</p>
                           <p className="text-xs text-slate-500">{alt.company ?? ""}</p>
-                          <span className="text-xs font-medium text-blue-700">
-                            ₹{alt.price.toLocaleString("en-IN")}
-                          </span>
+                          <p className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-medium text-blue-700">
+                              ₹{alt.price.toLocaleString("en-IN")}
+                            </span>
+                            {alt.stock != null &&
+                              (alt.stock < LOW_STOCK_THRESHOLD ? (
+                                <span className="text-xs font-semibold text-red-600">{t(lang, "shop_low_stock")}</span>
+                              ) : (
+                                <span className="text-xs font-medium text-green-700">
+                                  {t(lang, "shop_in_stock")}: {alt.stock}
+                                </span>
+                              ))}
+                          </p>
                         </div>
                         <QuantityStepper
                           quantity={altQuantity}

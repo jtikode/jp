@@ -47,10 +47,15 @@ export async function sendOrderNotificationEmail(params: {
     </div>
   `;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
     subject: `New order — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
+  // The Resend SDK resolves (never rejects) on an API-level failure like a
+  // sandboxed account or unverified domain — without this throw, a caller's
+  // try/catch around this call would never fire and the failure would be
+  // invisible.
+  if (error) throw new Error(`Resend API error: ${error.name} — ${error.message}`);
 }

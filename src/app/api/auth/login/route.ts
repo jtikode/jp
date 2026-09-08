@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth";
 import { getSession } from "@/lib/session";
 import { ROLE_HOME } from "@/lib/permissions";
+import { getClientIp } from "@/lib/requestInfo";
 
 const loginSchema = z.object({
   businessCode: z.string().min(1),
@@ -44,6 +45,17 @@ export async function POST(request: Request) {
   if (!valid) {
     return NextResponse.json({ error: "Invalid username or password." }, { status: 401 });
   }
+
+  await db.loginEvent.create({
+    data: {
+      orgId: org.id,
+      accountType: "STAFF",
+      userId: user.id,
+      displayName: user.name,
+      ipAddress: getClientIp(request),
+      userAgent: request.headers.get("user-agent"),
+    },
+  });
 
   const session = await getSession();
   session.userId = user.id;

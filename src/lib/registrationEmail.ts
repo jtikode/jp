@@ -41,10 +41,15 @@ export async function sendRegistrationEmail(details: ShopRegistrationDetails): P
     </div>
   `;
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
     subject: `New retailer registration — ${details.medicalName}`,
     html,
   });
+  // The Resend SDK resolves (never rejects) on an API-level failure like a
+  // sandboxed account or unverified domain — without this throw, the caller's
+  // try/catch would never fire, and a registration would report success to
+  // the retailer while the only record of it (this email) silently vanished.
+  if (error) throw new Error(`Resend API error: ${error.name} — ${error.message}`);
 }

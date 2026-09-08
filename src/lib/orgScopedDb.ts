@@ -33,6 +33,7 @@ const TENANT_MODELS = new Set([
   "requestedProduct",
   "pushSubscription",
   "scheduledNotification",
+  "loginEvent",
 ]);
 
 const WHERE_SCOPED_OPERATIONS = new Set([

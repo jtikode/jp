@@ -105,6 +105,7 @@ model Organization {
   requestedProducts RequestedProduct[]
   pushSubscriptions PushSubscription[]
   scheduledNotifications ScheduledNotification[]
+  loginEvents      LoginEvent[]
 }
 
 model User {
@@ -129,6 +130,7 @@ model User {
   workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
   assignedTasks    Task[]
   scheduledNotifications ScheduledNotification[]
+  loginEvents      LoginEvent[]
 
   @@unique([orgId, username])
   @@index([role])
@@ -233,6 +235,7 @@ model Store {
   orders           Order[]
   requestedProducts RequestedProduct[]
   pushSubscriptions PushSubscription[]
+  loginEvents      LoginEvent[]
 
   @@unique([orgId, externalCode])
   @@unique([orgId, loginCode])
@@ -710,6 +713,35 @@ model ScheduledNotification {
 
   @@index([orgId])
   @@index([status, scheduledAt])
+}
+
+enum LoginAccountType {
+  STAFF
+  RETAILER
+}
+
+// One row per successful sign-in, for both the staff team app and the
+// retailer shop — who logged in, from what IP, and when. `displayName` is
+// captured at login time (not joined live) so the history stays readable
+// even if a user/store is later renamed or removed.
+model LoginEvent {
+  id          String           @id @default(cuid())
+  orgId       String
+  accountType LoginAccountType
+  userId      String?
+  storeId     String?
+  displayName String
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime         @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  user  User?        @relation(fields: [userId], references: [id])
+  store Store?       @relation(fields: [storeId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@index([userId])
+  @@index([storeId])
 }
 
 // Admin-configured reward tiers shown on the retailer shop's home dashboard

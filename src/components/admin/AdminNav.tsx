@@ -25,6 +25,7 @@ const GROUPS: NavGroup[] = [
       { href: "/team/admin/calendar", label: "Calendar" },
       { href: "/team/admin/intelligence", label: "Intelligence" },
       { href: "/team/admin/outstanding", label: "Outstanding" },
+      { href: "/team/admin/login-activity", label: "Login Activity" },
       { href: "/team/admin/settings", label: "Settings" },
     ],
   },
