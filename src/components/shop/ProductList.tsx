@@ -11,6 +11,8 @@ import { t, type Lang } from "@/lib/i18n";
 import { fetchProductsPage } from "@/actions/catalogSearchActions";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
 import type { SearchProductItem } from "@/lib/productSearch";
+import { getCatalogSnapshot } from "@/lib/offlineCatalog";
+import { filterOfflineCatalog } from "@/lib/offlineProductFilter";
 
 export type ProductListItem = SearchProductItem;
 
@@ -45,6 +47,12 @@ export function ProductList({
   const [items, setItems] = useState<ProductListItem[]>(initialProducts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
+  const [companyOptions, setCompanyOptions] = useState(companies);
+  const [saltOptions, setSaltOptions] = useState(salts);
+  // True once a search actually had to fall back to the on-device catalog
+  // snapshot (no signal, or the server action failed) — shown as a small
+  // note so the retailer knows prices/stock might be a few hours stale.
+  const [usingOfflineSnapshot, setUsingOfflineSnapshot] = useState(false);
   const { items: cartItems, setQuantity } = useCart();
   const cartQuantities = useMemo(
     () => new Map(cartItems.map((i) => [i.productId, i.quantity])),
@@ -61,17 +69,50 @@ export function ProductList({
       const myRequestId = ++requestIdRef.current;
       setLoading(true);
       try {
-        const result = await fetchProductsPage({
-          query: filters.query || undefined,
-          company: filters.company || undefined,
-          salt: filters.salt || undefined,
-          hotOnly,
-          offset,
-          limit: PRODUCT_PAGE_SIZE,
-        });
+        const alreadyOffline = typeof navigator !== "undefined" && !navigator.onLine;
+        let result: { products: ProductListItem[]; hasMore: boolean; companies?: string[]; salts?: string[] } | null = null;
+
+        if (!alreadyOffline) {
+          try {
+            result = await fetchProductsPage({
+              query: filters.query || undefined,
+              company: filters.company || undefined,
+              salt: filters.salt || undefined,
+              hotOnly,
+              offset,
+              limit: PRODUCT_PAGE_SIZE,
+            });
+            if (myRequestId === requestIdRef.current) setUsingOfflineSnapshot(false);
+          } catch {
+            // Server action unreachable — most likely no signal. Fall
+            // through to the on-device snapshot below.
+          }
+        }
+
+        if (!result) {
+          try {
+            const snapshot = await getCatalogSnapshot();
+            result = filterOfflineCatalog(snapshot, {
+              query: filters.query,
+              company: filters.company,
+              salt: filters.salt,
+              offset,
+              limit: PRODUCT_PAGE_SIZE,
+            });
+          } catch {
+            // IndexedDB unavailable (rare — some private-browsing modes).
+            // No offline fallback possible; show an empty result rather
+            // than crash the search.
+            result = { products: [], hasMore: false };
+          }
+          if (myRequestId === requestIdRef.current) setUsingOfflineSnapshot(true);
+        }
+
         if (myRequestId !== requestIdRef.current) return;
         setItems((prev) => (append ? [...prev, ...result.products] : result.products));
         setHasMore(result.hasMore);
+        if (result.companies) setCompanyOptions(result.companies);
+        if (result.salts) setSaltOptions(result.salts);
       } finally {
         if (myRequestId === requestIdRef.current) setLoading(false);
       }
@@ -136,18 +177,24 @@ export function ProductList({
         <SearchableSelect
           value={companyPick}
           onChange={setCompanyPick}
-          options={companies}
+          options={companyOptions}
           placeholder={t(lang, "shop_company")}
           allLabel={t(lang, "shop_all_companies")}
         />
         <SearchableSelect
           value={saltPick}
           onChange={setSaltPick}
-          options={salts}
+          options={saltOptions}
           placeholder={t(lang, "shop_salt")}
           allLabel={t(lang, "shop_all_salts")}
         />
       </div>
+
+      {usingOfflineSnapshot && (
+        <p className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+          {t(lang, "shop_offline_catalog_notice")}
+        </p>
+      )}
 
       <div className="flex flex-col gap-2">
         {items.map((p) => {

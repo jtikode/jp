@@ -282,6 +282,10 @@ export const translations = {
   shop_expiry: { en: "Expiry", mr: "एक्सपायरी" },
   shop_show_alternatives: { en: "Show alternatives", mr: "पर्याय दाखवा" },
   shop_hide_alternatives: { en: "Hide alternatives", mr: "पर्याय लपवा" },
+  shop_offline_catalog_notice: {
+    en: "You're offline — showing your device's saved catalog. Prices and stock may be a few hours old.",
+    mr: "तुम्ही ऑफलाइन आहात — डिव्हाइसवर साठवलेला कॅटलॉग दाखवत आहोत. किंमत/साठा काही तास जुना असू शकतो.",
+  },
   shop_reorder: { en: "Reorder", mr: "पुन्हा ऑर्डर करा" },
   shop_reordering: { en: "Adding to cart...", mr: "कार्टमध्ये टाकत आहे..." },
   shop_reorder_unavailable: {

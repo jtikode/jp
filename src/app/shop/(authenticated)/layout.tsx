@@ -7,6 +7,7 @@ import { ShopBottomNav } from "@/components/shop/ShopBottomNav";
 import { CartProvider } from "@/components/shop/CartProvider";
 import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
+import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
         <OfflineBanner lang={lang} />
         <ShopHeader storeName={session.storeName} lang={lang} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">
+          <OfflineCatalogSync />
           <PendingOrdersSync lang={lang} />
           {children}
         </main>
