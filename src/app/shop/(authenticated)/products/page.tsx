@@ -1,13 +1,9 @@
 import { requireStoreSession } from "@/lib/retailerPermissions";
-import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
-import { normalizeName } from "@/lib/normalizeName";
 import { Card } from "@/components/ui/Card";
 import { ProductList } from "@/components/shop/ProductList";
-import { getHotSellingProductIds } from "@/lib/hotSelling";
-import { getActiveCatalog } from "@/lib/productCatalog";
-import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
+import { searchProductCatalog, PRODUCT_PAGE_SIZE } from "@/lib/productSearch";
 
 export default async function ShopProductsPage({
   searchParams,
@@ -17,35 +13,15 @@ export default async function ShopProductsPage({
   const session = await requireStoreSession();
   const lang = await getLang();
   const { company, filter, q, focus } = await searchParams;
+  const hotOnly = filter === "hot";
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const db = getOrgScopedDb(session.orgId);
-  const [catalog, hotIds, deals, expiryItems] = await Promise.all([
-    getActiveCatalog(session.orgId),
-    getHotSellingProductIds(session.orgId),
-    isWednesdayToday() ? getActiveWednesdayDeals(session.orgId) : Promise.resolve([]),
-    db.expiryItem.findMany({
-      where: { expiryDate: { gte: today } },
-      orderBy: { expiryDate: "asc" },
-    }),
-  ]);
-  const expiryByNormalizedName = new Map<string, string>();
-  for (const e of expiryItems) {
-    const key = normalizeName(e.itemName);
-    if (!expiryByNormalizedName.has(key)) expiryByNormalizedName.set(key, e.expiryDate.toISOString());
-  }
-  const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, deals);
-  const dealByProductId = new Map(
-    deals
-      .filter((d) => (remainingByDealId.get(d.id) ?? 0) > 0)
-      .map((d) => [d.productId, { id: d.id, price: d.dealPrice, remainingQty: remainingByDealId.get(d.id)! }]),
-  );
-
-  const products = [...catalog].sort(
-    (a, b) => (a.company ?? "").localeCompare(b.company ?? "") || a.name.localeCompare(b.name),
-  );
+  const result = await searchProductCatalog(session.orgId, session.storeId, {
+    query: q,
+    company,
+    hotOnly,
+    offset: 0,
+    limit: PRODUCT_PAGE_SIZE,
+  });
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -60,13 +36,11 @@ export default async function ShopProductsPage({
           initialQuery={q}
           autoFocus={focus === "search"}
           companyFilter={company}
-          hotOnly={filter === "hot"}
-          products={products.map((p) => ({
-            ...p,
-            hot: hotIds.has(p.id),
-            deal: dealByProductId.get(p.id) ?? null,
-            expiryDate: expiryByNormalizedName.get(normalizeName(p.name)) ?? null,
-          }))}
+          hotOnly={hotOnly}
+          initialProducts={result.products}
+          initialHasMore={result.hasMore}
+          companies={result.companies}
+          salts={result.salts}
         />
       </Card>
     </div>

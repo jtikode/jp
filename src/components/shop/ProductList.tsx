@@ -1,44 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Flame, Sparkles, ClipboardList } from "lucide-react";
+import { Flame, Sparkles, ClipboardList, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { SearchableSelect } from "@/components/shop/SearchableSelect";
 import { useCart } from "@/components/shop/CartProvider";
 import { QuantityStepper } from "@/components/shop/QuantityStepper";
 import { t, type Lang } from "@/lib/i18n";
-import { cascadingProductSearch } from "@/lib/fuzzySearch";
+import { fetchProductsPage } from "@/actions/catalogSearchActions";
+import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
+import type { SearchProductItem } from "@/lib/productSearch";
 
-export interface ProductListItem {
-  id: string;
-  name: string;
-  company: string | null;
-  unit: string | null;
-  price: number;
-  mrp: number | null;
-  taxPercent: number | null;
-  scheme: string | null;
-  composition: string | null;
-  stock: number | null;
-  hot: boolean;
-  // Present only when it's Wednesday and this product has an active deal
-  // the store hasn't fully used up yet.
-  deal?: { id: string; price: number; remainingQty: number } | null;
-  expiryDate?: string | null;
-}
+export type ProductListItem = SearchProductItem;
 
 const LOW_STOCK_THRESHOLD = 3;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export function ProductList({
-  products,
+  initialProducts,
+  initialHasMore,
+  companies,
+  salts,
   lang,
   initialQuery = "",
   autoFocus = false,
   companyFilter,
   hotOnly = false,
 }: {
-  products: ProductListItem[];
+  initialProducts: ProductListItem[];
+  initialHasMore: boolean;
+  companies: string[];
+  salts: string[];
   lang: Lang;
   initialQuery?: string;
   autoFocus?: boolean;
@@ -49,56 +42,77 @@ export function ProductList({
   const [companyPick, setCompanyPick] = useState(companyFilter ?? "");
   const [saltPick, setSaltPick] = useState("");
   const [expandedAlternatives, setExpandedAlternatives] = useState<Set<string>>(new Set());
-  const { items, setQuantity } = useCart();
+  const [items, setItems] = useState<ProductListItem[]>(initialProducts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loading, setLoading] = useState(false);
+  const { items: cartItems, setQuantity } = useCart();
   const cartQuantities = useMemo(
-    () => new Map(items.map((i) => [i.productId, i.quantity])),
-    [items],
+    () => new Map(cartItems.map((i) => [i.productId, i.quantity])),
+    [cartItems],
   );
 
-  const companies = useMemo(
-    () => [...new Set(products.map((p) => p.company).filter((c): c is string => !!c))].sort(),
-    [products],
-  );
-  const salts = useMemo(
-    () => [...new Set(products.map((p) => p.composition).filter((c): c is string => !!c))].sort(),
-    [products],
-  );
+  // Guards against a slow, now-superseded request overwriting the results of
+  // a newer one (e.g. two keystrokes fired two searches out of order).
+  const requestIdRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const companyScoped = useMemo(() => {
-    let scoped = products;
-    if (companyPick) scoped = scoped.filter((p) => p.company === companyPick);
-    if (saltPick) scoped = scoped.filter((p) => p.composition === saltPick);
-    if (hotOnly) scoped = scoped.filter((p) => p.hot);
-    return scoped;
-  }, [products, companyPick, saltPick, hotOnly]);
-
-  // Out-of-stock products are hidden from ordinary browsing/search — they
-  // only reappear when the retailer types the exact product name, so an
-  // exact lookup still confirms the item exists (as "Low Stock") without
-  // cluttering everyday browsing with things that can't be fulfilled.
-  const stockVisible = useMemo(() => {
-    const exactQuery = query.trim().toLowerCase();
-    return companyScoped.filter(
-      (p) => p.stock == null || p.stock > 0 || (exactQuery.length > 0 && p.name.trim().toLowerCase() === exactQuery),
-    );
-  }, [companyScoped, query]);
-
-  const filtered = useMemo(
-    () => cascadingProductSearch(stockVisible, query, (p) => p.name, (p) => p.composition),
-    [stockVisible, query],
+  const runSearch = useCallback(
+    async (filters: { query: string; company: string; salt: string }, offset: number, append: boolean) => {
+      const myRequestId = ++requestIdRef.current;
+      setLoading(true);
+      try {
+        const result = await fetchProductsPage({
+          query: filters.query || undefined,
+          company: filters.company || undefined,
+          salt: filters.salt || undefined,
+          hotOnly,
+          offset,
+          limit: PRODUCT_PAGE_SIZE,
+        });
+        if (myRequestId !== requestIdRef.current) return;
+        setItems((prev) => (append ? [...prev, ...result.products] : result.products));
+        setHasMore(result.hasMore);
+      } finally {
+        if (myRequestId === requestIdRef.current) setLoading(false);
+      }
+    },
+    [hotOnly],
   );
 
-  const alternativesByComposition = useMemo(() => {
-    const map = new Map<string, ProductListItem[]>();
-    for (const p of products) {
-      const key = p.composition?.trim().toLowerCase();
-      if (!key) continue;
-      const group = map.get(key) ?? [];
-      group.push(p);
-      map.set(key, group);
+  // Re-search from scratch whenever the query/company/salt filters change —
+  // debounced so typing doesn't fire a request per keystroke. Skips the very
+  // first render since the server already fetched that exact page.
+  const isFirstRun = useRef(true);
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
     }
-    return map;
-  }, [products]);
+    const handle = setTimeout(() => {
+      runSearch({ query, company: companyPick, salt: saltPick }, 0, false);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, companyPick, saltPick]);
+
+  // Load the next page as soon as the sentinel at the bottom of the list
+  // scrolls into view.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loading) {
+          runSearch({ query, company: companyPick, salt: saltPick }, items.length, true);
+        }
+      },
+      { rootMargin: "600px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, items.length]);
 
   function toggleAlternatives(productId: string) {
     setExpandedAlternatives((prev) => {
@@ -136,12 +150,9 @@ export function ProductList({
       </div>
 
       <div className="flex flex-col gap-2">
-        {filtered.map((p) => {
+        {items.map((p) => {
           const quantity = cartQuantities.get(p.id) ?? 0;
-          const compositionKey = p.composition?.trim().toLowerCase();
-          const alternatives = compositionKey
-            ? (alternativesByComposition.get(compositionKey) ?? []).filter((alt) => alt.id !== p.id)
-            : [];
+          const alternatives = p.alternatives;
           const isExpanded = expandedAlternatives.has(p.id);
           return (
             <div key={p.id} className="rounded-xl border-2 border-slate-200 bg-white p-3">
@@ -158,7 +169,7 @@ export function ProductList({
                 </p>
                 {p.composition && <p className="text-xs text-slate-400">{p.composition}</p>}
                 <p className="text-sm text-slate-500">
-                  {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
+                  {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
                 </p>
                 <p className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-bold text-blue-700">
@@ -279,7 +290,7 @@ export function ProductList({
             </div>
           );
         })}
-        {filtered.length === 0 && (
+        {items.length === 0 && !loading && (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <p className="text-slate-400">{t(lang, "shop_no_products_found")}</p>
             <Link
@@ -289,6 +300,12 @@ export function ProductList({
               <ClipboardList size={16} strokeWidth={1.75} />
               {t(lang, "shop_recommend_product")}
             </Link>
+          </div>
+        )}
+        {hasMore && <div ref={sentinelRef} aria-hidden className="h-1" />}
+        {loading && (
+          <div className="flex justify-center py-4">
+            <Loader2 size={20} className="animate-spin text-slate-400" />
           </div>
         )}
       </div>

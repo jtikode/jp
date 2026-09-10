@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-slate-100 p-4">
       <Card className="w-full max-w-sm text-center">
         <p className="mb-2 text-lg font-bold text-slate-900">Something went wrong</p>
         <p className="mb-4 text-sm text-slate-500">

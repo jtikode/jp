@@ -14,7 +14,7 @@ export default async function SalesmanLayout({ children }: { children: React.Rea
   const score = await computeSalesmanScore(session.orgId, session.userId as string);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100">
+    <div className="flex min-h-dvh flex-col bg-slate-100">
       <AppHeader
         title="Field Terminal"
         name={session.name ?? ""}

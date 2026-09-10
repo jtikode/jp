@@ -12,7 +12,7 @@ export default function WhoIsOrderingPage() {
   const [state, formAction, pending] = useActionState(saveOrderGiverWhatsapp, initialState);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-slate-100 p-4">
       <Card className="w-full max-w-sm">
         <h1 className="mb-1 text-2xl font-bold text-slate-900">Who&apos;s Ordering?</h1>
         <p className="mb-6 text-slate-500">

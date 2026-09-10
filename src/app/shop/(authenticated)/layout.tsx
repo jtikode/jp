@@ -29,7 +29,7 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
 
   return (
     <CartProvider>
-      <div className="flex min-h-screen flex-col bg-slate-100">
+      <div className="flex min-h-dvh flex-col bg-slate-100">
         <OfflineBanner lang={lang} />
         <ShopHeader storeName={session.storeName} lang={lang} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">

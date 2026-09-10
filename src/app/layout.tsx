@@ -25,6 +25,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#1d4ed8",
+  // Default Android behavior only resizes the *visual* viewport for the
+  // on-screen keyboard, leaving the layout viewport (and anything `fixed`
+  // to it, like the shop's bottom nav) sized to the full screen — so a
+  // fixed nav ends up floating mid-screen, above the keyboard, instead of
+  // pinned to the bottom of what's actually visible. This makes the layout
+  // viewport itself shrink with the keyboard so `fixed`/`100dvh` stay correct.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
