@@ -37,6 +37,7 @@ export default async function LoginActivityPage() {
                     year: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
+                    timeZone: "Asia/Kolkata",
                   })}
                 </td>
                 <td className="py-2 pr-4 font-medium text-slate-900">{e.displayName}</td>
