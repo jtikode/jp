@@ -52,6 +52,7 @@ export default async function AdminOrdersPage({
           <h1 className="text-lg font-bold text-slate-900">Retailer Orders ({orders.length})</h1>
           <ExportExcelButton
             data={orders.map((o) => ({
+              "Order #": o.orderNumber,
               Date: o.createdAt.toLocaleString(),
               Store: storeLabel(o.store.name, o.store.externalCode),
               "Ordered By (WhatsApp)": o.store.orderGiverWhatsapp ?? "",
@@ -66,6 +67,7 @@ export default async function AdminOrdersPage({
         <table className="w-full min-w-[700px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
+              <th className="py-2 pr-4">Order #</th>
               <th className="py-2 pr-4">Date</th>
               <th className="py-2 pr-4">Store</th>
               <th className="py-2 pr-4">Ordered By</th>
@@ -77,6 +79,7 @@ export default async function AdminOrdersPage({
           <tbody>
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-slate-100 align-top">
+                <td className="py-3 pr-4 font-mono font-semibold text-slate-900">#{o.orderNumber}</td>
                 <td className="py-3 pr-4 text-slate-600">{o.createdAt.toLocaleString("en-IN")}</td>
                 <td className="py-3 pr-4 font-medium text-slate-900">
                   {storeLabel(o.store.name, o.store.externalCode)}
@@ -98,7 +101,7 @@ export default async function AdminOrdersPage({
             ))}
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-slate-400">
+                <td colSpan={7} className="py-6 text-center text-slate-400">
                   No orders yet.
                 </td>
               </tr>

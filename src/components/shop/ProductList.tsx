@@ -13,10 +13,10 @@ import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
 import type { SearchProductItem } from "@/lib/productSearch";
 import { getCatalogSnapshot } from "@/lib/offlineCatalog";
 import { filterOfflineCatalog } from "@/lib/offlineProductFilter";
+import { LOW_STOCK_THRESHOLD } from "@/lib/stockRank";
 
 export type ProductListItem = SearchProductItem;
 
-const LOW_STOCK_THRESHOLD = 3;
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function ProductList({

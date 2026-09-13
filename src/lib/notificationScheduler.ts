@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { db } from "@/lib/db";
-import { sendPushToOrg } from "@/lib/webPush";
+import { sendPushToOrg, sendPushToStore } from "@/lib/webPush";
+import { getIstNow, getStartOfIstDayUtc } from "@/lib/istTime";
 
 let started = false;
 
@@ -14,6 +15,7 @@ export function startNotificationScheduler(): void {
 
   cron.schedule("* * * * *", () => {
     runDueNotifications().catch((err) => console.error("notificationScheduler tick failed:", err));
+    runDueOrderReminders().catch((err) => console.error("orderReminder tick failed:", err));
   });
 }
 
@@ -45,6 +47,44 @@ export async function runDueNotifications(): Promise<void> {
     } catch (err) {
       console.error("Failed to send scheduled notification", notif.id, err);
       await db.scheduledNotification.update({ where: { id: notif.id }, data: { status: "FAILED" } });
+    }
+  }
+}
+
+// A retailer's own weekly "remind me to order" preference, set once from the
+// shop app (day of week + time, IST) and fired every week from here — as
+// opposed to ScheduledNotification above, which is a one-off admin-composed
+// send.
+export async function runDueOrderReminders(): Promise<void> {
+  const { dayOfWeek, hour, minute } = getIstNow();
+  const startOfToday = getStartOfIstDayUtc();
+
+  const due = await db.orderReminder.findMany({
+    where: { active: true, dayOfWeek, hour, minute },
+  });
+
+  for (const reminder of due) {
+    // Atomically claim it: only fire once per IST calendar day, even if the
+    // cron ticks more than once in the same minute window or a second
+    // worker runs the same schedule.
+    const claimed = await db.orderReminder.updateMany({
+      where: {
+        id: reminder.id,
+        active: true,
+        OR: [{ lastSentAt: null }, { lastSentAt: { lt: startOfToday } }],
+      },
+      data: { lastSentAt: new Date() },
+    });
+    if (claimed.count === 0) continue;
+
+    try {
+      await sendPushToStore(reminder.orgId, reminder.storeId, {
+        title: "J P Traders",
+        body: "Time to place your weekly order — don't run out of your generic products.",
+        url: "/shop/products",
+      });
+    } catch (err) {
+      console.error("Failed to send order reminder", reminder.id, err);
     }
   }
 }

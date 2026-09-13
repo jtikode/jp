@@ -106,6 +106,7 @@ model Organization {
   pushSubscriptions PushSubscription[]
   scheduledNotifications ScheduledNotification[]
   loginEvents      LoginEvent[]
+  orderReminders   OrderReminder[]
 }
 
 model User {
@@ -236,6 +237,7 @@ model Store {
   requestedProducts RequestedProduct[]
   pushSubscriptions PushSubscription[]
   loginEvents      LoginEvent[]
+  orderReminder    OrderReminder?
 
   @@unique([orgId, externalCode])
   @@unique([orgId, loginCode])
@@ -617,6 +619,11 @@ model Order {
   id          String      @id @default(cuid())
   orgId       String
   storeId     String
+  // Short, human-readable reference — shown in the confirmation email, the
+  // admin dashboard, and the retailer's own order history, so a phone call
+  // ("regarding order #1042") can actually be looked up. The cuid `id` above
+  // stays the real primary key/URL param; this is purely for display.
+  orderNumber Int         @unique @default(autoincrement())
   status      OrderStatus @default(PENDING)
   totalAmount Decimal
   notes       String?
@@ -742,6 +749,31 @@ model LoginEvent {
   @@index([orgId, createdAt])
   @@index([userId])
   @@index([storeId])
+}
+
+// A retailer's own weekly "remind me to order" preference — set once from
+// the shop app, fires every week on the same day/time (IST) until the
+// retailer changes or turns it off. One per store.
+model OrderReminder {
+  id         String    @id @default(cuid())
+  orgId      String
+  storeId    String    @unique
+  // 0 = Sunday .. 6 = Saturday, matching JS Date#getDay().
+  dayOfWeek  Int
+  hour       Int
+  minute     Int
+  active     Boolean   @default(true)
+  // Guards against sending twice in the same IST calendar day — the cron
+  // tick runs every minute, so this is the dedupe key, not just a log.
+  lastSentAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@index([orgId])
+  @@index([active, dayOfWeek, hour, minute])
 }
 
 // Admin-configured reward tiers shown on the retailer shop's home dashboard

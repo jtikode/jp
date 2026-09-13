@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Wallet,
   Sparkles,
+  BellRing,
 } from "lucide-react";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
@@ -38,6 +39,7 @@ const MENU_TILES = [
   { href: "/shop/offers", key: "shop_menu_offers", icon: Gift, bg: "bg-orange-50", fg: "text-orange-600" },
   { href: "/shop/request-product", key: "shop_menu_request_product", icon: ClipboardList, bg: "bg-teal-50", fg: "text-teal-600" },
   { href: "/shop/pay-online", key: "shop_menu_pay_online", icon: Wallet, bg: "bg-green-50", fg: "text-green-600" },
+  { href: "/shop/order-reminder", key: "shop_menu_order_reminder", icon: BellRing, bg: "bg-indigo-50", fg: "text-indigo-600" },
 ] as const;
 
 export default async function ShopHomePage() {

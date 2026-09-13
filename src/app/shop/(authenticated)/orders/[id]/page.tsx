@@ -30,7 +30,7 @@ export default async function ShopOrderDetailPage({
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-xl font-bold text-slate-900">
-            Order — {order.createdAt.toLocaleDateString("en-IN")}
+            Order #{order.orderNumber} — {order.createdAt.toLocaleDateString("en-IN")}
           </h1>
           <span
             className={

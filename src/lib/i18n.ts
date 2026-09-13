@@ -377,6 +377,29 @@ export const translations = {
   shop_wednesday_deals_heading: { en: "Wednesday Deals", mr: "बुधवार डील्स" },
   shop_wednesday_deal: { en: "Wednesday Deal", mr: "बुधवार डील" },
   shop_deal_limit_left: { en: "Left today", mr: "आज शिल्लक" },
+
+  // --- Order Reminder ---
+  shop_menu_order_reminder: { en: "Order Reminder", mr: "ऑर्डर आठवण" },
+  shop_order_reminder_heading: { en: "Weekly Order Reminder", mr: "साप्ताहिक ऑर्डर आठवण" },
+  shop_order_reminder_subtitle: {
+    en: "Pick a day and time — we'll send you a notification every week to remind you to order.",
+    mr: "दिवस आणि वेळ निवडा — दर आठवड्याला ऑर्डर करण्याची आठवण करून देण्यासाठी आम्ही तुम्हाला सूचना पाठवू.",
+  },
+  shop_reminder_day: { en: "Day of the week", mr: "आठवड्याचा दिवस" },
+  shop_reminder_time: { en: "Time", mr: "वेळ" },
+  shop_reminder_save: { en: "Save Reminder", mr: "आठवण सेव्ह करा" },
+  shop_reminder_saving: { en: "Saving...", mr: "सेव्ह करत आहे..." },
+  shop_reminder_turn_off: { en: "Turn off reminder", mr: "आठवण बंद करा" },
+  shop_reminder_summary_prefix: { en: "Reminder set for", mr: "आठवण सेट केली आहे" },
+  shop_reminder_saved: { en: "Saved — your weekly reminder is on.", mr: "सेव्ह झाले — तुमची साप्ताहिक आठवण सुरू आहे." },
+  shop_reminder_off_label: { en: "No reminder set yet.", mr: "अद्याप कोणतीही आठवण सेट केलेली नाही." },
+  shop_day_sun: { en: "Sunday", mr: "रविवार" },
+  shop_day_mon: { en: "Monday", mr: "सोमवार" },
+  shop_day_tue: { en: "Tuesday", mr: "मंगळवार" },
+  shop_day_wed: { en: "Wednesday", mr: "बुधवार" },
+  shop_day_thu: { en: "Thursday", mr: "गुरुवार" },
+  shop_day_fri: { en: "Friday", mr: "शुक्रवार" },
+  shop_day_sat: { en: "Saturday", mr: "शनिवार" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

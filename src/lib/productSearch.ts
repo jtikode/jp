@@ -5,6 +5,7 @@ import { getHotSellingProductIds } from "@/lib/hotSelling";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
+import { byStockThenName, alternativesCap } from "@/lib/stockRank";
 
 export { PRODUCT_PAGE_SIZE };
 
@@ -134,10 +135,14 @@ export async function searchProductCatalog(
   const products: SearchProductItem[] = pageItems.map((p) => {
     const compKey = p.composition?.trim().toLowerCase();
     const alternatives: AlternativeItem[] = compKey
-      ? (byComposition.get(compKey) ?? [])
-          .filter((alt) => alt.id !== p.id)
-          .slice(0, MAX_ALTERNATIVES)
-          .map((alt) => ({ id: alt.id, name: alt.name, company: alt.company, price: alt.price, stock: alt.stock }))
+      ? (() => {
+          const sortedAlts = (byComposition.get(compKey) ?? [])
+            .filter((alt) => alt.id !== p.id)
+            .sort(byStockThenName);
+          return sortedAlts
+            .slice(0, alternativesCap(sortedAlts, MAX_ALTERNATIVES))
+            .map((alt) => ({ id: alt.id, name: alt.name, company: alt.company, price: alt.price, stock: alt.stock }));
+        })()
       : [];
 
     return {

@@ -140,7 +140,7 @@ export async function placeOrder(
     select: { orderGiverWhatsapp: true },
   });
   sendOrderNotificationEmail({
-    orderId: order.id,
+    orderNumber: order.orderNumber,
     storeName: session.storeName ?? "Retailer",
     orderGiverWhatsapp: orderingStore?.orderGiverWhatsapp,
     totalAmount,

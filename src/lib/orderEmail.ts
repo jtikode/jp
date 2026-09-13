@@ -8,7 +8,7 @@ export interface OrderEmailLine {
 }
 
 export async function sendOrderNotificationEmail(params: {
-  orderId: string;
+  orderNumber: number;
   storeName: string;
   orderGiverWhatsapp?: string | null;
   totalAmount: number;
@@ -27,7 +27,7 @@ export async function sendOrderNotificationEmail(params: {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:480px;">
       <h2 style="margin-bottom:4px;">New order from ${params.storeName}</h2>
-      <p style="color:#64748b;margin-top:0;">Order #${params.orderId.slice(-8).toUpperCase()}</p>
+      <p style="color:#64748b;margin-top:0;">Order #${params.orderNumber}</p>
       ${params.orderGiverWhatsapp ? `<p style="color:#475569;"><strong>Ordered by (WhatsApp):</strong> ${params.orderGiverWhatsapp}</p>` : ""}
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead>
@@ -50,7 +50,7 @@ export async function sendOrderNotificationEmail(params: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `New order — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `New order #${params.orderNumber} — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a

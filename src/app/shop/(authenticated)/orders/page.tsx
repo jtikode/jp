@@ -31,10 +31,12 @@ export default async function ShopOrdersPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {o.createdAt.toLocaleDateString("en-IN")} — {o.items.length} item
-                    {o.items.length === 1 ? "" : "s"}
+                    Order #{o.orderNumber} — {o.createdAt.toLocaleDateString("en-IN")}
                   </p>
-                  <p className="text-sm text-slate-500">₹{Number(o.totalAmount).toLocaleString("en-IN")}</p>
+                  <p className="text-sm text-slate-500">
+                    {o.items.length} item{o.items.length === 1 ? "" : "s"} · ₹
+                    {Number(o.totalAmount).toLocaleString("en-IN")}
+                  </p>
                 </div>
                 <span
                   className={
