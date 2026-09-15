@@ -66,47 +66,49 @@ enum BannerPlacement {
 // business's data at a time. `slug` is the "Business Code" typed at login
 // and signup — there is no subdomain/custom-domain routing.
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
   // Fixed UPI ID used to build the retailer shop's "Pay Online" deep link +
   // QR code — no payment gateway, just opens the retailer's own UPI app.
   upiVpa       String?
   upiPayeeName String?
 
-  users            User[]
-  routes           Route[]
-  routeAssignments RouteAssignment[]
-  stores           Store[]
-  routeStores      RouteStore[]
-  visits           Visit[]
-  attendances      Attendance[]
-  telecallerLogs   TelecallerLog[]
+  users                   User[]
+  routes                  Route[]
+  routeAssignments        RouteAssignment[]
+  stores                  Store[]
+  routeStores             RouteStore[]
+  visits                  Visit[]
+  attendances             Attendance[]
+  telecallerLogs          TelecallerLog[]
   telecallerCallSchedules TelecallerCallSchedule[]
-  tasks            Task[]
-  taskOccurrences  TaskOccurrence[]
-  stockItems       StockItem[]
-  stockCounts      StockCount[]
-  ledgerEntries    LedgerEntry[]
-  purchaseHistory  PurchaseHistoryItem[]
-  incentiveItems   IncentiveItem[]
-  expiryItems      ExpiryItem[]
-  targets          Target[]
-  telecallerParties TelecallerParty[]
-  importBatches    ImportBatch[]
-  products         Product[]
-  wednesdayDeals   WednesdayDeal[]
-  orders           Order[]
-  orderItems       OrderItem[]
-  banners          ShopBanner[]
-  loyaltyTiers     LoyaltyTier[]
-  requestedProducts RequestedProduct[]
-  pushSubscriptions PushSubscription[]
-  scheduledNotifications ScheduledNotification[]
-  loginEvents      LoginEvent[]
-  orderReminders   OrderReminder[]
+  tasks                   Task[]
+  taskOccurrences         TaskOccurrence[]
+  stockItems              StockItem[]
+  stockCounts             StockCount[]
+  ledgerEntries           LedgerEntry[]
+  purchaseHistory         PurchaseHistoryItem[]
+  fastOrderItems          FastOrderItem[]
+  incentiveItems          IncentiveItem[]
+  expiryItems             ExpiryItem[]
+  targets                 Target[]
+  telecallerParties       TelecallerParty[]
+  importBatches           ImportBatch[]
+  products                Product[]
+  wednesdayDeals          WednesdayDeal[]
+  orders                  Order[]
+  orderItems              OrderItem[]
+  banners                 ShopBanner[]
+  loyaltyTiers            LoyaltyTier[]
+  requestedProducts       RequestedProduct[]
+  pushSubscriptions       PushSubscription[]
+  scheduledNotifications  ScheduledNotification[]
+  loginEvents             LoginEvent[]
+  orderReminders          OrderReminder[]
+  promoClicks             PromoClick[]
 }
 
 model User {
@@ -119,23 +121,48 @@ model User {
   phone        String?
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
+  // Human-readable slug for this salesman's promo link
+  // (app.jpkop.in/go/<promoSlug>) — lazily generated from `name` the first
+  // time the admin Promo Links page is viewed, not set at creation time.
+  promoSlug    String?
 
-  org              Organization      @relation(fields: [orgId], references: [id])
-  routeAssignments RouteAssignment[]
-  visits           Visit[]
-  attendances      Attendance[]
-  telecallerLogs   TelecallerLog[]
-  stockCounts      StockCount[]
-  targets          Target[]
-  importBatches    ImportBatch[]
-  workingWithAttendances Attendance[] @relation("AttendanceWorkingWith")
-  assignedTasks    Task[]
+  org                    Organization            @relation(fields: [orgId], references: [id])
+  routeAssignments       RouteAssignment[]
+  visits                 Visit[]
+  attendances            Attendance[]
+  telecallerLogs         TelecallerLog[]
+  stockCounts            StockCount[]
+  targets                Target[]
+  importBatches          ImportBatch[]
+  workingWithAttendances Attendance[]            @relation("AttendanceWorkingWith")
+  assignedTasks          Task[]
   scheduledNotifications ScheduledNotification[]
-  loginEvents      LoginEvent[]
+  loginEvents            LoginEvent[]
+  promoClicks            PromoClick[]
 
   @@unique([orgId, username])
+  @@unique([orgId, promoSlug])
   @@index([role])
   @@index([orgId])
+}
+
+// One row per visit to a salesman's promo link (app.jpkop.in/go/<slug>) —
+// lets admin see which salesman is actually driving retailers to install the
+// shop app, not just who was assigned to promote it.
+model PromoClick {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  org  Organization @relation(fields: [orgId], references: [id])
+  user User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([orgId, createdAt])
 }
 
 model Route {
@@ -145,13 +172,13 @@ model Route {
   description String?
   createdAt   DateTime @default(now())
 
-  org           Organization @relation(fields: [orgId], references: [id])
-  stores        Store[]
-  assignments   RouteAssignment[]
-  visits        Visit[]
-  routeStores   RouteStore[]
-  attendances   Attendance[]
-  callSchedule  TelecallerCallSchedule?
+  org          Organization            @relation(fields: [orgId], references: [id])
+  stores       Store[]
+  assignments  RouteAssignment[]
+  visits       Visit[]
+  routeStores  RouteStore[]
+  attendances  Attendance[]
+  callSchedule TelecallerCallSchedule?
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -167,77 +194,78 @@ model TelecallerCallSchedule {
   dayOfWeek Int // 0=Sunday..6=Saturday
 
   org   Organization @relation(fields: [orgId], references: [id])
-  route Route @relation(fields: [routeId], references: [id])
+  route Route        @relation(fields: [routeId], references: [id])
 
   @@index([orgId])
   @@index([dayOfWeek])
 }
 
 model RouteAssignment {
-  id      String @id @default(cuid())
+  id      String       @id @default(cuid())
   orgId   String
   userId  String
   routeId String
   org     Organization @relation(fields: [orgId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
-  route   Route  @relation(fields: [routeId], references: [id])
+  user    User         @relation(fields: [userId], references: [id])
+  route   Route        @relation(fields: [routeId], references: [id])
 
   @@unique([userId, routeId])
   @@index([orgId])
 }
 
 model Store {
-  id           String   @id @default(cuid())
-  orgId        String
-  externalCode String?
-  name         String
-  address      String
-  phone        String?
+  id                 String    @id @default(cuid())
+  orgId              String
+  externalCode       String?
+  name               String
+  address            String
+  phone              String?
   // Name of whoever the phone number actually reaches (owner/manager) — kept
   // separate from `phone` so a telecaller can record who they're calling,
   // not just the number.
-  contactPersonName String?
+  contactPersonName  String?
   // Primary route, set by store-master import. A store can additionally be
   // assigned to other routes via RouteStore (e.g. two salesmen covering
   // different product lines both visit the same medical store).
-  routeId      String?
-  route        Route?   @relation(fields: [routeId], references: [id])
-  visitSequence Int?
+  routeId            String?
+  route              Route?    @relation(fields: [routeId], references: [id])
+  visitSequence      Int?
   // Set from the GPS captured on the first confirmed visit, so any salesman
   // covering this route later can see the store has already been located.
-  latitude     Float?
-  longitude    Float?
-  createdAt    DateTime @default(now())
+  latitude           Float?
+  longitude          Float?
+  createdAt          DateTime  @default(now())
   // 4-digit shop login code, admin-issued in bulk (see generateShopLoginCredentials)
   // instead of requiring retailer self-registration — works even for the many
   // stores with no phone on file. The shop login password is always this
   // code's digits reversed, so no separate plaintext password needs storing.
-  loginCode    String?
+  loginCode          String?
   // Set once the retailer has shop access — either via bulk-issued loginCode
   // or (legacy) self-activation with Business Code + phone + PIN. Null means
   // they haven't yet.
-  pinHash      String?
+  pinHash            String?
   // Updated on every successful shop activation/login, so admin can see
   // which retailers are actually using the app vs. never activated/gone quiet.
-  lastLoginAt  DateTime?
+  lastLoginAt        DateTime?
   // Captured once, on the retailer's first shop login — the personal WhatsApp
   // number of whoever is actually placing orders (not necessarily the shop's
   // own registered `phone`), since one shared login can be used by different
   // staff at the store. Null means we haven't asked yet.
   orderGiverWhatsapp String?
 
-  org              Organization @relation(fields: [orgId], references: [id])
-  visits           Visit[]
-  telecallerLogs   TelecallerLog[]
-  ledgerEntries    LedgerEntry[]
-  purchaseHistory  PurchaseHistoryItem[]
-  routeStores      RouteStore[]
-  telecallerParty  TelecallerParty?
-  orders           Order[]
+  org               Organization          @relation(fields: [orgId], references: [id])
+  visits            Visit[]
+  telecallerLogs    TelecallerLog[]
+  ledgerEntries     LedgerEntry[]
+  purchaseHistory   PurchaseHistoryItem[]
+  routeStores       RouteStore[]
+  telecallerParty   TelecallerParty?
+  orders            Order[]
   requestedProducts RequestedProduct[]
   pushSubscriptions PushSubscription[]
-  loginEvents      LoginEvent[]
-  orderReminder    OrderReminder?
+  loginEvents       LoginEvent[]
+  orderReminder     OrderReminder?
+  fastOrderItems    FastOrderItem[]
 
   @@unique([orgId, externalCode])
   @@unique([orgId, loginCode])
@@ -255,8 +283,8 @@ model RouteStore {
   createdAt     DateTime @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  route Route @relation(fields: [routeId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
+  route Route        @relation(fields: [routeId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
 
   @@unique([routeId, storeId])
   @@index([routeId])
@@ -283,9 +311,9 @@ model Visit {
   createdAt        DateTime       @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
-  route Route? @relation(fields: [routeId], references: [id])
+  user  User         @relation(fields: [userId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+  route Route?       @relation(fields: [routeId], references: [id])
 
   @@index([userId, visitDate])
   @@index([storeId])
@@ -294,24 +322,24 @@ model Visit {
 }
 
 model Attendance {
-  id        String           @id @default(cuid())
-  orgId     String
-  userId    String
-  date      DateTime
-  status    AttendanceStatus
-  note      String?
+  id                String           @id @default(cuid())
+  orgId             String
+  userId            String
+  date              DateTime
+  status            AttendanceStatus
+  note              String?
   // Set when status=ON_ROUTE — which of the salesman's assigned routes
   // they're declaring themselves out on today.
-  routeId   String?
+  routeId           String?
   // Optional colleague they're working with that day — filled via the
   // monthly Tour Plan grid, not the daily attendance buttons.
   workingWithUserId String?
-  createdAt DateTime         @default(now())
+  createdAt         DateTime         @default(now())
 
-  org        Organization @relation(fields: [orgId], references: [id])
-  user       User   @relation(fields: [userId], references: [id])
-  route      Route? @relation(fields: [routeId], references: [id])
-  workingWith User?  @relation("AttendanceWorkingWith", fields: [workingWithUserId], references: [id])
+  org         Organization @relation(fields: [orgId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
+  route       Route?       @relation(fields: [routeId], references: [id])
+  workingWith User?        @relation("AttendanceWorkingWith", fields: [workingWithUserId], references: [id])
 
   @@unique([userId, date])
   @@index([date])
@@ -336,8 +364,8 @@ model TelecallerLog {
   createdAt        DateTime       @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
+  user  User         @relation(fields: [userId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
 
   @@index([userId, contactDate])
   @@index([storeId])
@@ -364,19 +392,24 @@ model Task {
   active        Boolean        @default(true)
   createdAt     DateTime       @default(now())
 
-  org         Organization @relation(fields: [orgId], references: [id])
-  assignedTo  User?        @relation(fields: [assignedToId], references: [id])
+  org         Organization     @relation(fields: [orgId], references: [id])
+  assignedTo  User?            @relation(fields: [assignedToId], references: [id])
   occurrences TaskOccurrence[]
 
   @@index([orgId])
   @@index([assignedToId])
 }
 
-// One row per time a task actually comes due. Tied to its own due date —
-// unlike the old warehouse-only version, a missed occurrence does NOT roll
-// forward to the next day; it just stays PENDING against its original date,
-// which is what makes a missed day read as blank in the completion chart
-// instead of silently reappearing later.
+// One row per time a task actually comes due. `originalDate` is fixed at
+// whenever it was first due — used everywhere completion is reported on, so
+// history always reflects when the task was ACTUALLY owed. `scheduledDate`
+// is where it currently shows up on the board: for a DAILY task these two
+// stay equal forever (a missed day never rolls forward — it just stays
+// PENDING against its own date, reading as a missed day in the completion
+// chart instead of silently reappearing later); for WEEKLY/MONTHLY/ONCE, an
+// unresolved occurrence's `scheduledDate` keeps advancing day to day — same
+// row, same `originalDate` — until it's actually completed, so it never
+// quietly falls off the board. See ensureTodaysOccurrences.
 model TaskOccurrence {
   id            String     @id @default(cuid())
   orgId         String
@@ -390,7 +423,7 @@ model TaskOccurrence {
   approvedById  String?
 
   org  Organization @relation(fields: [orgId], references: [id])
-  task Task @relation(fields: [taskId], references: [id])
+  task Task         @relation(fields: [taskId], references: [id])
 
   @@unique([taskId, originalDate])
   @@index([scheduledDate])
@@ -416,18 +449,18 @@ model StockItem {
 }
 
 model StockCount {
-  id            String   @id @default(cuid())
-  orgId         String
-  stockItemId   String
-  date          DateTime
-  quantity      Decimal
-  recordedById  String
-  updatedAt     DateTime @updatedAt
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  orgId        String
+  stockItemId  String
+  date         DateTime
+  quantity     Decimal
+  recordedById String
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
 
   org        Organization @relation(fields: [orgId], references: [id])
-  stockItem  StockItem @relation(fields: [stockItemId], references: [id])
-  recordedBy User      @relation(fields: [recordedById], references: [id])
+  stockItem  StockItem    @relation(fields: [stockItemId], references: [id])
+  recordedBy User         @relation(fields: [recordedById], references: [id])
 
   @@unique([stockItemId, date])
   @@index([date])
@@ -447,7 +480,7 @@ model LedgerEntry {
   importedAt        DateTime  @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
 
   @@index([storeId])
   @@index([uploadBatchId])
@@ -470,10 +503,35 @@ model PurchaseHistoryItem {
   importedAt    DateTime  @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
 
   @@index([storeId])
   @@index([itemName])
+  @@index([orgId])
+}
+
+// Deliberately separate from PurchaseHistoryItem even though both come from
+// the same "Party VS Item Wise Sale Analysis" report: PurchaseHistoryItem
+// keeps the top 100 items PER STORE ranked by value (used by Hot Selling,
+// telecaller "Regularly Bought Items" upsell, and admin Intelligence — all
+// of which want the highest-value items visible). The shop's Fast Order
+// screen wants the opposite ranking — top 50 by QUANTITY, since that's what
+// a retailer actually re-orders often — so it gets its own table rather than
+// changing what the other three features see.
+model FastOrderItem {
+  id            String   @id @default(cuid())
+  orgId         String
+  storeId       String
+  itemName      String
+  quantity      Decimal
+  totalValue    Decimal?
+  uploadBatchId String
+  importedAt    DateTime @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@index([storeId])
   @@index([orgId])
 }
 
@@ -481,12 +539,12 @@ model PurchaseHistoryItem {
 // salesmen as "current incentives" on their dashboard. Each upload
 // replaces the whole list, same as ExpiryItem.
 model IncentiveItem {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   orgId           String
   itemName        String
   incentiveAmount Decimal
   uploadBatchId   String
-  importedAt      DateTime  @default(now())
+  importedAt      DateTime @default(now())
 
   org Organization @relation(fields: [orgId], references: [id])
 
@@ -494,13 +552,13 @@ model IncentiveItem {
 }
 
 model ExpiryItem {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   orgId         String
   itemName      String
   expiryDate    DateTime
   specialRate   Decimal?
   uploadBatchId String
-  importedAt    DateTime  @default(now())
+  importedAt    DateTime @default(now())
 
   org Organization @relation(fields: [orgId], references: [id])
 
@@ -521,7 +579,7 @@ model Target {
   updatedAt         DateTime @updatedAt
 
   org  Organization @relation(fields: [orgId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  user User         @relation(fields: [userId], references: [id])
 
   @@unique([userId, periodMonth, periodYear])
   @@index([orgId])
@@ -538,7 +596,7 @@ model TelecallerParty {
   importedAt    DateTime @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
 
   @@unique([storeId])
   @@index([orgId])
@@ -554,7 +612,7 @@ model ImportBatch {
   createdAt    DateTime @default(now())
 
   org        Organization @relation(fields: [orgId], references: [id])
-  uploadedBy User @relation(fields: [uploadedById], references: [id])
+  uploadedBy User         @relation(fields: [uploadedById], references: [id])
 
   @@index([orgId])
 }
@@ -563,31 +621,37 @@ model ImportBatch {
 // from StockItem (the warehouse's internal daily count-sheet dimension) —
 // this one carries a price and is customer-facing.
 model Product {
-  id          String   @id @default(cuid())
-  orgId       String
-  name        String
-  company     String?
-  unit        String?
-  price       Decimal
+  id            String    @id @default(cuid())
+  orgId         String
+  name          String
+  company       String?
+  unit          String?
+  price         Decimal
   // Reference/pre-discount price shown struck through next to the selling
   // price, and the applicable GST-style tax rate, both purely informational.
-  mrp         Decimal?
-  taxPercent  Decimal?
-  scheme      String?
+  mrp           Decimal?
+  taxPercent    Decimal?
+  scheme        String?
   // Salt/molecule composition (e.g. "AMOXYCILLIN+POTASSIUM CLAVULANATE") —
   // lets a retailer or telecaller find/verify a product by its salt, not
   // just its brand name.
-  composition String?
+  composition   String?
   // Admin-uploaded shelf quantity. Retailers see the exact number once it's
   // 3 or more; below that, the shop shows a plain "Low Stock" warning
   // instead of the number itself. Null means stock hasn't been set yet.
-  stock       Int?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  stock         Int?
+  // Soonest expiry date across this product's batches, from the last stock
+  // & expiry upload — when a product has several batches with different
+  // expiries, this is always the nearest one. Purely informational (shown
+  // on the admin inventory list); the Clearance list (ExpiryItem) below is
+  // the separate, curated set that actually drives retailer-facing markdowns.
+  nearestExpiry DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
 
-  org            Organization @relation(fields: [orgId], references: [id])
-  orderItems     OrderItem[]
-  wednesdayDeal  WednesdayDeal?
+  org           Organization   @relation(fields: [orgId], references: [id])
+  orderItems    OrderItem[]
+  wednesdayDeal WednesdayDeal?
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -651,6 +715,10 @@ model OrderItem {
   unitPrice   Decimal
   quantity    Int
   lineTotal   Decimal
+  // Snapshotted from Product.scheme at order time, same reasoning as
+  // productName/unitPrice — history should show the scheme that was live
+  // when the order was placed, not whatever the product carries today.
+  scheme      String?
   // Set when this line was bought at a Wednesday Deal price — lets placeOrder
   // sum up how much of a deal's max-qty-per-store cap a retailer has already
   // used today.
@@ -702,18 +770,18 @@ enum ScheduledNotificationStatus {
 // instrumentation.ts) polls for PENDING rows whose scheduledAt has passed —
 // there's no other job runner in this app, so this table is the only queue.
 model ScheduledNotification {
-  id          String                       @id @default(cuid())
+  id          String                      @id @default(cuid())
   orgId       String
   title       String
   body        String
   url         String?
   scheduledAt DateTime
-  status      ScheduledNotificationStatus  @default(PENDING)
+  status      ScheduledNotificationStatus @default(PENDING)
   sentAt      DateTime?
   sentCount   Int?
   storeCount  Int?
   createdById String
-  createdAt   DateTime                     @default(now())
+  createdAt   DateTime                    @default(now())
 
   org       Organization @relation(fields: [orgId], references: [id])
   createdBy User         @relation(fields: [createdById], references: [id])

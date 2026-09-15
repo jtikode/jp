@@ -6,6 +6,8 @@ import {
   importStoreMaster,
   importOutstanding,
   importPurchaseHistory,
+  importFastOrderItems,
+  importStockAndExpiry,
   importExpiryItems,
   importTelecallerParties,
   importIncentiveItems,
@@ -59,10 +61,43 @@ export default async function ImportsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload near-expiry stock</h2>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload fast-order items</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Item name, expiry date, and special rate. Each upload replaces the whole list — upload
-          this whenever your near-expiry stock changes.
+          Same report as regular items (Party VS Item Wise Sale Analysis), but this one powers the
+          shop&apos;s Fast Order screen specifically — top 50 items per store ranked by quantity, not
+          value. Only stores in the file get their fast-order list replaced.
+        </p>
+        <FileImportForm
+          action={importFastOrderItems}
+          buttonLabel="Upload fast-order items"
+          itemLabel="fast-order rows"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload stock &amp; expiry report</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Warehouse Stock Report export (batch-level, with quantity and expiry per batch). Updates
+          every matched product&apos;s current stock and nearest expiry, and automatically rebuilds
+          the Clearance list from it — the top 50 matched items expiring within 3 months, ranked by
+          value (rate × quantity), discounted 70% (this/next month), 50% (month after), or 20%
+          (month after that). Upload this whenever your stock or expiries change; the Clearance
+          list is fully replaced each time.
+        </p>
+        <FileImportForm
+          action={importStockAndExpiry}
+          buttonLabel="Upload stock & expiry"
+          itemLabel="products (stock, expiry & clearance list updated)"
+          accept=".csv,.xlsx,.xls"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload near-expiry stock (manual)</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Item name, expiry date, and special rate, entered by hand — for a one-off override. Each
+          upload replaces the whole Clearance list, including whatever the stock &amp; expiry
+          report above last set.
         </p>
         <FileImportForm
           action={importExpiryItems}

@@ -64,7 +64,14 @@ export default async function ShopOrderDetailPage({
           <tbody>
             {order.items.map((i) => (
               <tr key={i.id} className="border-b border-slate-100">
-                <td className="py-2 pr-4 font-medium text-slate-900">{i.productName}</td>
+                <td className="py-2 pr-4 font-medium text-slate-900">
+                  {i.productName}
+                  {i.scheme && (
+                    <span className="mt-1 block w-fit rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      {t(lang, "shop_scheme")}: {i.scheme}
+                    </span>
+                  )}
+                </td>
                 <td className="py-2 pr-4 text-slate-600">{i.quantity}</td>
                 <td className="py-2 pr-4 text-slate-600">₹{Number(i.unitPrice).toLocaleString("en-IN")}</td>
                 <td className="py-2 pr-4 text-slate-600">₹{Number(i.lineTotal).toLocaleString("en-IN")}</td>

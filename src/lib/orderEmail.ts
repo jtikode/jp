@@ -5,6 +5,7 @@ export interface OrderEmailLine {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  scheme?: string;
 }
 
 export async function sendOrderNotificationEmail(params: {
@@ -20,7 +21,7 @@ export async function sendOrderNotificationEmail(params: {
   const rows = params.lines
     .map(
       (l) =>
-        `<tr><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;">${l.productName}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">${l.quantity}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.unitPrice.toLocaleString("en-IN")}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.lineTotal.toLocaleString("en-IN")}</td></tr>`,
+        `<tr><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;">${l.productName}${l.scheme ? `<br/><span style="color:#b45309;font-size:12px;font-weight:bold;">Scheme: ${l.scheme}</span>` : ""}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">${l.quantity}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.unitPrice.toLocaleString("en-IN")}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.lineTotal.toLocaleString("en-IN")}</td></tr>`,
     )
     .join("");
 

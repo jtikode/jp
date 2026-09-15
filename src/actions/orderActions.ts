@@ -111,6 +111,7 @@ export async function placeOrder(
       quantity: l.quantity,
       lineTotal: unitPrice * l.quantity,
       dealId: weeklyDealIsValid ? l.dealId : undefined,
+      scheme: product.scheme ?? undefined,
     };
   });
   const totalAmount = orderLines.reduce((sum, l) => sum + l.lineTotal, 0);
@@ -150,6 +151,7 @@ export async function placeOrder(
       quantity: l.quantity,
       unitPrice: l.unitPrice,
       lineTotal: l.lineTotal,
+      scheme: l.scheme,
     })),
   }).catch((err) => {
     console.error("sendOrderNotificationEmail failed for order", order.id, err);
@@ -283,11 +285,11 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       orderBy: { _sum: { quantity: "desc" } },
       take: 50,
     }),
-    db.purchaseHistoryItem.groupBy({
+    db.fastOrderItem.groupBy({
       by: ["itemName"],
       where: { storeId: session.storeId },
       _sum: { quantity: true, totalValue: true },
-      orderBy: { _sum: { totalValue: "desc" } },
+      orderBy: { _sum: { quantity: "desc" } },
       take: 100,
     }),
     getActiveCatalog(session.orgId),

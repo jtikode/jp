@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toggleTaskActive, approveTaskOccurrence, rejectTaskOccurrence } from "@/actions/taskActions";
 import { TaskForm, type TaskFormEmployee } from "@/components/admin/TaskForm";
 import { TaskCompletionChart, type EmployeeCompletionPoint } from "@/components/charts/TaskCompletionChart";
+import { TaskTrendChart } from "@/components/charts/TaskTrendChart";
+import type { EmployeeTrends } from "@/lib/taskReporting";
 import { clsx } from "@/lib/clsx";
 
 const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -40,11 +42,13 @@ export function AdminTasksPanel({
   tasks,
   approvals,
   chartData,
+  trendsByEmployee,
 }: {
   employees: TaskFormEmployee[];
   tasks: TaskRow[];
   approvals: ApprovalRow[];
   chartData: EmployeeCompletionPoint[];
+  trendsByEmployee: Record<string, EmployeeTrends>;
 }) {
   const [tab, setTab] = useState<"manage" | "approvals" | "chart">(
     approvals.length > 0 ? "approvals" : "manage",
@@ -172,16 +176,28 @@ export function AdminTasksPanel({
       )}
 
       {tab === "chart" && (
-        <div>
-          <p className="mb-3 text-sm text-slate-500">
-            Last 30 days, individually-assigned tasks only (role-wide tasks aren&rsquo;t attributed to one
-            person unless someone actually completed them).
-          </p>
-          {chartData.length > 0 ? (
-            <TaskCompletionChart data={chartData} />
-          ) : (
-            <p className="py-6 text-center text-slate-400">No task history yet.</p>
-          )}
+        <div className="space-y-8">
+          <div>
+            <h2 className="mb-1 text-base font-bold text-slate-900">Trend — birds-eye view</h2>
+            <p className="mb-3 text-sm text-slate-500">
+              The whole team (or one person) over time — switch between weekly and monthly to spot
+              whether completion is slipping.
+            </p>
+            <TaskTrendChart trendsByEmployee={trendsByEmployee} employees={employees} />
+          </div>
+
+          <div>
+            <h2 className="mb-1 text-base font-bold text-slate-900">Last 30 days by employee</h2>
+            <p className="mb-3 text-sm text-slate-500">
+              Individually-assigned tasks only (role-wide tasks aren&rsquo;t attributed to one person
+              unless someone actually completed them).
+            </p>
+            {chartData.length > 0 ? (
+              <TaskCompletionChart data={chartData} />
+            ) : (
+              <p className="py-6 text-center text-slate-400">No task history yet.</p>
+            )}
+          </div>
         </div>
       )}
     </div>

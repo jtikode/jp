@@ -18,6 +18,7 @@ export default async function AdminProductsPage() {
     }),
     getHotSellingProductIds(session.orgId),
   ]);
+  const now = new Date();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -50,6 +51,7 @@ export default async function AdminProductsPage() {
               "Tax %": p.taxPercent != null ? Number(p.taxPercent) : "",
               Scheme: p.scheme ?? "",
               Stock: p.stock ?? "",
+              "Nearest Expiry": p.nearestExpiry ? p.nearestExpiry.toLocaleDateString("en-IN") : "",
               Status: p.active ? "Active" : "Hidden",
             }))}
             filename="products"
@@ -67,6 +69,17 @@ export default async function AdminProductsPage() {
             taxPercent: p.taxPercent != null ? Number(p.taxPercent) : null,
             scheme: p.scheme,
             stock: p.stock,
+            nearestExpiry:
+              p.nearestExpiry != null
+                ? {
+                    label: p.nearestExpiry.toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                    daysLeft: Math.ceil((p.nearestExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+                  }
+                : null,
             active: p.active,
             hot: hotIds.has(p.id),
           }))}

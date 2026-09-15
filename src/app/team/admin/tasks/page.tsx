@@ -4,6 +4,7 @@ import { assertRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { AdminTasksPanel, type ApprovalRow, type TaskRow } from "@/components/admin/AdminTasksPanel";
 import type { EmployeeCompletionPoint } from "@/components/charts/TaskCompletionChart";
+import { buildTaskTrends } from "@/lib/taskReporting";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ export default async function AdminTasksPage() {
   const today = startOfToday();
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sixMonthsAgo = new Date(today);
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
   const [users, tasks, awaitingOccurrences, historyOccurrences] = await Promise.all([
     db.user.findMany({ where: { active: true }, orderBy: [{ role: "asc" }, { name: "asc" }] }),
@@ -34,8 +37,13 @@ export default async function AdminTasksPage() {
       include: { task: true },
       orderBy: { completedAt: "asc" },
     }),
+    // Bucketed by originalDate (when a task was ACTUALLY due), not
+    // scheduledDate — a WEEKLY/MONTHLY occurrence rolled forward from weeks
+    // ago would otherwise only ever show up in "today"'s bucket. Six months
+    // back covers both the 30-day per-employee chart and the weekly/monthly
+    // trend view below, from one query.
     db.taskOccurrence.findMany({
-      where: { scheduledDate: { gte: thirtyDaysAgo, lt: today } },
+      where: { originalDate: { gte: sixMonthsAgo, lt: today } },
       include: { task: true },
     }),
   ]);
@@ -68,6 +76,7 @@ export default async function AdminTasksPage() {
   // nobody touched has no single person to blame, so it's left out.
   const buckets = new Map<string, { approved: number; awaiting: number; missed: number }>();
   for (const o of historyOccurrences) {
+    if (o.originalDate < thirtyDaysAgo) continue;
     const responsibleUserId = o.task.assignedToId ?? o.completedById ?? undefined;
     if (!responsibleUserId) continue;
 
@@ -81,6 +90,17 @@ export default async function AdminTasksPage() {
   const chartData: EmployeeCompletionPoint[] = [...buckets.entries()]
     .map(([userId, counts]) => ({ name: userNameById.get(userId) ?? "Unknown", ...counts }))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const trendsByEmployee = buildTaskTrends(
+    historyOccurrences.map((o) => ({
+      originalDate: o.originalDate,
+      status: o.status,
+      taskAssignedToId: o.task.assignedToId,
+      completedById: o.completedById,
+    })),
+    users.map((u) => u.id),
+    today,
+  );
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -109,6 +129,7 @@ export default async function AdminTasksPage() {
           tasks={taskRows}
           approvals={approvalRows}
           chartData={chartData}
+          trendsByEmployee={trendsByEmployee}
         />
       </Card>
     </div>

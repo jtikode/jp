@@ -15,6 +15,7 @@ interface ProductRow {
   taxPercent: number | null;
   scheme: string | null;
   stock: number | null;
+  nearestExpiry: { label: string; daysLeft: number } | null;
   active: boolean;
   hot: boolean;
 }
@@ -53,6 +54,7 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
               <th className="py-2 pr-4">Tax %</th>
               <th className="py-2 pr-4">Scheme</th>
               <th className="py-2 pr-4">Stock</th>
+              <th className="py-2 pr-4">Nearest Expiry</th>
               <th className="py-2 pr-4">Status</th>
               <th className="py-2 pr-4"></th>
             </tr>
@@ -83,6 +85,13 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
                 <td className="py-2 pr-4 text-slate-600">{p.scheme ?? "—"}</td>
                 <td className="py-2 pr-4 text-slate-600">{p.stock ?? "—"}</td>
                 <td className="py-2 pr-4">
+                  {p.nearestExpiry ? (
+                    <ExpiryBadge label={p.nearestExpiry.label} daysLeft={p.nearestExpiry.daysLeft} />
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )}
+                </td>
+                <td className="py-2 pr-4">
                   <span
                     className={
                       p.active
@@ -104,7 +113,7 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={11} className="py-6 text-center text-slate-400">
+                <td colSpan={12} className="py-6 text-center text-slate-400">
                   No products match your search.
                 </td>
               </tr>
@@ -114,4 +123,14 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
       </div>
     </div>
   );
+}
+
+function ExpiryBadge({ label, daysLeft }: { label: string; daysLeft: number }) {
+  const urgency =
+    daysLeft <= 30
+      ? "bg-red-100 text-red-700"
+      : daysLeft <= 90
+        ? "bg-amber-100 text-amber-800"
+        : "bg-slate-100 text-slate-600";
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${urgency}`}>{label}</span>;
 }

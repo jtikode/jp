@@ -18,24 +18,61 @@ function isDueOn(
   return date.getDate() === task.dayOfMonth;
 }
 
-// Makes sure today has an occurrence for every active task whose recurrence
-// rule matches today's date. Called whenever the board loads — no cron.
-// Unlike the old warehouse-only version, a missed occurrence is never
-// rolled forward: it just stays PENDING against its own original date, so a
-// day nobody completed it reads as blank in the completion chart instead of
-// silently reappearing later.
+// Makes sure today's occurrences are in the right state for every active
+// task. Called whenever the board loads — no cron. Two different rules by
+// recurrence:
+//   - DAILY: tied strictly to its own day. A missed day is never rolled
+//     forward — it just stays PENDING against that original date, so a day
+//     nobody completed it reads as a blank/missed day in the completion
+//     chart instead of silently reappearing later.
+//   - WEEKLY / MONTHLY / ONCE: the opposite — an unresolved occurrence
+//     (still PENDING or sent back REJECTED) keeps rolling forward day to
+//     day, same row, same originalDate (so the chart still credits/blames
+//     whenever it was ACTUALLY due), until someone finally completes it. A
+//     new occurrence for the next due date only gets created once the
+//     current one has been resolved (AWAITING_APPROVAL or APPROVED).
 export async function ensureTodaysOccurrences(orgId: string): Promise<void> {
   const db = getOrgScopedDb(orgId);
   const today = startOfToday();
 
   const activeTasks = await db.task.findMany({ where: { active: true } });
+  if (activeTasks.length === 0) return;
+
+  // One row per task — its single most recent occurrence — fetched in one
+  // query regardless of how much occurrence history has piled up.
+  const latestOccurrences = await db.taskOccurrence.findMany({
+    where: { taskId: { in: activeTasks.map((t) => t.id) } },
+    orderBy: { originalDate: "desc" },
+    distinct: ["taskId"],
+  });
+  const latestByTask = new Map(latestOccurrences.map((o) => [o.taskId, o]));
+
   for (const task of activeTasks) {
-    if (!isDueOn(task, today)) continue;
-    await db.taskOccurrence.upsert({
-      where: { taskId_originalDate: { taskId: task.id, originalDate: today } },
-      update: {},
-      create: { orgId, taskId: task.id, originalDate: today, scheduledDate: today },
-    });
+    const latest = latestByTask.get(task.id);
+    const alreadyHasTodaysOccurrence = latest?.originalDate.getTime() === today.getTime();
+
+    if (task.recurrence === "DAILY") {
+      if (isDueOn(task, today) && !alreadyHasTodaysOccurrence) {
+        await db.taskOccurrence.create({
+          data: { orgId, taskId: task.id, originalDate: today, scheduledDate: today },
+        });
+      }
+      continue;
+    }
+
+    const isUnresolved = latest != null && (latest.status === "PENDING" || latest.status === "REJECTED");
+    if (isUnresolved) {
+      if (latest!.scheduledDate.getTime() !== today.getTime()) {
+        await db.taskOccurrence.update({ where: { id: latest!.id }, data: { scheduledDate: today } });
+      }
+      continue;
+    }
+
+    if (isDueOn(task, today) && !alreadyHasTodaysOccurrence) {
+      await db.taskOccurrence.create({
+        data: { orgId, taskId: task.id, originalDate: today, scheduledDate: today },
+      });
+    }
   }
 }
 

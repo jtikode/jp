@@ -35,6 +35,8 @@ const TENANT_MODELS = new Set([
   "scheduledNotification",
   "loginEvent",
   "orderReminder",
+  "promoClick",
+  "fastOrderItem",
 ]);
 
 const WHERE_SCOPED_OPERATIONS = new Set([

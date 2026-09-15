@@ -6,7 +6,8 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
-import { parseRegularItemsExcel } from "@/lib/regularItems";
+import { parseRegularItemsExcel, parseFastOrderItemsReport } from "@/lib/regularItems";
+import { parseStockExpiryReport, stockMatchKey } from "@/lib/stockExpiryReport";
 import type { ActionResult } from "@/actions/employeeActions";
 
 /** Handles both a typed date string and an Excel serial date number. */
@@ -283,15 +284,15 @@ export async function importPurchaseHistory(
   }
 
   const buffer = await file.arrayBuffer();
-  const isExcel = /\.xlsx?$/i.test(file.name);
 
   const parsedRows: Array<{ code: string; itemName: string; quantity: number; totalValue?: number }> =
     [];
 
   // The owner's "Party VS Item Wise Sale Analysis" export (store subtotal
-  // rows followed by indented per-item rows) is the expected real format
-  // for Excel uploads — try it first.
-  if (isExcel) {
+  // rows followed by indented per-item rows) is the expected real format —
+  // try it first, whether it arrived as CSV or Excel (XLSX.read auto-detects
+  // either from the raw bytes regardless of file extension).
+  {
     const regularItemRows = parseRegularItemsExcel(buffer);
     for (const r of regularItemRows) {
       parsedRows.push({
@@ -381,6 +382,79 @@ export async function importPurchaseHistory(
   return { ok: true, rowCount: imported };
 }
 
+// Same source report as importPurchaseHistory, but ranked by quantity and
+// capped at 50/store into a dedicated table — see FastOrderItem's schema
+// comment for why this stays separate from PurchaseHistoryItem.
+export async function importFastOrderItems(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const buffer = await file.arrayBuffer();
+  const parsedRows = parseFastOrderItemsReport(buffer);
+
+  if (parsedRows.length === 0) {
+    return { ok: false, error: "No fast-order rows could be read from that file." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      orgId: session.orgId,
+      importType: "FAST_ORDER_ITEMS",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  const storeCache = new Map<string, string | null>();
+  const touchedStoreIds = new Set<string>();
+  let imported = 0;
+
+  for (const row of parsedRows) {
+    if (!storeCache.has(row.code)) {
+      const store = await db.store.findFirst({ where: { externalCode: row.code } });
+      storeCache.set(row.code, store?.id ?? null);
+    }
+    const storeId = storeCache.get(row.code);
+    if (!storeId) continue;
+    touchedStoreIds.add(storeId);
+    imported += 1;
+  }
+
+  if (touchedStoreIds.size > 0) {
+    await db.fastOrderItem.deleteMany({ where: { storeId: { in: [...touchedStoreIds] } } });
+  }
+
+  for (const row of parsedRows) {
+    const storeId = storeCache.get(row.code);
+    if (!storeId) continue;
+
+    await db.fastOrderItem.create({
+      data: {
+        orgId: session.orgId,
+        storeId,
+        itemName: row.itemName,
+        quantity: row.quantity,
+        totalValue: row.totalValue,
+        uploadBatchId: batch.id,
+      },
+    });
+  }
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
+
+  revalidatePath("/team/admin/imports");
+  return { ok: true, rowCount: imported };
+}
+
 const EXPIRY_ALIASES = {
   itemName: ["item", "item name", "product", "product name"],
   expiryDate: ["expiry", "expiry date", "exp date", "exp"],
@@ -448,6 +522,130 @@ export async function importExpiryItems(
   revalidatePath("/team/admin/imports");
   revalidatePath("/team/admin/intelligence");
   return { ok: true, rowCount: parsedRows.length };
+}
+
+/**
+ * Warehouse "STOCK REPORT" upload — one file that does two things at once:
+ * 1. Writes current stock + nearest expiry onto every matched Product (only
+ *    products found in the file are touched; anything not in this report is
+ *    left as-is, same "only what's in the file changes" rule every other
+ *    import in this app follows).
+ * 2. Fully replaces the Clearance list (ExpiryItem) with the top 50 matched
+ *    items expiring in the next 3 months, ranked by value (current selling
+ *    price x quantity) — the ExpiryItem upload card above still exists for a
+ *    manual one-off override, but this is meant to be the normal path now.
+ * Discount steps down the further out the expiry is: 70% off items expiring
+ * this month or next, 50% the month after that, 20% the month after that;
+ * anything expiring later isn't discounted or listed here at all.
+ */
+export async function importStockAndExpiry(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const buffer = await file.arrayBuffer();
+  const items = parseStockExpiryReport(buffer);
+
+  if (items.length === 0) {
+    return { ok: false, error: "No item/stock rows could be read from that file." };
+  }
+
+  const products = await db.product.findMany({ select: { id: true, name: true, price: true } });
+  const productByKey = new Map(products.map((p) => [stockMatchKey(p.name), p]));
+
+  const matched: Array<{
+    productId: string;
+    productName: string;
+    price: number;
+    totalQuantity: number;
+    nearestExpiry: Date | null;
+  }> = [];
+  for (const item of items) {
+    const product = productByKey.get(stockMatchKey(item.itemName));
+    if (!product) continue;
+    matched.push({
+      productId: product.id,
+      productName: product.name,
+      price: Number(product.price),
+      totalQuantity: item.totalQuantity,
+      nearestExpiry: item.nearestExpiry,
+    });
+  }
+
+  if (matched.length === 0) {
+    return { ok: false, error: "None of the items in that file matched a product in your catalog." };
+  }
+
+  const batch = await db.importBatch.create({
+    data: {
+      orgId: session.orgId,
+      importType: "STOCK_AND_EXPIRY",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  for (const m of matched) {
+    await db.product.update({
+      where: { id: m.productId },
+      data: { stock: Math.round(m.totalQuantity), nearestExpiry: m.nearestExpiry },
+    });
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMonthIndex = today.getFullYear() * 12 + today.getMonth();
+
+  const clearanceCandidates = matched
+    .filter((m) => m.nearestExpiry && m.totalQuantity > 0 && m.nearestExpiry.getTime() >= today.getTime())
+    .map((m) => ({
+      ...m,
+      monthsAhead: m.nearestExpiry!.getFullYear() * 12 + m.nearestExpiry!.getMonth() - todayMonthIndex,
+    }))
+    .filter((m) => m.monthsAhead >= 0 && m.monthsAhead <= 3)
+    .map((m) => {
+      const discountPercent = m.monthsAhead <= 1 ? 70 : m.monthsAhead === 2 ? 50 : 20;
+      return {
+        ...m,
+        value: m.price * m.totalQuantity,
+        specialRate: Math.round(m.price * (1 - discountPercent / 100) * 100) / 100,
+      };
+    })
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 50);
+
+  // Each upload is a fresh full snapshot of near-expiry stock, same as the
+  // manual ExpiryItem upload above — replace the whole list every time.
+  await db.expiryItem.deleteMany({});
+  if (clearanceCandidates.length > 0) {
+    await db.expiryItem.createMany({
+      data: clearanceCandidates.map((c) => ({
+        orgId: session.orgId,
+        itemName: c.productName,
+        expiryDate: c.nearestExpiry!,
+        specialRate: c.specialRate,
+        uploadBatchId: batch.id,
+      })),
+    });
+  }
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: matched.length } });
+
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/team/admin/products");
+  revalidatePath("/team/admin/intelligence");
+  revalidatePath("/team/salesman/near-expiry");
+  revalidatePath("/shop/products");
+  revalidatePath("/shop/clearance");
+  return { ok: true, rowCount: matched.length };
 }
 
 const INCENTIVE_ALIASES = {
