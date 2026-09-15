@@ -43,7 +43,7 @@ export default async function SalesmanNearExpiryPage() {
                 <tr key={item.id} className="border-b border-slate-100">
                   <td className="py-2 pr-4 font-medium text-slate-900">{item.itemName}</td>
                   <td className={`py-2 pr-4 ${urgency}`}>
-                    {item.expiryDate.toLocaleDateString("en-IN")} ({daysLeft}d)
+                    {item.expiryDate.toLocaleDateString("en-IN", { month: "short", year: "numeric" })} ({daysLeft}d)
                   </td>
                   <td className="py-2 pr-4 text-slate-600">
                     {item.specialRate != null ? `₹${Number(item.specialRate).toLocaleString("en-IN")}` : "—"}

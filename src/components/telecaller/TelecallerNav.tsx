@@ -6,6 +6,8 @@ import { clsx } from "@/lib/clsx";
 
 const LINKS = [
   { href: "/team/telecaller/dashboard", label: "Dashboard" },
+  { href: "/team/telecaller/orders", label: "Order Calls" },
+  { href: "/team/telecaller/payments", label: "Payment Calls" },
   { href: "/team/telecaller/routes", label: "Routes" },
   { href: "/team/telecaller/calendar", label: "Calendar" },
   { href: "/team/board", label: "Task Board" },

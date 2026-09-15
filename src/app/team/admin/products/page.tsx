@@ -51,7 +51,9 @@ export default async function AdminProductsPage() {
               "Tax %": p.taxPercent != null ? Number(p.taxPercent) : "",
               Scheme: p.scheme ?? "",
               Stock: p.stock ?? "",
-              "Nearest Expiry": p.nearestExpiry ? p.nearestExpiry.toLocaleDateString("en-IN") : "",
+              "Nearest Expiry": p.nearestExpiry
+                ? p.nearestExpiry.toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+                : "",
               Status: p.active ? "Active" : "Hidden",
             }))}
             filename="products"
@@ -73,7 +75,6 @@ export default async function AdminProductsPage() {
               p.nearestExpiry != null
                 ? {
                     label: p.nearestExpiry.toLocaleDateString("en-IN", {
-                      day: "2-digit",
                       month: "short",
                       year: "numeric",
                     }),

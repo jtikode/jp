@@ -12,14 +12,22 @@ interface Option {
   label: string;
 }
 
-export function AssignRouteForm({ salesmen, routes }: { salesmen: Option[]; routes: Option[] }) {
+export function AssignRouteForm({
+  salesmen,
+  routes,
+  employeePlaceholder = "Choose salesman",
+}: {
+  salesmen: Option[];
+  routes: Option[];
+  employeePlaceholder?: string;
+}) {
   const [state, formAction, pending] = useActionState(assignRoute, initialState);
 
   return (
     <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <Select name="userId" required defaultValue="">
         <option value="" disabled>
-          Choose salesman
+          {employeePlaceholder}
         </option>
         {salesmen.map((s) => (
           <option key={s.id} value={s.id}>

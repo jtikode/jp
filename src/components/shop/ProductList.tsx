@@ -256,7 +256,7 @@ export function ProductList({
                 </p>
                 {p.expiryDate && (
                   <p className="text-xs text-slate-400">
-                    {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                    {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                   </p>
                 )}
                 {p.scheme && (

@@ -41,7 +41,7 @@ export function buildStatementMessage(storeName: string, entries: StatementLine[
     "",
     `Total Outstanding: Rs ${total.toLocaleString("en-IN")}`,
     "",
-    "कृपया लवकरात लवकर पेमेंट करावे.",
+    "कृपया थकबाकीची रक्कम लवकरात लवकर ट्रान्सफर करावी.",
     "",
     "Sent via J P Traders AI",
   ].join("\n");

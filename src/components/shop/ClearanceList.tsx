@@ -59,7 +59,7 @@ export function ClearanceList({ items, lang }: { items: ClearanceItem[]; lang: L
                 {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
               </p>
               <p className={`text-xs font-semibold ${urgency}`}>
-                {t(lang, "shop_expires")}: {new Date(p.expiryDate).toLocaleDateString("en-IN")} (
+                {t(lang, "shop_expires")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })} (
                 {p.daysLeft}d)
               </p>
               <p className="flex flex-wrap items-baseline gap-2">

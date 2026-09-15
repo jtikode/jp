@@ -30,6 +30,6 @@ body {
    opacity:1 alone doesn't clear it, so force a solid, unambiguous color. */
 input::placeholder,
 textarea::placeholder {
-  color: #334155 !important; /* slate-700, fully opaque */
+  color: #000000 !important;
   opacity: 1 !important;
 }

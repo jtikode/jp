@@ -53,6 +53,9 @@ export async function assignRoute(_prevState: ActionResult | null, formData: For
   await db.routeAssignment.create({ data: { ...parsed.data, orgId: session.orgId } });
 
   revalidatePath("/team/admin/routes");
+  revalidatePath("/team/telecaller/dashboard");
+  revalidatePath("/team/telecaller/orders");
+  revalidatePath("/team/telecaller/payments");
   return { ok: true };
 }
 
@@ -63,6 +66,9 @@ export async function unassignRoute(assignmentId: string): Promise<void> {
   await db.routeAssignment.delete({ where: { id: assignmentId } });
 
   revalidatePath("/team/admin/routes");
+  revalidatePath("/team/telecaller/dashboard");
+  revalidatePath("/team/telecaller/orders");
+  revalidatePath("/team/telecaller/payments");
 }
 
 export async function deleteRoute(routeId: string): Promise<ActionResult> {
