@@ -94,7 +94,10 @@ export async function searchProductCatalog(
     ...p,
     hot: hotIds.has(p.id),
     deal: dealByProductId.get(p.id) ?? null,
-    expiryDate: expiryByNormalizedName.get(normalizeName(p.name)) ?? null,
+    // The curated Clearance date takes priority when both exist (it's what
+    // actually drives the discount there), but most products only have
+    // their own recorded nearestExpiry — that's still worth showing.
+    expiryDate: expiryByNormalizedName.get(normalizeName(p.name)) ?? p.nearestExpiry ?? null,
   }));
 
   const sorted = [...withMeta].sort(

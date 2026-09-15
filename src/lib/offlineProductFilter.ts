@@ -23,9 +23,12 @@ export interface OfflineSearchResult {
 const MAX_ALTERNATIVES = 8;
 
 // Same filtering behavior as searchProductCatalog (server-side) minus the
-// data that only the server can compute freshly — hot-selling rank,
-// Wednesday deal availability, expiry matches. Those are omitted rather
-// than shown stale/wrong while offline.
+// data that only the server can compute freshly — hot-selling rank and
+// Wednesday deal availability are omitted rather than shown stale/wrong
+// while offline. Expiry is different: nearestExpiry is already part of the
+// cached catalog snapshot itself (no live join needed), so it's shown here
+// too — only the curated Clearance date (which needs a fresh ExpiryItem
+// lookup) is skipped, same as before.
 export function filterOfflineCatalog(
   catalog: CatalogProduct[],
   params: OfflineSearchParams,
@@ -86,7 +89,7 @@ export function filterOfflineCatalog(
       stock: p.stock,
       hot: false,
       deal: null,
-      expiryDate: null,
+      expiryDate: p.nearestExpiry ?? null,
       alternatives,
     };
   });

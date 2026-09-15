@@ -12,6 +12,11 @@ export interface CatalogProduct {
   scheme: string | null;
   composition: string | null;
   stock: number | null;
+  // Soonest expiry across this product's batches, from the last stock &
+  // expiry upload — shown as a fallback whenever the item isn't one of the
+  // curated Clearance picks (which carry their own, possibly more current,
+  // expiryDate via ExpiryItem).
+  nearestExpiry: string | null;
 }
 
 // Shared, cached read of an org's active catalog. Every retailer-facing
@@ -38,6 +43,7 @@ const getCachedActiveCatalog = unstable_cache(
         scheme: true,
         composition: true,
         stock: true,
+        nearestExpiry: true,
       },
     });
     return products.map((p) => ({
@@ -50,6 +56,7 @@ const getCachedActiveCatalog = unstable_cache(
       taxPercent: p.taxPercent != null ? Number(p.taxPercent) : null,
       scheme: p.scheme,
       composition: p.composition,
+      nearestExpiry: p.nearestExpiry != null ? p.nearestExpiry.toISOString() : null,
       stock: p.stock,
     }));
   },
