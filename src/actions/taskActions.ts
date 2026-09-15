@@ -4,15 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { createTaskSchema } from "@/lib/validators";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import type { ActionResult } from "@/actions/employeeActions";
 import type { Role } from "@/generated/prisma/client";
 
 const ANY_STAFF: Role[] = ["ADMIN", "SALESMAN", "TELECALLER", "WAREHOUSE"];
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 // Admin-defined task, for either one named employee or every employee of a
 // role (assignTo is "user:<id>" or "role:<ROLE>").
@@ -64,7 +60,7 @@ export async function createTask(
   // ONCE tasks are due immediately — every other recurrence picks up its
   // first occurrence the next time a board/dashboard loads.
   if (task.recurrence === "ONCE") {
-    const today = startOfToday();
+    const today = getStartOfIstDayUtc();
     await db.taskOccurrence.create({
       data: { orgId: session.orgId, taskId: task.id, originalDate: today, scheduledDate: today },
     });
@@ -96,7 +92,7 @@ export async function createOwnTask(
   if (!title) return { ok: false, error: "Title is required." };
   const description = (formData.get("description") as string | null)?.trim() || undefined;
 
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
   const task = await db.task.create({
     data: {
       orgId: session.orgId,
@@ -169,7 +165,7 @@ export async function markWarehouseAttendance(present: boolean): Promise<void> {
   const session = await assertRole(["WAREHOUSE"]);
   const db = getOrgScopedDb(session.orgId);
   const userId = session.userId as string;
-  const date = startOfToday();
+  const date = getStartOfIstDayUtc();
 
   if (present) {
     await db.attendance.deleteMany({ where: { userId, date } });

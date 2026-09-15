@@ -4,21 +4,17 @@ import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 
 const STOCK_ITEM_ALIASES = {
   company: ["company", "company name", "manufacturer", "brand"],
   name: ["item", "item name", "product", "product name"],
 };
 
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
 export async function upsertStockCount(stockItemId: string, quantity: number): Promise<void> {
   const session = await assertRole(["WAREHOUSE"]);
   const db = getOrgScopedDb(session.orgId);
-  const date = startOfToday();
+  const date = getStartOfIstDayUtc();
 
   await db.stockCount.upsert({
     where: { stockItemId_date: { stockItemId, date } },

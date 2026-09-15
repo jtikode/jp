@@ -1,6 +1,6 @@
-import { isSameDay } from "date-fns";
 import type { getOrgScopedDb } from "@/lib/orgScopedDb";
 import type { DayCell } from "@/components/calendar/DCRCalendarGrid";
+import { getIstDateParts, makeIstDateUtc, isSameIstDay } from "@/lib/istTime";
 
 // Shared with both the salesman's own calendar and the admin's all-salesmen
 // calendar — one month of attendance + visit activity, cell-per-day.
@@ -20,17 +20,19 @@ export async function buildMonthCells(
     }),
   ]);
 
+  const { year, month } = getIstDateParts(monthStart);
+
   return Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
-    const date = new Date(monthStart.getFullYear(), monthStart.getMonth(), day);
+    const date = makeIstDateUtc(year, month, day);
 
-    const dayVisits = visits.filter((v) => isSameDay(v.visitDate, date));
+    const dayVisits = visits.filter((v) => isSameIstDay(v.visitDate, date));
     const totalCalls = dayVisits.length;
     const productiveCalls = dayVisits.filter((v) => v.hasOrder).length;
 
-    const attendance = attendances.find((a) => isSameDay(a.date, date));
+    const attendance = attendances.find((a) => isSameIstDay(a.date, date));
     const status = attendance?.status ?? (totalCalls > 0 ? "OFFICIAL_VISIT" : null);
 
-    return { day, isToday: isSameDay(date, today), totalCalls, productiveCalls, status };
+    return { day, isToday: isSameIstDay(date, today), totalCalls, productiveCalls, status };
   });
 }

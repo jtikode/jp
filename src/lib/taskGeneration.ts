@@ -1,10 +1,6 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getStartOfIstDayUtc, getIstDateParts, getIstNow } from "@/lib/istTime";
 import type { Role } from "@/generated/prisma/client";
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 function isDueOn(
   task: { recurrence: string; dayOfWeek: number | null; dayOfMonth: number | null },
@@ -14,8 +10,8 @@ function isDueOn(
   // — they never recur via this check.
   if (task.recurrence === "ONCE") return false;
   if (task.recurrence === "DAILY") return true;
-  if (task.recurrence === "WEEKLY") return date.getDay() === task.dayOfWeek;
-  return date.getDate() === task.dayOfMonth;
+  if (task.recurrence === "WEEKLY") return getIstNow(date).dayOfWeek === task.dayOfWeek;
+  return getIstDateParts(date).day === task.dayOfMonth;
 }
 
 // Makes sure today's occurrences are in the right state for every active
@@ -33,7 +29,7 @@ function isDueOn(
 //     current one has been resolved (AWAITING_APPROVAL or APPROVED).
 export async function ensureTodaysOccurrences(orgId: string): Promise<void> {
   const db = getOrgScopedDb(orgId);
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
 
   const activeTasks = await db.task.findMany({ where: { active: true } });
   if (activeTasks.length === 0) return;
@@ -100,7 +96,7 @@ export async function getTodaysTasksForEmployee(
 ): Promise<EmployeeTaskView[]> {
   const db = getOrgScopedDb(orgId);
   await ensureTodaysOccurrences(orgId);
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
 
   const occurrences = await db.taskOccurrence.findMany({
     where: {

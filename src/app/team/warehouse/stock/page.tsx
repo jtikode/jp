@@ -1,12 +1,8 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { StockSheetList } from "@/components/warehouse/StockSheetList";
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 export default async function WarehouseStockPage() {
   const session = await getSession();
@@ -16,7 +12,7 @@ export default async function WarehouseStockPage() {
       where: { active: true },
       orderBy: [{ company: "asc" }, { name: "asc" }],
     }),
-    db.stockCount.findMany({ where: { date: startOfToday() } }),
+    db.stockCount.findMany({ where: { date: getStartOfIstDayUtc() } }),
   ]);
 
   const countByItem = new Map(todaysCounts.map((c) => [c.stockItemId, Number(c.quantity)]));

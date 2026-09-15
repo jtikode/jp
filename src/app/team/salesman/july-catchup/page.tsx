@@ -1,8 +1,8 @@
-import { format, eachDayOfInterval } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import { getIstDateParts, getIstNow, makeIstDateUtc, getEndOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -30,21 +30,21 @@ export default async function JulyCatchupPage({
     orderBy: { name: "asc" },
   });
 
-  const year = new Date().getFullYear();
-  const days = eachDayOfInterval({ start: new Date(year, 6, 1), end: new Date(year, 6, 31) });
+  const year = getIstDateParts(new Date()).year;
+  const days = Array.from({ length: 31 }, (_, i) => makeIstDateUtc(year, 6, i + 1));
 
   let dayInfos: { date: string; dayOfWeek: number; existing?: { orderAmount: number | null; collectionAmount: number | null } }[] = [];
 
   if (storeId) {
-    const monthStart = new Date(year, 6, 1);
-    const monthEnd = new Date(year, 6, 31, 23, 59, 59, 999);
+    const monthStart = makeIstDateUtc(year, 6, 1);
+    const monthEnd = getEndOfIstDayUtc(makeIstDateUtc(year, 6, 31));
     const existingVisits = await db.visit.findMany({
       where: { userId, storeId, visitDate: { gte: monthStart, lte: monthEnd } },
       orderBy: { visitDate: "asc" },
     });
     const existingByDate = new Map(
       existingVisits.map((v) => [
-        format(v.visitDate, "yyyy-MM-dd"),
+        getIstNow(v.visitDate).dateKey,
         {
           orderAmount: v.orderAmount != null ? Number(v.orderAmount) : null,
           collectionAmount: v.collectionAmount != null ? Number(v.collectionAmount) : null,
@@ -53,10 +53,10 @@ export default async function JulyCatchupPage({
     );
 
     dayInfos = days.map((d) => {
-      const dateStr = format(d, "yyyy-MM-dd");
+      const dateStr = getIstNow(d).dateKey;
       return {
         date: dateStr,
-        dayOfWeek: d.getDay(),
+        dayOfWeek: getIstNow(d).dayOfWeek,
         existing: existingByDate.get(dateStr),
       };
     });

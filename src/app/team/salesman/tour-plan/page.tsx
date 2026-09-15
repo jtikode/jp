@@ -1,9 +1,16 @@
-import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { Card } from "@/components/ui/Card";
 import { getSession } from "@/lib/session";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import {
+  getIstDateParts,
+  getIstNow,
+  getIstMonthKey,
+  makeIstDateUtc,
+  getStartOfIstMonthUtc,
+  getEndOfIstMonthUtc,
+} from "@/lib/istTime";
 import { TourPlanGrid } from "@/components/salesman/TourPlanGrid";
 
 export default async function TourPlanPage({
@@ -18,15 +25,19 @@ export default async function TourPlanPage({
   const lang = await getLang();
 
   const now = new Date();
-  const [yearStr, monthNumStr] = (monthParam ?? format(now, "yyyy-MM")).split("-");
-  const year = Number(yearStr) || now.getFullYear();
-  const monthIndex = (Number(monthNumStr) || now.getMonth() + 1) - 1;
-  const anchor = new Date(year, monthIndex, 1);
-  const monthValue = format(anchor, "yyyy-MM");
+  const { year: nowYear, month: nowMonth } = getIstDateParts(now);
+  const [yearStr, monthNumStr] = (monthParam ?? getIstMonthKey(now)).split("-");
+  const year = Number(yearStr) || nowYear;
+  const monthIndex = (Number(monthNumStr) || nowMonth + 1) - 1;
+  const anchor = makeIstDateUtc(year, monthIndex, 1);
+  const monthValue = getIstMonthKey(anchor);
 
-  const monthStart = startOfMonth(anchor);
-  const monthEnd = endOfMonth(anchor);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const monthStart = getStartOfIstMonthUtc(anchor);
+  const monthEnd = getEndOfIstMonthUtc(anchor);
+  const days: Date[] = [];
+  for (let t = monthStart.getTime(); t <= monthEnd.getTime(); t += 24 * 60 * 60 * 1000) {
+    days.push(new Date(t));
+  }
 
   const [assignments, colleagues, existing] = await Promise.all([
     db.routeAssignment.findMany({ where: { userId }, include: { route: true } }),
@@ -39,7 +50,7 @@ export default async function TourPlanPage({
     }),
   ]);
 
-  const existingByDate = new Map(existing.map((a) => [format(a.date, "yyyy-MM-dd"), a]));
+  const existingByDate = new Map(existing.map((a) => [getIstNow(a.date).dateKey, a]));
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -51,17 +62,21 @@ export default async function TourPlanPage({
       <TourPlanGrid
         lang={lang}
         monthValue={monthValue}
-        days={days.map((d) => ({
-          date: format(d, "yyyy-MM-dd"),
-          dayOfWeek: d.getDay(),
-          existing: existingByDate.get(format(d, "yyyy-MM-dd"))
-            ? {
-                routeId: existingByDate.get(format(d, "yyyy-MM-dd"))!.routeId ?? "",
-                workingWithUserId: existingByDate.get(format(d, "yyyy-MM-dd"))!.workingWithUserId ?? "",
-                note: existingByDate.get(format(d, "yyyy-MM-dd"))!.note ?? "",
-              }
-            : undefined,
-        }))}
+        days={days.map((d) => {
+          const dateStr = getIstNow(d).dateKey;
+          const existingForDay = existingByDate.get(dateStr);
+          return {
+            date: dateStr,
+            dayOfWeek: getIstNow(d).dayOfWeek,
+            existing: existingForDay
+              ? {
+                  routeId: existingForDay.routeId ?? "",
+                  workingWithUserId: existingForDay.workingWithUserId ?? "",
+                  note: existingForDay.note ?? "",
+                }
+              : undefined,
+          };
+        })}
         routes={assignments.map((a) => ({ id: a.route.id, name: a.route.name }))}
         colleagues={colleagues.map((c) => ({ id: c.id, name: c.name }))}
       />

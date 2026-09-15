@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { AdminTasksPanel, type ApprovalRow, type TaskRow } from "@/components/admin/AdminTasksPanel";
 import type { EmployeeCompletionPoint } from "@/components/charts/TaskCompletionChart";
 import { buildTaskTrends } from "@/lib/taskReporting";
+import { getStartOfIstDayUtc, addIstMonths } from "@/lib/istTime";
 
 export const dynamic = "force-dynamic";
 
@@ -15,19 +16,12 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "All Admins",
 };
 
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
 export default async function AdminTasksPage() {
   const session = await assertRole(["ADMIN"]);
   const db = getOrgScopedDb(session.orgId);
-  const today = startOfToday();
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const sixMonthsAgo = new Date(today);
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const today = getStartOfIstDayUtc();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const sixMonthsAgo = addIstMonths(today, -6);
 
   const [users, tasks, awaitingOccurrences, historyOccurrences] = await Promise.all([
     db.user.findMany({ where: { active: true }, orderBy: [{ role: "asc" }, { name: "asc" }] }),

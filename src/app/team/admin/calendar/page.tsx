@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { startOfMonth, endOfMonth, getDate, getDay } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
+import { getStartOfIstMonthUtc, getEndOfIstMonthUtc, getIstDateParts, getIstNow } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { DCRCalendarGrid } from "@/components/calendar/DCRCalendarGrid";
 import { buildMonthCells } from "@/lib/dcrCalendar";
@@ -16,10 +16,10 @@ export default async function AdminCalendarPage() {
   const db = getOrgScopedDb(session.orgId);
 
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const daysInMonth = getDate(monthEnd);
-  const leadingBlanks = (getDay(monthStart) + 6) % 7;
+  const monthStart = getStartOfIstMonthUtc(today);
+  const monthEnd = getEndOfIstMonthUtc(today);
+  const daysInMonth = getIstDateParts(monthEnd).day;
+  const leadingBlanks = (getIstNow(monthStart).dayOfWeek + 6) % 7;
 
   const salesmen = await db.user.findMany({
     where: { role: "SALESMAN", active: true },
@@ -44,7 +44,7 @@ export default async function AdminCalendarPage() {
 
       <Card>
         <h1 className="text-xl font-bold text-slate-900">
-          All Salesmen — {monthStart.toLocaleString("default", { month: "long", year: "numeric" })}
+          All Salesmen — {monthStart.toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Each salesman&rsquo;s own daily call report calendar, side by side.

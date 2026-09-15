@@ -1,15 +1,11 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { getTodaysTasksForEmployee } from "@/lib/taskGeneration";
 import { WarehouseAttendanceButtons } from "@/components/warehouse/WarehouseAttendanceButtons";
 import { TaskList } from "@/components/tasks/TaskList";
 import { AddOwnTaskForm } from "@/components/warehouse/AddOwnTaskForm";
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 export default async function WarehouseDashboardPage() {
   const session = await getSession();
@@ -20,7 +16,7 @@ export default async function WarehouseDashboardPage() {
   const [tasks, attendance] = await Promise.all([
     getTodaysTasksForEmployee(orgId, userId, "WAREHOUSE"),
     db.attendance.findUnique({
-      where: { userId_date: { userId, date: startOfToday() } },
+      where: { userId_date: { userId, date: getStartOfIstDayUtc() } },
     }),
   ]);
 

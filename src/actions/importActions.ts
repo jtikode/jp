@@ -8,6 +8,7 @@ import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
 import { parseRegularItemsExcel, parseFastOrderItemsReport } from "@/lib/regularItems";
 import { parseStockExpiryReport, stockMatchKey } from "@/lib/stockExpiryReport";
+import { getStartOfIstDayUtc, getIstDateParts } from "@/lib/istTime";
 import type { ActionResult } from "@/actions/employeeActions";
 
 /** Handles both a typed date string and an Excel serial date number. */
@@ -600,16 +601,15 @@ export async function importStockAndExpiry(
     });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayMonthIndex = today.getFullYear() * 12 + today.getMonth();
+  const today = getStartOfIstDayUtc();
+  const todayMonthIndex = getIstDateParts(today).year * 12 + getIstDateParts(today).month;
 
   const clearanceCandidates = matched
     .filter((m) => m.nearestExpiry && m.totalQuantity > 0 && m.nearestExpiry.getTime() >= today.getTime())
-    .map((m) => ({
-      ...m,
-      monthsAhead: m.nearestExpiry!.getFullYear() * 12 + m.nearestExpiry!.getMonth() - todayMonthIndex,
-    }))
+    .map((m) => {
+      const expParts = getIstDateParts(m.nearestExpiry!);
+      return { ...m, monthsAhead: expParts.year * 12 + expParts.month - todayMonthIndex };
+    })
     .filter((m) => m.monthsAhead >= 0 && m.monthsAhead <= 3)
     .map((m) => {
       const discountPercent = m.monthsAhead <= 1 ? 70 : m.monthsAhead === 2 ? 50 : 20;

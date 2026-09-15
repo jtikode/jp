@@ -10,6 +10,7 @@ import { orderStatusLabel } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 export interface CartLine {
@@ -86,8 +87,7 @@ export async function placeOrder(
   // special rate if the deal it points at is still live AND actually names
   // this same product — otherwise a client could pair a cheap deal's id
   // with an unrelated, expensive product to buy it at the wrong price.
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getStartOfIstDayUtc();
   const orderLines = cleanLines.map((l) => {
     const product = productMap.get(l.productId)!;
     const expiryItem = l.expiryItemId ? expiryItemMap.get(l.expiryItemId) : undefined;

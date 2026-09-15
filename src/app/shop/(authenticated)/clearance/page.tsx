@@ -3,6 +3,7 @@ import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { ClearanceList, type ClearanceItem } from "@/components/shop/ClearanceList";
 
@@ -11,8 +12,7 @@ export default async function ShopClearancePage() {
   const db = getOrgScopedDb(session.orgId);
   const lang = await getLang();
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getStartOfIstDayUtc();
 
   const [expiryItems, products] = await Promise.all([
     db.expiryItem.findMany({

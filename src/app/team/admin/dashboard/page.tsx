@@ -1,6 +1,12 @@
-import { startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
+import {
+  getStartOfIstMonthUtc,
+  getEndOfIstMonthUtc,
+  getStartOfIstDayUtc,
+  getEndOfIstDayUtc,
+  getIstDateParts,
+} from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { RecordsTable } from "@/components/admin/RecordsTable";
@@ -17,8 +23,9 @@ export default async function AdminDashboardPage({
   const db = getOrgScopedDb(session.orgId);
   const params = await searchParams;
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  const monthStart = getStartOfIstMonthUtc(today);
+  const monthEnd = getEndOfIstMonthUtc(today);
+  const { year: istYear, month: istMonth } = getIstDateParts(today);
 
   const [routes, employees, records, salesmen, todayAgg, monthAgg, targets] = await Promise.all([
     db.route.findMany({ orderBy: { name: "asc" } }),
@@ -27,7 +34,7 @@ export default async function AdminDashboardPage({
     db.user.findMany({ where: { role: "SALESMAN", active: true }, orderBy: { name: "asc" } }),
     db.visit.groupBy({
       by: ["userId"],
-      where: { visitDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+      where: { visitDate: { gte: getStartOfIstDayUtc(today), lte: getEndOfIstDayUtc(today) } },
       _sum: { orderAmount: true, collectionAmount: true },
     }),
     db.visit.groupBy({
@@ -36,7 +43,7 @@ export default async function AdminDashboardPage({
       _sum: { orderAmount: true, collectionAmount: true },
     }),
     db.target.findMany({
-      where: { periodMonth: today.getMonth() + 1, periodYear: today.getFullYear() },
+      where: { periodMonth: istMonth + 1, periodYear: istYear },
     }),
   ]);
 

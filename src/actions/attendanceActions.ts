@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import type { AttendanceStatus } from "@/generated/prisma/client";
-
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 export async function markAttendance(
   status: AttendanceStatus,
@@ -17,7 +13,7 @@ export async function markAttendance(
   const session = await assertRole(["SALESMAN"]);
   const db = getOrgScopedDb(session.orgId);
 
-  const date = startOfToday();
+  const date = getStartOfIstDayUtc();
   const userId = session.userId as string;
 
   await db.attendance.upsert({

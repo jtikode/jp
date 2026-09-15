@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
+import { getIstDateParts } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { TargetForm } from "@/components/admin/TargetForm";
 
@@ -15,9 +16,8 @@ export default async function EmployeeTargetsPage({
   const employee = await db.user.findUnique({ where: { id: userId } });
   if (!employee) notFound();
 
-  const today = new Date();
-  const periodMonth = today.getMonth() + 1;
-  const periodYear = today.getFullYear();
+  const { year: periodYear, month } = getIstDateParts(new Date());
+  const periodMonth = month + 1;
 
   const target = await db.target.findUnique({
     where: { userId_periodMonth_periodYear: { userId, periodMonth, periodYear } },
@@ -28,7 +28,7 @@ export default async function EmployeeTargetsPage({
       <Card>
         <h1 className="mb-1 text-lg font-bold text-slate-900">{employee.name}</h1>
         <p className="mb-4 text-sm text-slate-500">
-          Targets for {today.toLocaleString("default", { month: "long" })} {periodYear}
+          Targets for {new Date(0, periodMonth - 1).toLocaleString("en-IN", { month: "long" })} {periodYear}
         </p>
         <TargetForm
           userId={userId}

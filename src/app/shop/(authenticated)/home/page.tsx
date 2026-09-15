@@ -26,6 +26,7 @@ import { OneTapReorderCard } from "@/components/shop/OneTapReorderCard";
 import { WednesdayDealsStrip } from "@/components/shop/WednesdayDealsStrip";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 import { getOneTapReorderData } from "@/actions/orderActions";
+import { getStartOfIstYearUtc } from "@/lib/istTime";
 
 const MENU_TILES = [
   { href: "/shop/quick-check", key: "shop_menu_quick_check", icon: ScanSearch, bg: "bg-cyan-50", fg: "text-cyan-600" },
@@ -47,7 +48,7 @@ export default async function ShopHomePage() {
   const db = getOrgScopedDb(session.orgId);
   const lang = await getLang();
 
-  const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+  const startOfYear = getStartOfIstYearUtc();
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 

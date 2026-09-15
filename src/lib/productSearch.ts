@@ -6,6 +6,7 @@ import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } fro
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
 import { byStockThenName, alternativesCap } from "@/lib/stockRank";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 
 export { PRODUCT_PAGE_SIZE };
 
@@ -63,8 +64,7 @@ export async function searchProductCatalog(
   storeId: string,
   params: ProductSearchParams,
 ): Promise<ProductSearchResult> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getStartOfIstDayUtc();
 
   const db = getOrgScopedDb(orgId);
   const [catalog, hotIds, deals, expiryItems] = await Promise.all([

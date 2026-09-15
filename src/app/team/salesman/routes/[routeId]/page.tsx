@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { subMonths, startOfMonth, endOfMonth, startOfDay, endOfDay, format } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
+import { getStartOfIstMonthUtc, getEndOfIstMonthUtc, getStartOfIstDayUtc, getEndOfIstDayUtc, addIstMonths } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { RouteBarChart, type MonthlyPoint } from "@/components/charts/RouteBarChart";
 import { storeLabel } from "@/lib/storeLabel";
@@ -28,9 +28,9 @@ export default async function RouteDetailPage({
   const monthlyData: MonthlyPoint[] = [];
 
   for (let i = 5; i >= 0; i--) {
-    const monthDate = subMonths(today, i);
-    const from = startOfMonth(monthDate);
-    const to = endOfMonth(monthDate);
+    const monthDate = addIstMonths(today, -i);
+    const from = getStartOfIstMonthUtc(monthDate);
+    const to = getEndOfIstMonthUtc(monthDate);
 
     const visits = await db.visit.findMany({
       where: { userId, routeId, visitDate: { gte: from, lte: to } },
@@ -40,7 +40,7 @@ export default async function RouteDetailPage({
     const collection = visits.reduce((sum, v) => sum + Number(v.collectionAmount ?? 0), 0);
 
     monthlyData.push({
-      month: format(monthDate, "MMM"),
+      month: monthDate.toLocaleDateString("en-IN", { month: "short", timeZone: "Asia/Kolkata" }),
       visits: visits.length,
       collection,
     });
@@ -53,7 +53,7 @@ export default async function RouteDetailPage({
       orderBy: [{ visitSequence: { sort: "asc", nulls: "last" } }, { store: { name: "asc" } }],
     }),
     db.visit.findMany({
-      where: { userId, routeId, visitDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+      where: { userId, routeId, visitDate: { gte: getStartOfIstDayUtc(today), lte: getEndOfIstDayUtc(today) } },
       select: { storeId: true },
     }),
   ]);

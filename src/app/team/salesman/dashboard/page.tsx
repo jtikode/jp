@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { startOfMonth, endOfMonth } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { AttendanceButtons } from "@/components/salesman/AttendanceButtons";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import { getStartOfIstDayUtc, getStartOfIstMonthUtc, getEndOfIstMonthUtc, getIstDateParts, getIstNow } from "@/lib/istTime";
 
 function formatCurrency(lang: "en" | "mr", value: number | null | undefined): string {
   if (value == null) return t(lang, "not_set");
@@ -18,17 +18,18 @@ export default async function SalesmanDashboardPage() {
   const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const monthStart = getStartOfIstMonthUtc(today);
+  const monthEnd = getEndOfIstMonthUtc(today);
+  const startOfToday = getStartOfIstDayUtc(today);
+  const { year: istYear, month: istMonth } = getIstDateParts(today);
 
   const [target, assignments, attendance, visits, incentiveItems] = await Promise.all([
     db.target.findUnique({
       where: {
         userId_periodMonth_periodYear: {
           userId,
-          periodMonth: today.getMonth() + 1,
-          periodYear: today.getFullYear(),
+          periodMonth: istMonth + 1,
+          periodYear: istYear,
         },
       },
     }),
@@ -49,7 +50,7 @@ export default async function SalesmanDashboardPage() {
   const usageByRoute = new Map<string, Set<string>>();
   for (const v of visits) {
     if (!v.routeId) continue;
-    const dayKey = v.visitDate.toDateString();
+    const dayKey = getIstNow(v.visitDate).dateKey;
     if (!usageByRoute.has(v.routeId)) usageByRoute.set(v.routeId, new Set());
     usageByRoute.get(v.routeId)!.add(dayKey);
   }

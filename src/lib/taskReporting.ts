@@ -1,3 +1,5 @@
+import { getStartOfIstWeekUtc, getStartOfIstMonthUtc, getIstDateParts, makeIstDateUtc } from "@/lib/istTime";
+
 export interface TrendPoint {
   label: string;
   approved: number;
@@ -13,28 +15,24 @@ export interface EmployeeTrends {
 const WEEKS = 12;
 const MONTHS = 6;
 
-// Monday-start week, so a task due "every Monday" always lands in the week
-// bucket it's actually due in rather than spilling into the previous one.
-function startOfWeek(d: Date): Date {
-  const dayOfWeek = d.getDay(); // 0=Sun..6=Sat
-  const diffFromMonday = (dayOfWeek + 6) % 7;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - diffFromMonday);
-}
-
-function startOfMonth(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
 function weekLabel(weekStart: Date): string {
-  return weekStart.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return weekStart.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 }
 
 function monthLabel(monthStart: Date): string {
-  return monthStart.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+  return monthStart.toLocaleDateString("en-IN", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 }
 
 function emptyPoint(label: string): TrendPoint {
   return { label, approved: 0, awaiting: 0, missed: 0 };
+}
+
+// i months before an IST month-start instant — calendar-aware (months vary
+// in length, so this can't be plain millisecond subtraction the way weeks can).
+function monthsBefore(monthStart: Date, count: number): Date {
+  const { year, month } = getIstDateParts(monthStart);
+  const totalMonths = year * 12 + month - count;
+  return makeIstDateUtc(Math.floor(totalMonths / 12), ((totalMonths % 12) + 12) % 12, 1);
 }
 
 /**
@@ -61,16 +59,16 @@ export function buildTaskTrends(
   employeeIds: string[],
   now: Date,
 ): Record<string, EmployeeTrends> {
-  const thisWeekStart = startOfWeek(now);
+  const thisWeekStart = getStartOfIstWeekUtc(now);
   const weekStarts: Date[] = [];
   for (let i = WEEKS - 1; i >= 0; i--) {
-    weekStarts.push(new Date(thisWeekStart.getFullYear(), thisWeekStart.getMonth(), thisWeekStart.getDate() - i * 7));
+    weekStarts.push(new Date(thisWeekStart.getTime() - i * 7 * 24 * 60 * 60 * 1000));
   }
 
-  const thisMonthStart = startOfMonth(now);
+  const thisMonthStart = getStartOfIstMonthUtc(now);
   const monthStarts: Date[] = [];
   for (let i = MONTHS - 1; i >= 0; i--) {
-    monthStarts.push(new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth() - i, 1));
+    monthStarts.push(monthsBefore(thisMonthStart, i));
   }
 
   const result: Record<string, EmployeeTrends> = {};
@@ -84,8 +82,8 @@ export function buildTaskTrends(
   for (const id of employeeIds) initBuckets(id);
 
   for (const o of occurrences) {
-    const wIdx = weekStarts.findIndex((w) => w.getTime() === startOfWeek(o.originalDate).getTime());
-    const mIdx = monthStarts.findIndex((m) => m.getTime() === startOfMonth(o.originalDate).getTime());
+    const wIdx = weekStarts.findIndex((w) => w.getTime() === getStartOfIstWeekUtc(o.originalDate).getTime());
+    const mIdx = monthStarts.findIndex((m) => m.getTime() === getStartOfIstMonthUtc(o.originalDate).getTime());
     if (wIdx === -1 && mIdx === -1) continue;
 
     const bucketKey: "approved" | "awaiting" | "missed" =

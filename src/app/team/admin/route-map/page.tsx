@@ -1,6 +1,6 @@
-import { format } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
+import { getIstNow, getEndOfIstDayUtc, makeIstDateUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
@@ -22,12 +22,13 @@ export default async function RouteMapPage({
   });
 
   const selectedUserId = userId ?? salesmen[0]?.id ?? "";
-  const selectedDate = dateParam ?? format(new Date(), "yyyy-MM-dd");
+  const selectedDate = dateParam ?? getIstNow().dateKey;
 
   let points: VisitPoint[] = [];
   if (selectedUserId) {
-    const dayStart = new Date(`${selectedDate}T00:00:00`);
-    const dayEnd = new Date(`${selectedDate}T23:59:59.999`);
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const dayStart = makeIstDateUtc(y, m - 1, d);
+    const dayEnd = getEndOfIstDayUtc(dayStart);
     const visits = await db.visit.findMany({
       where: { userId: selectedUserId, visitDate: { gte: dayStart, lte: dayEnd } },
       include: { store: true },
@@ -39,7 +40,7 @@ export default async function RouteMapPage({
       .map((v, i) => ({
         sequence: i + 1,
         storeName: v.store.name,
-        time: format(v.visitDate, "h:mm a"),
+        time: v.visitDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }),
         lat: v.store.latitude as number,
         lng: v.store.longitude as number,
       }));

@@ -1,16 +1,16 @@
 import Link from "next/link";
-import {
-  startOfMonth,
-  endOfMonth,
-  startOfDay,
-  endOfDay,
-  subMonths,
-  format,
-  getDate,
-  getDay,
-} from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
+import {
+  getStartOfIstDayUtc,
+  getEndOfIstDayUtc,
+  getStartOfIstMonthUtc,
+  getEndOfIstMonthUtc,
+  getIstDateParts,
+  getIstNow,
+  addIstMonths,
+  getIstMonthKey,
+} from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { DCRCalendarGrid } from "@/components/calendar/DCRCalendarGrid";
 import { buildMonthCells } from "@/lib/dcrCalendar";
@@ -25,15 +25,16 @@ export default async function CalendarPage() {
   const lang = await getLang();
 
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const daysInMonth = getDate(monthEnd);
-  // Monday-first grid: convert JS Sunday=0 to 0=Monday..6=Sunday
-  const leadingBlanks = (getDay(monthStart) + 6) % 7;
+  const monthStart = getStartOfIstMonthUtc(today);
+  const monthEnd = getEndOfIstMonthUtc(today);
+  const daysInMonth = getIstDateParts(monthEnd).day;
+  // Monday-first grid: convert Sunday=0 to 0=Monday..6=Sunday
+  const leadingBlanks = (getIstNow(monthStart).dayOfWeek + 6) % 7;
+  const { year: istYear, month: istMonth } = getIstDateParts(today);
 
   const [todayOrders, monthOrders, target] = await Promise.all([
     db.visit.aggregate({
-      where: { userId, visitDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+      where: { userId, visitDate: { gte: getStartOfIstDayUtc(today), lte: getEndOfIstDayUtc(today) } },
       _sum: { orderAmount: true },
     }),
     db.visit.aggregate({
@@ -44,8 +45,8 @@ export default async function CalendarPage() {
       where: {
         userId_periodMonth_periodYear: {
           userId,
-          periodMonth: today.getMonth() + 1,
-          periodYear: today.getFullYear(),
+          periodMonth: istMonth + 1,
+          periodYear: istYear,
         },
       },
     }),
@@ -58,7 +59,7 @@ export default async function CalendarPage() {
 
   // Last 3 years (36 months) of this salesman's own history, fetched in one
   // query and bucketed in JS rather than 36 separate month-by-month queries.
-  const threeYearsAgo = startOfMonth(subMonths(today, 35));
+  const threeYearsAgo = getStartOfIstMonthUtc(addIstMonths(today, -35));
   const historyVisits = await db.visit.findMany({
     where: { userId, visitDate: { gte: threeYearsAgo } },
     select: { visitDate: true, orderAmount: true, collectionAmount: true, hasOrder: true },
@@ -69,10 +70,10 @@ export default async function CalendarPage() {
     { label: string; visits: number; productive: number; orderAmount: number; collection: number }
   >();
   for (let i = 0; i < 36; i++) {
-    const d = subMonths(today, i);
-    const key = format(d, "yyyy-MM");
+    const d = addIstMonths(today, -i);
+    const key = getIstMonthKey(d);
     monthlyBuckets.set(key, {
-      label: format(d, "MMM yyyy"),
+      label: d.toLocaleDateString("en-IN", { month: "short", year: "numeric", timeZone: "Asia/Kolkata" }),
       visits: 0,
       productive: 0,
       orderAmount: 0,
@@ -80,7 +81,7 @@ export default async function CalendarPage() {
     });
   }
   for (const v of historyVisits) {
-    const key = format(v.visitDate, "yyyy-MM");
+    const key = getIstMonthKey(v.visitDate);
     const bucket = monthlyBuckets.get(key);
     if (!bucket) continue;
     bucket.visits += 1;
@@ -103,7 +104,8 @@ export default async function CalendarPage() {
 
       <Card>
         <h1 className="mb-4 text-lg font-bold text-slate-900">
-          {t(lang, "daily_call_report")} — {monthStart.toLocaleString("default", { month: "long", year: "numeric" })}
+          {t(lang, "daily_call_report")} —{" "}
+          {monthStart.toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}
         </h1>
         <DCRCalendarGrid cells={cells} leadingBlanks={leadingBlanks} />
       </Card>

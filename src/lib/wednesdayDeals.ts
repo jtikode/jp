@@ -1,8 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getIstNow, getStartOfIstDayUtc } from "@/lib/istTime";
 
 export function isWednesdayToday(): boolean {
-  return new Date().getDay() === 3;
+  return getIstNow().dayOfWeek === 3;
 }
 
 export interface WednesdayDealView {
@@ -47,11 +48,6 @@ export function getActiveWednesdayDeals(orgId: string): Promise<WednesdayDealVie
   return getCachedActiveWednesdayDeals(orgId);
 }
 
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
 /** How many more units of this deal a store can still order today — never cached, always live. */
 export async function getRemainingDealQty(
   orgId: string,
@@ -60,7 +56,7 @@ export async function getRemainingDealQty(
   maxQtyPerStore: number,
 ): Promise<number> {
   const db = getOrgScopedDb(orgId);
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
 
   const result = await db.orderItem.aggregate({
     where: { dealId, order: { storeId, createdAt: { gte: today } } },
@@ -79,7 +75,7 @@ export async function getRemainingDealQtyMap(
 ): Promise<Map<string, number>> {
   if (deals.length === 0) return new Map();
   const db = getOrgScopedDb(orgId);
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
 
   const grouped = await db.orderItem.groupBy({
     by: ["dealId"],

@@ -1,6 +1,6 @@
-import { startOfDay, endOfDay } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getSession } from "@/lib/session";
+import { getStartOfIstDayUtc, getEndOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StoreCard } from "@/components/telecaller/StoreCard";
@@ -17,7 +17,7 @@ export default async function TelecallerDashboardPage() {
     db.telecallerParty.count(),
     db.ledgerEntry.groupBy({ by: ["storeId"], _sum: { outstandingAmount: true } }),
     db.telecallerLog.count({
-      where: { userId, contactDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+      where: { userId, contactDate: { gte: getStartOfIstDayUtc(today), lte: getEndOfIstDayUtc(today) } },
     }),
   ]);
 

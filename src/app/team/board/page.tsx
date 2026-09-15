@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
 import { ensureTodaysOccurrences } from "@/lib/taskGeneration";
+import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Card } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
@@ -13,11 +14,6 @@ const ROLE_LABELS: Record<string, string> = {
   WAREHOUSE: "Warehouse",
 };
 
-function startOfToday(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
 // The shared kiosk/office-screen board. Anyone logged in as any staff role
 // can operate it — there's no per-employee login on this screen, so
 // identity comes from tapping a name, not from the device's own session.
@@ -25,7 +21,7 @@ export default async function BoardPage() {
   const session = await requireRole(["ADMIN", "SALESMAN", "TELECALLER", "WAREHOUSE"]);
   const db = getOrgScopedDb(session.orgId);
   await ensureTodaysOccurrences(session.orgId);
-  const today = startOfToday();
+  const today = getStartOfIstDayUtc();
 
   const [users, occurrences] = await Promise.all([
     db.user.findMany({ where: { active: true }, orderBy: [{ role: "asc" }, { name: "asc" }] }),

@@ -1,5 +1,5 @@
-import { startOfMonth, endOfMonth } from "date-fns";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
+import { getStartOfIstMonthUtc, getEndOfIstMonthUtc, getIstDateParts } from "@/lib/istTime";
 
 export interface SalesmanScoreBreakdown {
   total: number;
@@ -39,16 +39,17 @@ const WEIGHTS = {
 export async function computeSalesmanScore(orgId: string, userId: string): Promise<SalesmanScoreBreakdown> {
   const db = getOrgScopedDb(orgId);
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  const monthStart = getStartOfIstMonthUtc(today);
+  const monthEnd = getEndOfIstMonthUtc(today);
+  const { year: istYear, month: istMonth } = getIstDateParts(today);
 
   const [target, monthAgg, assignments, attendances] = await Promise.all([
     db.target.findUnique({
       where: {
         userId_periodMonth_periodYear: {
           userId,
-          periodMonth: today.getMonth() + 1,
-          periodYear: today.getFullYear(),
+          periodMonth: istMonth + 1,
+          periodYear: istYear,
         },
       },
     }),
