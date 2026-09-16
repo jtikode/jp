@@ -704,6 +704,13 @@ model Order {
   // entirely, so a broken inbox, spam filter, or dead API key can never again
   // be the reason an order goes unnoticed.
   adminSeenAt DateTime?
+  // Client-generated UUID, stable across retries of the same submit attempt
+  // (the offline queue and manual "Retry now" both reuse it). Lets placeOrder
+  // recognize "this exact submission already went through" and return the
+  // existing order instead of creating a duplicate — the retailer's client
+  // can lose the success response (dropped connection, backgrounded tab)
+  // after the order already committed, and retry blindly.
+  clientRequestId String? @unique
 
   org   Organization @relation(fields: [orgId], references: [id])
   store Store        @relation(fields: [storeId], references: [id])

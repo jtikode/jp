@@ -11,7 +11,7 @@ import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
-import type { OrderStatus } from "@/generated/prisma/client";
+import { Prisma, type OrderStatus } from "@/generated/prisma/client";
 
 export interface CartLine {
   productId: string;
@@ -29,9 +29,20 @@ export interface CartLine {
 export async function placeOrder(
   lines: CartLine[],
   notes?: string,
+  clientRequestId?: string,
 ): Promise<{ ok: boolean; error?: string; orderId?: string }> {
   const session = await assertStoreSession();
   const db = getOrgScopedDb(session.orgId);
+
+  // The client retries a submission whenever it can't confirm the first
+  // attempt reached the server (dropped connection, backgrounded tab) even
+  // though the order may have already committed — recognize that retry by
+  // its stable clientRequestId and hand back the original order instead of
+  // creating a duplicate.
+  if (clientRequestId) {
+    const existing = await db.order.findFirst({ where: { clientRequestId } });
+    if (existing) return { ok: true, orderId: existing.id };
+  }
 
   const cleanLines = lines.filter((l) => l.quantity > 0);
   if (cleanLines.length === 0) {
@@ -116,20 +127,33 @@ export async function placeOrder(
   });
   const totalAmount = orderLines.reduce((sum, l) => sum + l.lineTotal, 0);
 
-  const order = await db.$transaction(async (tx) => {
-    const order = await tx.order.create({
-      data: {
-        orgId: session.orgId,
-        storeId: session.storeId,
-        totalAmount,
-        notes: notes?.trim() || undefined,
-      },
+  let order;
+  try {
+    order = await db.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          orgId: session.orgId,
+          storeId: session.storeId,
+          totalAmount,
+          notes: notes?.trim() || undefined,
+          clientRequestId,
+        },
+      });
+      await tx.orderItem.createMany({
+        data: orderLines.map((l) => ({ orgId: session.orgId, orderId: order.id, ...l })),
+      });
+      return order;
     });
-    await tx.orderItem.createMany({
-      data: orderLines.map((l) => ({ orgId: session.orgId, orderId: order.id, ...l })),
-    });
-    return order;
-  });
+  } catch (err) {
+    // Two submissions with the same clientRequestId landed at (almost) the
+    // same time — the unique constraint caught what the earlier findFirst
+    // check couldn't. Whichever won, return its order rather than erroring.
+    if (clientRequestId && err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      const existing = await db.order.findFirst({ where: { clientRequestId } });
+      if (existing) return { ok: true, orderId: existing.id };
+    }
+    throw err;
+  }
 
   revalidatePath("/shop/orders");
   revalidatePath("/team/admin/orders");

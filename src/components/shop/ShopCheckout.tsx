@@ -27,8 +27,14 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
       expiryItemId: i.expiryItemId,
       dealId: i.dealId,
     }));
+    // Generated once per submit attempt and reused on every retry of it
+    // (including the automatic offline-queue retry below) — lets the server
+    // recognize a resend of an order that may have already committed, since
+    // this exact tap can succeed server-side even if the response never
+    // reaches the client.
+    const clientRequestId = crypto.randomUUID();
     try {
-      const result = await placeOrder(lines, notes);
+      const result = await placeOrder(lines, notes, clientRequestId);
       if (!result.ok) {
         setError(result.error ?? "Could not place order.");
         return;
@@ -40,7 +46,7 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
       // mid-request) — save the order on the device instead of losing it.
       // PendingOrdersSync retries it automatically once back online.
       if (isLikelyNetworkError(err)) {
-        addPendingOrder(lines, notes);
+        addPendingOrder(lines, notes, clientRequestId);
         clear();
         setSavedOffline(true);
       } else {

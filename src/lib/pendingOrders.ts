@@ -7,6 +7,10 @@ export interface PendingOrder {
   lines: CartLine[];
   notes: string;
   createdAt: string;
+  // Same key sent on the original attempt that failed to confirm — reused on
+  // every retry so the server can recognize a resend of an order that may
+  // have already committed, instead of creating a duplicate.
+  clientRequestId: string;
 }
 
 const STORAGE_KEY = "jpt_shop_pending_orders";
@@ -28,12 +32,13 @@ export function getPendingOrders(): PendingOrder[] {
   return read();
 }
 
-export function addPendingOrder(lines: CartLine[], notes: string): PendingOrder {
+export function addPendingOrder(lines: CartLine[], notes: string, clientRequestId: string): PendingOrder {
   const order: PendingOrder = {
     id: `pending_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     lines,
     notes,
     createdAt: new Date().toISOString(),
+    clientRequestId,
   };
   write([...read(), order]);
   return order;

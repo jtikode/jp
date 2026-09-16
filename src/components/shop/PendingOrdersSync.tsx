@@ -24,7 +24,7 @@ export function PendingOrdersSync({ lang }: { lang: Lang }) {
     setSyncing(true);
     for (const order of queued) {
       try {
-        const result = await placeOrder(order.lines, order.notes);
+        const result = await placeOrder(order.lines, order.notes, order.clientRequestId);
         if (result.ok) {
           removePendingOrder(order.id);
         }
