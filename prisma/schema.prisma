@@ -693,6 +693,17 @@ model Order {
   notes       String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  // Set only once the order-notification email is confirmed sent — null
+  // means it either hasn't been attempted yet or every attempt failed.
+  // Never trusted as the sole "did the admin find out" signal — that's what
+  // adminSeenAt (below) is for; this is purely a diagnostic/audit trail so a
+  // silent email failure is visible instead of invisible.
+  emailSentAt DateTime?
+  // Set the first time an admin views the admin orders list after this
+  // order was placed — the real fail-safe. Independent of email deliverability
+  // entirely, so a broken inbox, spam filter, or dead API key can never again
+  // be the reason an order goes unnoticed.
+  adminSeenAt DateTime?
 
   org   Organization @relation(fields: [orgId], references: [id])
   store Store        @relation(fields: [storeId], references: [id])

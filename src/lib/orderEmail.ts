@@ -8,6 +8,15 @@ export interface OrderEmailLine {
   scheme?: string;
 }
 
+/**
+ * Sends the new-order email, retrying twice more (three attempts total,
+ * short backoff) before giving up — a transient network blip or Resend
+ * hiccup shouldn't cost an admin the only notification of a real order.
+ * Always throws on final failure (including "not configured" — a missing
+ * API key used to make this silently no-op, which is exactly the kind of
+ * invisible failure that let orders go unnoticed) so the caller's tracking
+ * of emailSentAt always reflects what actually happened.
+ */
 export async function sendOrderNotificationEmail(params: {
   orderNumber: number;
   storeName: string;
@@ -16,7 +25,28 @@ export async function sendOrderNotificationEmail(params: {
   notes?: string;
   lines: OrderEmailLine[];
 }): Promise<void> {
-  if (!resend) return;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await attemptSend(params);
+      return;
+    } catch (err) {
+      lastError = err;
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    }
+  }
+  throw lastError;
+}
+
+async function attemptSend(params: {
+  orderNumber: number;
+  storeName: string;
+  orderGiverWhatsapp?: string | null;
+  totalAmount: number;
+  notes?: string;
+  lines: OrderEmailLine[];
+}): Promise<void> {
+  if (!resend) throw new Error("RESEND_API_KEY is not configured — order notification email cannot be sent.");
 
   const rows = params.lines
     .map(

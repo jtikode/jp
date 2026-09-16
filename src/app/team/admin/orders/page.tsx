@@ -26,6 +26,14 @@ export default async function AdminOrdersPage({
     take: 200,
   });
 
+  // Capture which orders were unseen BEFORE marking them seen, so this same
+  // render can flag them as new — viewing this list at all is the fail-safe
+  // that clears the unseen-orders badge, independent of email deliverability.
+  const newOrderIds = new Set(orders.filter((o) => !o.adminSeenAt).map((o) => o.id));
+  if (newOrderIds.size > 0) {
+    await db.order.updateMany({ where: { adminSeenAt: null }, data: { adminSeenAt: new Date() } });
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <Card>
@@ -79,7 +87,14 @@ export default async function AdminOrdersPage({
           <tbody>
             {orders.map((o) => (
               <tr key={o.id} className="border-b border-slate-100 align-top">
-                <td className="py-3 pr-4 font-mono font-semibold text-slate-900">#{o.orderNumber}</td>
+                <td className="py-3 pr-4 font-mono font-semibold text-slate-900">
+                  #{o.orderNumber}
+                  {newOrderIds.has(o.id) && (
+                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 font-sans text-[10px] font-bold uppercase text-red-700">
+                      New
+                    </span>
+                  )}
+                </td>
                 <td className="py-3 pr-4 text-slate-600">{o.createdAt.toLocaleString("en-IN")}</td>
                 <td className="py-3 pr-4 font-medium text-slate-900">
                   {storeLabel(o.store.name, o.store.externalCode)}

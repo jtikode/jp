@@ -135,7 +135,10 @@ export async function placeOrder(
   revalidatePath("/team/admin/orders");
 
   // Best-effort — a failed/misconfigured email send must never block the
-  // order itself, which is already committed above.
+  // order itself, which is already committed above. The real fail-safe is
+  // adminSeenAt (set when an admin views the orders list); emailSentAt here
+  // is only a diagnostic trail so a silent email failure is visible instead
+  // of invisible, and stays null if every retry inside the helper failed.
   const orderingStore = await db.store.findUnique({
     where: { id: session.storeId },
     select: { orderGiverWhatsapp: true },
@@ -153,9 +156,11 @@ export async function placeOrder(
       lineTotal: l.lineTotal,
       scheme: l.scheme,
     })),
-  }).catch((err) => {
-    console.error("sendOrderNotificationEmail failed for order", order.id, err);
-  });
+  })
+    .then(() => db.order.update({ where: { id: order.id }, data: { emailSentAt: new Date() } }))
+    .catch((err) => {
+      console.error("sendOrderNotificationEmail failed for order", order.id, err);
+    });
 
   return { ok: true, orderId: order.id };
 }

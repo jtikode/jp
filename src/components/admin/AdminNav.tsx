@@ -63,7 +63,18 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-export function AdminNav() {
+const ORDERS_HREF = "/team/admin/orders";
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+export function AdminNav({ unseenOrderCount = 0 }: { unseenOrderCount?: number }) {
   const pathname = usePathname();
 
   const activeGroup =
@@ -74,6 +85,9 @@ export function AdminNav() {
       <nav className="flex gap-1 overflow-x-auto px-4 sm:px-6">
         {GROUPS.map((group) => {
           const isActive = group === activeGroup;
+          const groupUnseenCount = group.items.some((item) => item.href === ORDERS_HREF)
+            ? unseenOrderCount
+            : 0;
           return (
             <Link
               key={group.label}
@@ -86,6 +100,7 @@ export function AdminNav() {
               )}
             >
               {group.label}
+              <NavBadge count={groupUnseenCount} />
             </Link>
           );
         })}
@@ -103,6 +118,7 @@ export function AdminNav() {
             )}
           >
             {item.label}
+            {item.href === ORDERS_HREF && <NavBadge count={unseenOrderCount} />}
           </Link>
         ))}
       </nav>
