@@ -6,10 +6,10 @@ import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 
 const PRODUCT_ALIASES = {
-  name: ["item", "item name", "product", "product name", "name"],
+  name: ["item", "item name", "product", "product name", "name", "brand name"],
   company: ["company", "company name", "manufacturer", "brand"],
   unit: ["unit", "uom", "pack", "pack size"],
-  price: ["price", "rate", "unit price", "selling price"],
+  price: ["price", "rate", "unit price", "selling price", "ptr"],
   mrp: ["mrp", "m.r.p", "m.r.p.", "max retail price"],
   taxPercent: ["tax", "tax %", "gst", "gst %", "igst"],
   scheme: ["scheme"],
