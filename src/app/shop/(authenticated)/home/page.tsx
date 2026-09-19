@@ -26,6 +26,7 @@ import { WednesdayDealsStrip } from "@/components/shop/WednesdayDealsStrip";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 import { getOneTapReorderData } from "@/actions/orderActions";
 import { getStartOfIstYearUtc } from "@/lib/istTime";
+import { COMPANY_SALE_GROUPS, formatSaleDate } from "@/lib/companySales";
 
 const MENU_TILES = [
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
@@ -50,7 +51,7 @@ export default async function ShopHomePage() {
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 
-  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, oneTapReorder] = await Promise.all([
+  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, oneTapReorder, companySales] = await Promise.all([
     db.shopBanner.findMany({
       where: { placement: "HERO", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
@@ -66,8 +67,11 @@ export default async function ShopHomePage() {
       _sum: { totalAmount: true },
     }),
     getOneTapReorderData(),
+    db.companySale.findMany({ where: { storeId: session.storeId } }),
   ]);
 
+  const salePeriodEnd = companySales[0]?.periodEnd ?? (await db.companySale.findFirst({ select: { periodEnd: true } }))?.periodEnd;
+  const saleByCompany = new Map(companySales.map((c) => [c.company, Number(c.amount)]));
   const yearSpend = Number(yearSpendResult._sum.totalAmount ?? 0);
   const sortedTiers = [...loyaltyTiers].sort(
     (a, b) => Number(a.thresholdAmount) - Number(b.thresholdAmount),
@@ -154,6 +158,27 @@ export default async function ShopHomePage() {
             }))}
           />
         </div>
+      )}
+
+      {salePeriodEnd && (
+        <Card>
+          <h2 className="mb-1 text-base font-bold text-slate-900">{t(lang, "shop_company_sale_heading")}</h2>
+          <p className="mb-3 text-sm text-slate-500">
+            {t(lang, "shop_company_sale_note")} {t(lang, "shop_company_sale_till")} {formatSaleDate(salePeriodEnd)}
+          </p>
+          <table className="w-full text-left text-sm">
+            <tbody>
+              {COMPANY_SALE_GROUPS.map((g) => (
+                <tr key={g.company} className="border-b border-slate-100 last:border-b-0">
+                  <td className="py-2 pr-4 font-semibold text-slate-900">{g.company}</td>
+                  <td className="py-2 text-right font-bold text-green-700">
+                    ₹{Math.max(0, Math.round(saleByCompany.get(g.company) ?? 0)).toLocaleString("en-IN")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
 
       {loyaltyTiers.length > 0 && (

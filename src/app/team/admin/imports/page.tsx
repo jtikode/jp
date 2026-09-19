@@ -11,6 +11,7 @@ import {
   importExpiryItems,
   importTelecallerParties,
   importIncentiveItems,
+  importCompanySales,
 } from "@/actions/importActions";
 
 export default async function ImportsPage() {
@@ -71,6 +72,21 @@ export default async function ImportsPage() {
           action={importFastOrderItems}
           buttonLabel="Upload fast-order items"
           itemLabel="fast-order rows"
+        />
+      </Card>
+
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">Upload company sales (yearly gift)</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Party VS Company Wise Sale Analysis. Shows each retailer their sale so far for SMART,
+          SMARTWAY, CUREWAY and SMART ICONIC on the shop home page. Put the cut-off in the file
+          name (e.g. &quot;COMPANY SALE TILL 18-9.xlsx&quot;). Each upload replaces the last one.
+        </p>
+        <FileImportForm
+          action={importCompanySales}
+          buttonLabel="Upload company sales"
+          itemLabel="store-company rows"
+          accept=".xlsx,.xls"
         />
       </Card>
 

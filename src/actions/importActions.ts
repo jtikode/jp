@@ -7,6 +7,7 @@ import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
 import { parseRegularItemsExcel, parseFastOrderItemsReport } from "@/lib/regularItems";
+import { parseCompanySaleReport } from "@/lib/companySales";
 import { parseStockExpiryReport, stockMatchKey } from "@/lib/stockExpiryReport";
 import { getStartOfIstDayUtc, getIstDateParts } from "@/lib/istTime";
 import type { ActionResult } from "@/actions/employeeActions";
@@ -765,4 +766,68 @@ export async function importTelecallerParties(
   revalidatePath("/team/admin/imports");
   revalidatePath("/team/telecaller/dashboard");
   return { ok: true, rowCount: stores.length };
+}
+
+export async function importCompanySales(
+  _prevState: (ActionResult & { rowCount?: number }) | null,
+  formData: FormData,
+): Promise<ActionResult & { rowCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    return { ok: false, error: "Please choose a file to upload." };
+  }
+
+  const { rows, periodEnd: reportEnd } = parseCompanySaleReport(await file.arrayBuffer());
+
+  // File names like "COMPANY SALE TILL 18-9.xlsx" carry the real cut-off date,
+  // which can be later than the report's own period line.
+  let periodEnd = reportEnd;
+  const fromName = file.name.match(/TILL\s+(\d{1,2})[-.](\d{1,2})(?:[-.](\d{2,4}))?/i);
+  if (fromName) {
+    const year = fromName[3] ? Number(fromName[3]) : new Date().getUTCFullYear();
+    periodEnd = new Date(Date.UTC(year < 100 ? 2000 + year : year, Number(fromName[2]) - 1, Number(fromName[1])));
+  }
+  if (!periodEnd) return { ok: false, error: "Could not work out the sale cut-off date from that file." };
+  if (rows.length === 0) return { ok: false, error: "No SMART / SMARTWAY / CUREWAY / S ICONIC rows found in that file." };
+
+  const stores = await db.store.findMany({
+    where: { externalCode: { in: [...new Set(rows.map((r) => r.code))] } },
+    select: { id: true, externalCode: true },
+  });
+  const storeIdByCode = new Map(stores.map((s) => [s.externalCode, s.id]));
+  const matched = rows.filter((r) => storeIdByCode.has(r.code));
+  if (matched.length === 0) return { ok: false, error: "None of the party codes in that file matched a store." };
+
+  const batch = await db.importBatch.create({
+    data: {
+      orgId: session.orgId,
+      importType: "COMPANY_SALES",
+      fileName: file.name,
+      rowCount: 0,
+      uploadedById: session.userId as string,
+    },
+  });
+
+  // Each report is a full year-to-date snapshot, so it replaces the last one.
+  await db.companySale.deleteMany({});
+  await db.companySale.createMany({
+    data: matched.map((r) => ({
+      orgId: session.orgId,
+      storeId: storeIdByCode.get(r.code)!,
+      company: r.company,
+      amount: Math.round(r.amount * 100) / 100,
+      freeQty: Math.round(r.freeQty),
+      periodEnd: periodEnd!,
+      uploadBatchId: batch.id,
+    })),
+  });
+
+  await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: matched.length } });
+
+  revalidatePath("/team/admin/imports");
+  revalidatePath("/shop/home");
+  return { ok: true, rowCount: matched.length };
 }

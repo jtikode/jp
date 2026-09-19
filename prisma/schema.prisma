@@ -92,6 +92,7 @@ model Organization {
   ledgerEntries           LedgerEntry[]
   purchaseHistory         PurchaseHistoryItem[]
   fastOrderItems          FastOrderItem[]
+  companySales            CompanySale[]
   incentiveItems          IncentiveItem[]
   expiryItems             ExpiryItem[]
   targets                 Target[]
@@ -268,6 +269,7 @@ model Store {
   loginEvents       LoginEvent[]
   orderReminder     OrderReminder?
   fastOrderItems    FastOrderItem[]
+  companySales      CompanySale[]
 
   @@unique([orgId, externalCode])
   @@unique([orgId, loginCode])
@@ -559,6 +561,30 @@ model FastOrderItem {
   store Store        @relation(fields: [storeId], references: [id])
 
   @@index([storeId])
+  @@index([orgId])
+}
+
+// Per-store sale value for the few companies that give a yearly free-thing
+// (FT) on sale. Shown to the retailer on the home page so they can see how
+// close they are. Each import replaces a store's rows for the whole org.
+model CompanySale {
+  id            String   @id @default(cuid())
+  orgId         String
+  storeId       String
+  // Display group: SMART, SMARTWAY, CUREWAY or SMART ICONIC.
+  company       String
+  // Net of returns, before tax.
+  amount        Decimal
+  freeQty       Int      @default(0)
+  // Sales are counted up to and including this IST calendar date.
+  periodEnd     DateTime
+  uploadBatchId String
+  importedAt    DateTime @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, company])
   @@index([orgId])
 }
 

@@ -242,6 +242,12 @@ export const translations = {
   shop_menu_pay_online: { en: "Pay Online", mr: "ऑनलाइन पेमेंट" },
   shop_special_offers: { en: "Special Offers", mr: "खास ऑफर्स" },
   shop_loyalty_heading: { en: "Yearly Gift on Sale", mr: "वार्षिक विक्रीवर भेट" },
+  shop_company_sale_heading: { en: "Company Sales for Yearly Gift", mr: "वार्षिक भेटीसाठी कंपनी विक्री" },
+  shop_company_sale_till: { en: "Your sale till", mr: "तुमची विक्री" },
+  shop_company_sale_note: {
+    en: "These companies give a yearly gift on sale.",
+    mr: "या कंपन्या वार्षिक विक्रीवर भेट देतात.",
+  },
   shop_tax: { en: "Tax", mr: "कर" },
   shop_scheme: { en: "Scheme", mr: "स्कीम" },
   shop_pending_bills_heading: { en: "Pending Bills", mr: "थकीत बिले" },
