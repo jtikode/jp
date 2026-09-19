@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { db } from "@/lib/db";
 import { sendPushToOrg, sendPushToStore } from "@/lib/webPush";
 import { getIstNow, getStartOfIstDayUtc } from "@/lib/istTime";
+import { runPaymentDigest } from "@/lib/paymentDigest";
 
 let started = false;
 
@@ -16,6 +17,7 @@ export function startNotificationScheduler(): void {
   cron.schedule("* * * * *", () => {
     runDueNotifications().catch((err) => console.error("notificationScheduler tick failed:", err));
     runDueOrderReminders().catch((err) => console.error("orderReminder tick failed:", err));
+    runPaymentDigest().catch((err) => console.error("paymentDigest tick failed:", err));
   });
 }
 
@@ -80,7 +82,7 @@ export async function runDueOrderReminders(): Promise<void> {
     try {
       await sendPushToStore(reminder.orgId, reminder.storeId, {
         title: "J P Traders",
-        body: "Time to place your weekly order — don't run out of your generic products.",
+        body: "Time to place your weekly order, don't run out of your generic products.",
         url: "/shop/products",
       });
     } catch (err) {

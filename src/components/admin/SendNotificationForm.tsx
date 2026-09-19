@@ -19,7 +19,7 @@ export function SendNotificationForm() {
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">Message</label>
-        <Input name="body" placeholder="e.g. Fresh batch of antibiotics now in stock — order today." required />
+        <Input name="body" placeholder="e.g. Fresh batch of antibiotics now in stock, order today." required />
       </div>
 
       <div>

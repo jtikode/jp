@@ -27,6 +27,12 @@ export function RequestProductForm({
         <Input name="productName" defaultValue={initialProductName} required />
       </div>
       <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          {t(lang, "shop_company_name")}
+        </label>
+        <Input name="company" required />
+      </div>
+      <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">{t(lang, "shop_note_optional")}</label>
         <Textarea name="note" rows={3} />
       </div>

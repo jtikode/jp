@@ -36,7 +36,7 @@ export default async function ImportsPage() {
         <h2 className="mb-1 text-lg font-bold text-slate-900">Upload outstanding data</h2>
         <p className="mb-4 text-sm text-slate-500">
           PDF (or CSV/Excel) export from billing software, matched to stores by store code. Can
-          cover mixed routes — only the stores in the file get their outstanding figures replaced.
+          cover mixed routes, only the stores in the file get their outstanding figures replaced.
         </p>
         <FileImportForm
           action={importOutstanding}
@@ -64,7 +64,7 @@ export default async function ImportsPage() {
         <h2 className="mb-1 text-lg font-bold text-slate-900">Upload fast-order items</h2>
         <p className="mb-4 text-sm text-slate-500">
           Same report as regular items (Party VS Item Wise Sale Analysis), but this one powers the
-          shop&apos;s Fast Order screen specifically — top 50 items per store ranked by quantity, not
+          shop&apos;s Fast Order screen specifically, top 50 items per store ranked by quantity, not
           value. Only stores in the file get their fast-order list replaced.
         </p>
         <FileImportForm
@@ -79,7 +79,7 @@ export default async function ImportsPage() {
         <p className="mb-4 text-sm text-slate-500">
           Warehouse Stock Report export (batch-level, with quantity and expiry per batch). Updates
           every matched product&apos;s current stock and nearest expiry, and automatically rebuilds
-          the Clearance list from it — the top 50 matched items expiring within 3 months, ranked by
+          the Clearance list from it, the top 50 matched items expiring within 3 months, ranked by
           value (rate × quantity), discounted 70% (this/next month), 50% (month after), or 20%
           (month after that). Upload this whenever your stock or expiries change; the Clearance
           list is fully replaced each time.
@@ -95,7 +95,7 @@ export default async function ImportsPage() {
       <Card>
         <h2 className="mb-1 text-lg font-bold text-slate-900">Upload near-expiry stock (manual)</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Item name, expiry date, and special rate, entered by hand — for a one-off override. Each
+          Item name, expiry date, and special rate, entered by hand, for a one-off override. Each
           upload replaces the whole Clearance list, including whatever the stock &amp; expiry
           report above last set.
         </p>
@@ -110,7 +110,7 @@ export default async function ImportsPage() {
         <h2 className="mb-1 text-lg font-bold text-slate-900">Upload telecaller party list</h2>
         <p className="mb-4 text-sm text-slate-500">
           CSV or Excel with a store code column. Sets exactly which parties telecallers see and
-          call — each upload replaces the whole list. Until the first upload, telecallers see every
+          call, each upload replaces the whole list. Until the first upload, telecallers see every
           store.
         </p>
         <FileImportForm
@@ -124,7 +124,7 @@ export default async function ImportsPage() {
         <h2 className="mb-1 text-lg font-bold text-slate-900">Upload incentive product list</h2>
         <p className="mb-4 text-sm text-slate-500">
           Item name and incentive amount columns. Shown to salesmen as &quot;Current Incentives&quot;
-          on their dashboard — each upload replaces the whole list.
+          on their dashboard, each upload replaces the whole list.
         </p>
         <FileImportForm
           action={importIncentiveItems}

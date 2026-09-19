@@ -31,6 +31,7 @@ const TENANT_MODELS = new Set([
   "shopBanner",
   "loyaltyTier",
   "requestedProduct",
+  "paymentReport",
   "pushSubscription",
   "scheduledNotification",
   "loginEvent",

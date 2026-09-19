@@ -50,7 +50,7 @@ export async function createBanner(
   if (expiresAt) {
     sendPushToOrg(session.orgId, {
       title: "⚡ Flash Deal",
-      body: title ? `${title} — limited time only!` : "A limited-time deal just went live.",
+      body: title ? `${title}, limited time only!` : "A limited-time deal just went live.",
       url: "/shop/offers",
     }).catch(() => {});
   }

@@ -163,14 +163,23 @@ export async function placeOrder(
   // adminSeenAt (set when an admin views the orders list); emailSentAt here
   // is only a diagnostic trail so a silent email failure is visible instead
   // of invisible, and stays null if every retry inside the helper failed.
-  const orderingStore = await db.store.findUnique({
-    where: { id: session.storeId },
-    select: { orderGiverWhatsapp: true },
-  });
+  const [orderingStore, ordersTodayCount] = await Promise.all([
+    db.store.findUnique({
+      where: { id: session.storeId },
+      select: { orderGiverWhatsapp: true },
+    }),
+    // Counts this order too (already committed above) — so billing sees "2nd
+    // order today" rather than having to infer it from a count that excludes
+    // the very order they're looking at.
+    db.order.count({
+      where: { storeId: session.storeId, createdAt: { gte: getStartOfIstDayUtc() } },
+    }),
+  ]);
   sendOrderNotificationEmail({
     orderNumber: order.orderNumber,
     storeName: session.storeName ?? "Retailer",
     orderGiverWhatsapp: orderingStore?.orderGiverWhatsapp,
+    ordersTodayCount,
     totalAmount,
     notes: notes?.trim() || undefined,
     lines: orderLines.map((l) => ({
@@ -377,7 +386,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
   // project's default language (Marathi) same as a fresh, unconfigured session.
   sendPushToStore(session.orgId, order.storeId, {
     title: "J P Traders",
-    body: `${orderStatusLabel("mr", status)} — ₹${Number(order.totalAmount).toLocaleString("en-IN")}`,
+    body: `${orderStatusLabel("mr", status)}: ₹${Number(order.totalAmount).toLocaleString("en-IN")}`,
     url: `/shop/orders/${order.id}`,
   }).catch(() => {});
 }

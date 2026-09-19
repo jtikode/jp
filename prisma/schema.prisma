@@ -104,6 +104,7 @@ model Organization {
   banners                 ShopBanner[]
   loyaltyTiers            LoyaltyTier[]
   requestedProducts       RequestedProduct[]
+  paymentReports          PaymentReport[]
   pushSubscriptions       PushSubscription[]
   scheduledNotifications  ScheduledNotification[]
   loginEvents             LoginEvent[]
@@ -262,6 +263,7 @@ model Store {
   telecallerParty   TelecallerParty?
   orders            Order[]
   requestedProducts RequestedProduct[]
+  paymentReports    PaymentReport[]
   pushSubscriptions PushSubscription[]
   loginEvents       LoginEvent[]
   orderReminder     OrderReminder?
@@ -465,6 +467,31 @@ model StockCount {
   @@unique([stockItemId, date])
   @@index([date])
   @@index([orgId])
+}
+
+// A payment the retailer says they made from the shop app's Pay Online page.
+// UPI settles in the payer's own app straight to the bank, so nothing tells us
+// it actually happened — this is retailer-reported until an admin ticks
+// verified against the bank statement.
+model PaymentReport {
+  id           String    @id @default(cuid())
+  orgId        String
+  storeId      String
+  amount       Decimal
+  invoiceNos   String[]
+  // UPI reference / UTR, if the retailer typed one.
+  utr          String?
+  verified     Boolean   @default(false)
+  verifiedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  // Set when the end-of-day summary email covering this payment went out.
+  digestSentAt DateTime?
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  store Store        @relation(fields: [storeId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@index([storeId])
 }
 
 model LedgerEntry {
@@ -886,6 +913,8 @@ model RequestedProduct {
   orgId       String
   storeId     String
   productName String
+  // Nullable only because requests made before this field existed have none.
+  company     String?
   note        String?
   reviewed    Boolean  @default(false)
   createdAt   DateTime @default(now())

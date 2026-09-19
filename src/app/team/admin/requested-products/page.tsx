@@ -26,6 +26,7 @@ export default async function AdminRequestedProductsPage() {
               <th className="py-2 pr-4">Date</th>
               <th className="py-2 pr-4">Store</th>
               <th className="py-2 pr-4">Product</th>
+              <th className="py-2 pr-4">Company</th>
               <th className="py-2 pr-4">Note</th>
               <th className="py-2 pr-4">Status</th>
               <th className="py-2 pr-4"></th>
@@ -39,6 +40,7 @@ export default async function AdminRequestedProductsPage() {
                   {storeLabel(r.store.name, r.store.externalCode)}
                 </td>
                 <td className="py-2 pr-4 text-slate-600">{r.productName}</td>
+                <td className="py-2 pr-4 text-slate-600">{r.company ?? "—"}</td>
                 <td className="py-2 pr-4 text-slate-500">{r.note ?? "—"}</td>
                 <td className="py-2 pr-4">
                   <span
@@ -62,7 +64,7 @@ export default async function AdminRequestedProductsPage() {
             ))}
             {requests.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-4 text-center text-slate-400">
+                <td colSpan={7} className="py-4 text-center text-slate-400">
                   No product requests yet.
                 </td>
               </tr>

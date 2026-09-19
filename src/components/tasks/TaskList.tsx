@@ -66,7 +66,7 @@ export function TaskList({ tasks, employeeUserId }: { tasks: TaskListItem[]; emp
             <div className="flex shrink-0 flex-col items-end gap-1">
               {t.status === "REJECTED" && (
                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
-                  Sent back — redo
+                  Sent back, redo
                 </span>
               )}
               <Button

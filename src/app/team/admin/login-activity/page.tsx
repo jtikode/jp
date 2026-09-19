@@ -56,7 +56,7 @@ export default async function LoginActivityPage() {
       <Card className="overflow-x-auto">
         <h1 className="mb-1 text-lg font-bold text-slate-900">Shop App Adoption by Route</h1>
         <p className="mb-4 text-sm text-slate-500">
-          Which routes are actually using the shop app — use this to follow up where retailers need a
+          Which routes are actually using the shop app, use this to follow up where retailers need a
           reminder or a hand holding them through it.
         </p>
         <table className="w-full min-w-[640px] text-left text-sm">

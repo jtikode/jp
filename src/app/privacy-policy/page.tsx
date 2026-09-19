@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — J P Traders",
+  title: "Privacy Policy | J P Traders",
   description: "Privacy Policy for the J P Traders Retailer app and portal.",
 };
 
@@ -25,26 +25,26 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-lg font-semibold text-slate-900">Information We Collect</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
             <li>
-              <span className="font-medium text-slate-900">Store &amp; business details</span> — store
+              <span className="font-medium text-slate-900">Store &amp; business details</span>: store
               name, owner name, phone number, address, and registration details you provide (such as
               GST, PAN, or drug licence numbers) when you register or activate your account.
             </li>
             <li>
-              <span className="font-medium text-slate-900">Order &amp; transaction history</span> — the
+              <span className="font-medium text-slate-900">Order &amp; transaction history</span>: the
               products you order, quantities, order status, and outstanding bill/ledger records
               associated with your store.
             </li>
             <li>
-              <span className="font-medium text-slate-900">Device &amp; notification data</span> — a
+              <span className="font-medium text-slate-900">Device &amp; notification data</span>: a
               push-notification token for your device so we can send you order updates and
               announcements, and basic device/app information needed to deliver notifications.
             </li>
             <li>
-              <span className="font-medium text-slate-900">Communication details</span> — your WhatsApp
+              <span className="font-medium text-slate-900">Communication details</span>: your WhatsApp
               or phone number if you choose to contact us for support.
             </li>
             <li>
-              <span className="font-medium text-slate-900">Usage data</span> — general app/website usage
+              <span className="font-medium text-slate-900">Usage data</span>: general app/website usage
               analytics (such as pages visited and features used) collected through Google Analytics,
               to help us understand and improve the Service.
             </li>
@@ -67,8 +67,8 @@ export default function PrivacyPolicyPage() {
           <p className="mt-2">
             We do not sell your information, and we do not share it with third parties for their own
             marketing purposes. Your data is only shared with service providers that help us operate the
-            Service — such as our hosting/database provider and Google Analytics for usage
-            statistics — solely to the extent needed to provide the Service to you.
+            Service, such as our hosting/database provider and Google Analytics for usage
+            statistics, solely to the extent needed to provide the Service to you.
           </p>
         </section>
 
@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
           <p className="mt-2">
             We retain your store, order, and ledger records for as long as your account is active and
             as needed to maintain accurate business and billing records. We use reasonable technical
-            and organisational measures — including encrypted storage and access controls — to protect
+            and organisational measures, including encrypted storage and access controls, to protect
             your information from unauthorised access, loss, or misuse.
           </p>
         </section>

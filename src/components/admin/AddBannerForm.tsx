@@ -49,11 +49,11 @@ export function AddBannerForm() {
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">
-          Flash deal — ends at (optional)
+          Flash deal, ends at (optional)
         </label>
         <Input name="expiresAt" type="datetime-local" />
         <p className="mt-1 text-xs text-slate-500">
-          Set this to make it a time-boxed flash deal — every retailer with notifications enabled
+          Set this to make it a time-boxed flash deal, every retailer with notifications enabled
           gets a push the moment you add it, and the banner disappears once this time passes.
         </p>
       </div>

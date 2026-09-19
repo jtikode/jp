@@ -70,7 +70,7 @@ export async function deleteEmployee(userId: string): Promise<ActionResult> {
   if (visits + attendances + telecallerLogs + stockCounts > 0) {
     return {
       ok: false,
-      error: "This employee has logged activity — deactivate them instead of deleting.",
+      error: "This employee has logged activity, deactivate them instead of deleting.",
     };
   }
 

@@ -1,10 +1,12 @@
-import Image from "next/image";
 import QRCode from "qrcode";
 import { db } from "@/lib/db";
+import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import { buildUpiLink, invoiceNote } from "@/lib/upi";
 import { Card } from "@/components/ui/Card";
+import { PayOnlineSelector, type PayableInvoice } from "@/components/shop/PayOnlineSelector";
 
 export default async function ShopPayOnlinePage() {
   const session = await requireStoreSession();
@@ -24,8 +26,39 @@ export default async function ShopPayOnlinePage() {
   }
 
   const payeeName = org.upiPayeeName || org.name;
-  const upiLink = `upi://pay?pa=${encodeURIComponent(org.upiVpa)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
-  const qrDataUrl = await QRCode.toDataURL(upiLink, { width: 280, margin: 1 });
+
+  // Scoped to this retailer's own storeId — never an admin-chosen store.
+  const scopedDb = getOrgScopedDb(session.orgId);
+  const entries = await scopedDb.ledgerEntry.findMany({
+    where: { storeId: session.storeId },
+    orderBy: { invoiceDate: "asc" },
+  });
+
+  const invoices: PayableInvoice[] = entries
+    .filter((e) => Number(e.outstandingAmount) > 0)
+    .map((e) => ({
+      id: e.id,
+      invoiceNo: e.invoiceNo,
+      dateLabel: e.invoiceDate
+        ? e.invoiceDate.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+        : null,
+      amount: Number(e.amount),
+      outstanding: Number(e.outstandingAmount),
+    }));
+
+  // Everything is selected by default, so the first paint is the full
+  // outstanding amount — the client component regenerates the QR as the
+  // retailer unticks bills.
+  const defaultTotal = Math.round(invoices.reduce((sum, i) => sum + i.outstanding, 0) * 100) / 100;
+  const initialQrDataUrl = await QRCode.toDataURL(
+    buildUpiLink({
+      vpa: org.upiVpa,
+      payeeName,
+      amount: defaultTotal,
+      note: invoiceNote(invoices.map((i) => i.invoiceNo)),
+    }),
+    { width: 280, margin: 1 },
+  );
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -34,16 +67,13 @@ export default async function ShopPayOnlinePage() {
         <p className="mt-1 text-sm text-slate-500">{t(lang, "shop_pay_online_subtitle")}</p>
       </Card>
 
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <Image src={qrDataUrl} alt="UPI QR code" width={220} height={220} unoptimized />
-        <p className="text-sm text-slate-500">{payeeName}</p>
-        <a
-          href={upiLink}
-          className="w-full rounded-lg bg-blue-700 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-blue-800"
-        >
-          {t(lang, "shop_pay_now")}
-        </a>
-      </Card>
+      <PayOnlineSelector
+        vpa={org.upiVpa}
+        payeeName={payeeName}
+        invoices={invoices}
+        initialQrDataUrl={initialQrDataUrl}
+        lang={lang}
+      />
     </div>
   );
 }

@@ -64,7 +64,7 @@ export function ShopLoginCredentialsTable({ stores }: { stores: CredentialRow[] 
                     <a
                       href={buildWhatsAppLink(
                         s.phone,
-                        `Your J P Traders shop login — Login ID: ${s.loginCode}, Password: ${s.password}`,
+                        `Your J P Traders shop login, Login ID: ${s.loginCode}, Password: ${s.password}`,
                       )}
                       target="_blank"
                       rel="noopener noreferrer"

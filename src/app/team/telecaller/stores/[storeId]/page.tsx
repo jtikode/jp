@@ -180,7 +180,7 @@ export default async function TelecallerStorePage({
       {regularItems.length > 0 && (
         <Card className="overflow-x-auto">
           <h2 className="mb-1 text-base font-bold text-slate-900">Regularly bought items</h2>
-          <p className="mb-3 text-xs text-slate-500">Ask about these — highest value first.</p>
+          <p className="mb-3 text-xs text-slate-500">Ask about these, highest value first.</p>
           <table className="w-full min-w-[320px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500">

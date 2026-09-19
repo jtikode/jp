@@ -41,7 +41,7 @@ export default function ShopRegisterPage() {
       <Card className="w-full max-w-sm">
         <h1 className="mb-1 text-2xl font-bold text-slate-900">Register Account</h1>
         <p className="mb-6 text-slate-500">
-          Tell us about your shop — we&apos;ll review your details and set up your login.
+          Tell us about your shop, we&apos;ll review your details and set up your login.
         </p>
 
         {state.ok ? (

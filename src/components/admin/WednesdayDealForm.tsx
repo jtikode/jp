@@ -28,7 +28,7 @@ export function WednesdayDealForm({ products }: { products: DealFormProduct[] })
           </option>
           {products.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name} {p.company ? `(${p.company})` : ""} — ₹{p.price.toLocaleString("en-IN")} normal
+              {p.name} {p.company ? `(${p.company})` : ""}: ₹{p.price.toLocaleString("en-IN")} normal
             </option>
           ))}
         </Select>

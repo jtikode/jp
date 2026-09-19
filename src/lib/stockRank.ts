@@ -33,21 +33,24 @@ export function extractStrength(name: string): string | null {
   return match ? match[0] : null;
 }
 
-/** Same "alternative for this product" ranking as byStockThenName, but a
- * same-strength match (e.g. showing other 40MG options before 10MG ones)
- * always outranks stock tier — a retailer swapping brands almost always
- * wants the same dose first. */
-export function byStrengthMatchThenStockThenName<T extends { stock: number | null; name: string }>(
+/** Ranking for the "alternatives" list: available stock always comes first
+ * (a retailer can only order what's actually here), then — within the same
+ * stock tier — a same-strength match (e.g. other 40MG options before 10MG
+ * ones), then name. Strength used to outrank stock, which pushed same-dose
+ * out-of-stock items above in-stock ones of a slightly different dose. */
+export function byStockThenStrengthMatchThenName<T extends { stock: number | null; name: string }>(
   referenceName: string,
 ): (a: T, b: T) => number {
   const refStrength = extractStrength(referenceName);
   return (a, b) => {
+    const tierDiff = stockTier(a.stock) - stockTier(b.stock);
+    if (tierDiff !== 0) return tierDiff;
     if (refStrength) {
       const aMatches = extractStrength(a.name) === refStrength;
       const bMatches = extractStrength(b.name) === refStrength;
       if (aMatches !== bMatches) return aMatches ? -1 : 1;
     }
-    return byStockThenName(a, b);
+    return a.name.localeCompare(b.name);
   };
 }
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ScanSearch,
   Zap,
   FileText,
   Flame,
@@ -29,7 +28,6 @@ import { getOneTapReorderData } from "@/actions/orderActions";
 import { getStartOfIstYearUtc } from "@/lib/istTime";
 
 const MENU_TILES = [
-  { href: "/shop/quick-check", key: "shop_menu_quick_check", icon: ScanSearch, bg: "bg-cyan-50", fg: "text-cyan-600" },
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
   { href: "/shop/products", key: "shop_menu_order", icon: FileText, bg: "bg-blue-50", fg: "text-blue-600" },
   { href: "/shop/products?filter=hot", key: "shop_menu_hot_selling", icon: Flame, bg: "bg-red-50", fg: "text-red-600" },

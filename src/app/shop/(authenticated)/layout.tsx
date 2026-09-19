@@ -8,6 +8,7 @@ import { CartProvider } from "@/components/shop/CartProvider";
 import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,9 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
           <OfflineCatalogSync />
           <PendingOrdersSync lang={lang} />
           {children}
+          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-slate-400">
+            {t(lang, "shop_rates_disclaimer")}
+          </p>
         </main>
         <ShopBottomNav lang={lang} />
       </div>

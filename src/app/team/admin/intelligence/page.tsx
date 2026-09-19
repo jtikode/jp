@@ -55,7 +55,7 @@ export default async function IntelligencePage({
             filename="near-expiry-list"
           />
         </div>
-        <p className="mb-4 text-sm text-slate-500">Soonest expiry first — push these at special rate.</p>
+        <p className="mb-4 text-sm text-slate-500">Soonest expiry first, push these at special rate.</p>
         <table className="w-full min-w-[400px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
@@ -113,7 +113,7 @@ export default async function IntelligencePage({
           />
         </div>
         <p className="mb-4 text-sm text-slate-500">
-          In stock but zero recorded sales (no in-app order, no purchase history) — highest tied-up
+          In stock but zero recorded sales (no in-app order, no purchase history), highest tied-up
           value first.
         </p>
         <table className="w-full min-w-[500px] text-left text-sm">
@@ -141,7 +141,7 @@ export default async function IntelligencePage({
             {deadStock.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-4 text-center text-slate-400">
-                  No dead stock — everything in stock has sold at least once.
+                  No dead stock, everything in stock has sold at least once.
                 </td>
               </tr>
             )}

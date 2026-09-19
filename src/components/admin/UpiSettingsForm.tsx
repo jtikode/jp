@@ -21,7 +21,7 @@ export function UpiSettingsForm({
         <Input name="upiVpa" placeholder="yourbusiness@okhdfcbank" defaultValue={defaults.upiVpa} />
         <p className="mt-1 text-xs text-slate-500">
           Retailers tap &quot;Pay Online&quot; in the shop to pay this UPI ID directly from their
-          own bank app — no payment gateway involved.
+          own bank app, no payment gateway involved.
         </p>
       </div>
       <div>

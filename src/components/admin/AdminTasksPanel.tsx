@@ -178,9 +178,9 @@ export function AdminTasksPanel({
       {tab === "chart" && (
         <div className="space-y-8">
           <div>
-            <h2 className="mb-1 text-base font-bold text-slate-900">Trend — birds-eye view</h2>
+            <h2 className="mb-1 text-base font-bold text-slate-900">Trend: birds-eye view</h2>
             <p className="mb-3 text-sm text-slate-500">
-              The whole team (or one person) over time — switch between weekly and monthly to spot
+              The whole team (or one person) over time, switch between weekly and monthly to spot
               whether completion is slipping.
             </p>
             <TaskTrendChart trendsByEmployee={trendsByEmployee} employees={employees} />

@@ -55,8 +55,8 @@ export default async function PromoLinksPage() {
       <Card>
         <h1 className="text-lg font-bold text-slate-900">Promo Links</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Each salesman gets a unique link ending in their own name. Share it however you like —
-          WhatsApp, a poster, in person — and this page tracks how many times each one has been
+          Each salesman gets a unique link ending in their own name. Share it however you like,
+          WhatsApp, a poster, in person, and this page tracks how many times each one has been
           opened, so you can see who&apos;s actually driving retailers to the app.
         </p>
       </Card>
@@ -99,7 +99,7 @@ export default async function PromoLinksPage() {
                         <a
                           href={buildWhatsAppLink(
                             r.phone,
-                            `Hi ${r.name}, here's your personal link to promote the JP Traders shop app — every retailer who opens it gets counted under your name: ${url}`,
+                            `Hi ${r.name}, here's your personal link to promote the JP Traders shop app, every retailer who opens it gets counted under your name: ${url}`,
                           )}
                           target="_blank"
                           rel="noopener noreferrer"

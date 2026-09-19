@@ -35,7 +35,7 @@ export function buildStatementMessage(storeName: string, entries: StatementLine[
 
   return [
     `नमस्कार, जे.पी. ट्रेडर्सकडून.`,
-    `${storeName} — Outstanding Statement`,
+    `${storeName}, Outstanding Statement`,
     "",
     ...lines,
     "",

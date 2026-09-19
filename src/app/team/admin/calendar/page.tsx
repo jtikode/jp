@@ -44,7 +44,7 @@ export default async function AdminCalendarPage() {
 
       <Card>
         <h1 className="text-xl font-bold text-slate-900">
-          All Salesmen — {monthStart.toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}
+          All Salesmen, {monthStart.toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Each salesman&rsquo;s own daily call report calendar, side by side.

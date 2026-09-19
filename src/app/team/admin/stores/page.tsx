@@ -56,7 +56,7 @@ export default async function AdminStoresPage({
         <Card>
           <h2 className="mb-4 text-lg font-bold text-slate-900">Assign store to this route</h2>
           <p className="mb-3 text-sm text-slate-500">
-            For a medical that needs visits from more than one salesman — a store can be on
+            For a medical that needs visits from more than one salesman, a store can be on
             several routes at once.
           </p>
           <AssignStoreToRouteForm
@@ -70,7 +70,7 @@ export default async function AdminStoresPage({
 
         <Card>
           <h1 className="mb-1 text-lg font-bold text-slate-900">
-            {route?.name} — Visit Sequence
+            {route?.name}, Visit Sequence
           </h1>
           <p className="mb-4 text-sm text-slate-500">
             Reorder with the arrows to match the actual visit route.

@@ -86,8 +86,8 @@ export const translations = {
   // --- Visit page ---
   regularly_bought_items: { en: "Regularly bought items", mr: "नियमित घेतला जाणारा माल" },
   check_before_order: {
-    en: "Highest value first — check before you order.",
-    mr: "जास्त किमतीचा माल आधी — ऑर्डर करण्यापूर्वी पहा.",
+    en: "Highest value first, check before you order.",
+    mr: "जास्त किमतीचा माल आधी, ऑर्डर करण्यापूर्वी पहा.",
   },
   qty: { en: "Qty", mr: "प्रमाण" },
   near_expiry_stock: { en: "Near-Expiry Stock", mr: "एक्सपायरी जवळ असलेला माल" },
@@ -130,8 +130,8 @@ export const translations = {
   // --- Near expiry / Regular items pages ---
   near_expiry_heading: { en: "Near-Expiry Stock", mr: "एक्सपायरी जवळ असलेला माल" },
   soonest_expiry_first: {
-    en: "Soonest expiry first — push these at special rate.",
-    mr: "लवकर एक्सपायर होणारा माल आधी — खास दरात विका.",
+    en: "Soonest expiry first, push these at special rate.",
+    mr: "लवकर एक्सपायर होणारा माल आधी, खास दरात विका.",
   },
   no_expiry_uploaded: { en: "No near-expiry stock uploaded yet.", mr: "अजून एक्सपायरी यादी अपलोड नाही." },
   regularly_bought_items_heading: { en: "Regularly Bought Items", mr: "नियमित घेतला जाणारा माल" },
@@ -146,8 +146,8 @@ export const translations = {
   // --- Tour Plan ---
   tour_plan_heading: { en: "Tour Plan", mr: "टूर प्लॅन" },
   tour_plan_subtitle: {
-    en: "Plan your whole month at once — route and colleague for each day.",
-    mr: "संपूर्ण महिन्याचे नियोजन एकाच वेळी करा — प्रत्येक दिवसाचा मार्ग व सोबती.",
+    en: "Plan your whole month at once, route and colleague for each day.",
+    mr: "संपूर्ण महिन्याचे नियोजन एकाच वेळी करा, प्रत्येक दिवसाचा मार्ग व सोबती.",
   },
   day: { en: "Day", mr: "दिवस" },
   working_with: { en: "Working With", mr: "सोबती" },
@@ -258,6 +258,7 @@ export const translations = {
   shop_no_pending_bills: { en: "No pending bills.", mr: "कोणतेही थकीत बिल नाही." },
   shop_no_offers: { en: "No offers right now.", mr: "सध्या कोणतीही ऑफर नाही." },
   shop_product_name: { en: "Product Name", mr: "उत्पादनाचे नाव" },
+  shop_company_name: { en: "Company Name", mr: "कंपनीचे नाव" },
   shop_note_optional: { en: "Note (optional)", mr: "टीप (ऐच्छिक)" },
   shop_request_sent: { en: "Request sent.", mr: "विनंती पाठवली." },
   shop_sending: { en: "Sending...", mr: "पाठवत आहे..." },
@@ -277,14 +278,35 @@ export const translations = {
     mr: "QR कोड स्कॅन करा किंवा UPI ने पेमेंट करण्यासाठी बटण दाबा.",
   },
   shop_pay_now: { en: "Pay Now", mr: "आता पेमेंट करा" },
+  shop_rates_disclaimer: {
+    en: "Note: Rates and stock shown in the app are indicative. Actual rates and stock may vary.",
+    mr: "टीप: ॲपमध्ये दाखवलेले दर आणि साठा अंदाजित आहेत. प्रत्यक्ष दर आणि साठा वेगळा असू शकतो.",
+  },
+  shop_upi_id: { en: "UPI ID", mr: "UPI आयडी" },
+  shop_payment_report_hint: {
+    en: "Already paid? Let us know so we can match your payment.",
+    mr: "पेमेंट केले आहे का? आम्हाला कळवा, म्हणजे आम्ही ते जुळवू शकू.",
+  },
+  shop_i_have_paid: { en: "I have paid", mr: "मी पेमेंट केले" },
+  shop_amount_paid: { en: "Amount paid (₹)", mr: "भरलेली रक्कम (₹)" },
+  shop_utr_optional: { en: "UPI reference no. (optional)", mr: "UPI रेफरन्स क्र. (ऐच्छिक)" },
+  shop_submit_payment: { en: "Submit payment details", mr: "पेमेंट तपशील पाठवा" },
+  shop_payment_reported: {
+    en: "Thank you! Your payment has been noted, we'll confirm it once it reaches our bank.",
+    mr: "धन्यवाद! तुमचे पेमेंट नोंदवले आहे, आमच्या बँकेत जमा झाल्यावर आम्ही ते निश्चित करू.",
+  },
+  shop_select_bills_to_pay: { en: "Select bills to pay", mr: "भरायची बिले निवडा" },
+  shop_amount_to_pay: { en: "Amount to pay", mr: "भरायची रक्कम" },
+  shop_select_all: { en: "Select all", mr: "सर्व निवडा" },
+  shop_clear_selection: { en: "Clear", mr: "निवड काढा" },
   shop_low_stock: { en: "Low Stock", mr: "मर्यादित साठा" },
   shop_in_stock: { en: "In Stock", mr: "साठा" },
   shop_expiry: { en: "Expiry", mr: "एक्सपायरी" },
   shop_show_alternatives: { en: "Show alternatives", mr: "पर्याय दाखवा" },
   shop_hide_alternatives: { en: "Hide alternatives", mr: "पर्याय लपवा" },
   shop_offline_catalog_notice: {
-    en: "You're offline — showing your device's saved catalog. Prices and stock may be a few hours old.",
-    mr: "तुम्ही ऑफलाइन आहात — डिव्हाइसवर साठवलेला कॅटलॉग दाखवत आहोत. किंमत/साठा काही तास जुना असू शकतो.",
+    en: "You're offline, showing your device's saved catalog. Prices and stock may be a few hours old.",
+    mr: "तुम्ही ऑफलाइन आहात, डिव्हाइसवर साठवलेला कॅटलॉग दाखवत आहोत. किंमत/साठा काही तास जुना असू शकतो.",
   },
   shop_reorder: { en: "Reorder", mr: "पुन्हा ऑर्डर करा" },
   shop_reordering: { en: "Adding to cart...", mr: "कार्टमध्ये टाकत आहे..." },
@@ -309,8 +331,8 @@ export const translations = {
   shop_menu_fast_order: { en: "Fast Order", mr: "जलद ऑर्डर" },
   shop_fast_order_heading: { en: "Fast Order", mr: "जलद ऑर्डर" },
   shop_fast_order_subtitle: {
-    en: "Your regular items — just enter quantity and go.",
-    mr: "तुमचा नियमित माल — फक्त प्रमाण टाका आणि पुढे जा.",
+    en: "Your regular items, just enter quantity and go.",
+    mr: "तुमचा नियमित माल, फक्त प्रमाण टाका आणि पुढे जा.",
   },
   shop_no_fast_order_items: {
     en: "No regular items found yet. Order a few times and they'll show up here.",
@@ -323,8 +345,8 @@ export const translations = {
   shop_menu_lowest_rate: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
   shop_lowest_rate_heading: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
   shop_lowest_rate_subtitle: {
-    en: "Same composition, sorted cheapest first — in-stock only.",
-    mr: "एकाच घटकाचे पर्याय, सर्वात स्वस्त आधी — फक्त उपलब्ध साठा.",
+    en: "Top-selling combinations, the 2 cheapest in-stock options for each.",
+    mr: "जास्त खपणारे कॉम्बिनेशन, प्रत्येकासाठी सर्वात स्वस्त २ उपलब्ध पर्याय.",
   },
   shop_search_composition: { en: "Search by composition or product name...", mr: "घटक किंवा उत्पादनाच्या नावाने शोधा..." },
   shop_best_price: { en: "Best Price", mr: "सर्वोत्तम दर" },
@@ -335,8 +357,8 @@ export const translations = {
   shop_menu_clearance: { en: "Clearance", mr: "क्लिअरन्स" },
   shop_clearance_heading: { en: "Clearance", mr: "क्लिअरन्स" },
   shop_clearance_subtitle: {
-    en: "Near-expiry stock at a special rate — first come, first served.",
-    mr: "एक्सपायरी जवळ असलेला माल खास दरात — आधी येईल त्याला आधी.",
+    en: "Near-expiry stock at a special rate, first come, first served.",
+    mr: "एक्सपायरी जवळ असलेला माल खास दरात, आधी येईल त्याला आधी.",
   },
   shop_clearance: { en: "Clearance", mr: "क्लिअरन्स" },
   shop_expires: { en: "Expires", mr: "एक्सपायरी" },
@@ -344,7 +366,7 @@ export const translations = {
   shop_quick_check_heading: { en: "Quick Check", mr: "पटकन तपासा" },
   shop_quick_check_subtitle: {
     en: "Type a medicine name to instantly see your rate, MRP, and stock.",
-    mr: "औषधाचे नाव टाका — दर, MRP आणि साठा लगेच दिसेल.",
+    mr: "औषधाचे नाव टाका, दर, MRP आणि साठा लगेच दिसेल.",
   },
   shop_quick_check_placeholder: { en: "Type a product name...", mr: "उत्पादनाचे नाव टाका..." },
   shop_quick_check_prompt: {
@@ -359,8 +381,8 @@ export const translations = {
 
   // --- Offline order sync ---
   shop_order_saved_offline: {
-    en: "No internet right now — your order is saved on this phone and will be sent automatically once you're back online.",
-    mr: "सध्या इंटरनेट नाही — तुमची ऑर्डर या फोनवर सेव्ह झाली आहे आणि इंटरनेट परत आल्यावर आपोआप पाठवली जाईल.",
+    en: "No internet right now, your order is saved on this phone and will be sent automatically once you're back online.",
+    mr: "सध्या इंटरनेट नाही, तुमची ऑर्डर या फोनवर सेव्ह झाली आहे आणि इंटरनेट परत आल्यावर आपोआप पाठवली जाईल.",
   },
   shop_pending_orders_label: {
     en: "Orders waiting to sync",
@@ -369,8 +391,8 @@ export const translations = {
   shop_retry_now: { en: "Retry now", mr: "पुन्हा प्रयत्न करा" },
   shop_syncing: { en: "Sending...", mr: "पाठवत आहे..." },
   shop_offline_indicator: {
-    en: "📡 No internet — showing saved data",
-    mr: "📡 इंटरनेट नाही — सेव्ह केलेला डेटा दाखवत आहे",
+    en: "📡 No internet, showing saved data",
+    mr: "📡 इंटरनेट नाही, सेव्ह केलेला डेटा दाखवत आहे",
   },
 
   // --- Wednesday Deals ---
@@ -382,8 +404,8 @@ export const translations = {
   shop_menu_order_reminder: { en: "Order Reminder", mr: "ऑर्डर आठवण" },
   shop_order_reminder_heading: { en: "Weekly Order Reminder", mr: "साप्ताहिक ऑर्डर आठवण" },
   shop_order_reminder_subtitle: {
-    en: "Pick a day and time — we'll send you a notification every week to remind you to order.",
-    mr: "दिवस आणि वेळ निवडा — दर आठवड्याला ऑर्डर करण्याची आठवण करून देण्यासाठी आम्ही तुम्हाला सूचना पाठवू.",
+    en: "Pick a day and time, we'll send you a notification every week to remind you to order.",
+    mr: "दिवस आणि वेळ निवडा, दर आठवड्याला ऑर्डर करण्याची आठवण करून देण्यासाठी आम्ही तुम्हाला सूचना पाठवू.",
   },
   shop_reminder_day: { en: "Day of the week", mr: "आठवड्याचा दिवस" },
   shop_reminder_time: { en: "Time", mr: "वेळ" },
@@ -391,7 +413,7 @@ export const translations = {
   shop_reminder_saving: { en: "Saving...", mr: "सेव्ह करत आहे..." },
   shop_reminder_turn_off: { en: "Turn off reminder", mr: "आठवण बंद करा" },
   shop_reminder_summary_prefix: { en: "Reminder set for", mr: "आठवण सेट केली आहे" },
-  shop_reminder_saved: { en: "Saved — your weekly reminder is on.", mr: "सेव्ह झाले — तुमची साप्ताहिक आठवण सुरू आहे." },
+  shop_reminder_saved: { en: "Saved, your weekly reminder is on.", mr: "सेव्ह झाले, तुमची साप्ताहिक आठवण सुरू आहे." },
   shop_reminder_off_label: { en: "No reminder set yet.", mr: "अद्याप कोणतीही आठवण सेट केलेली नाही." },
   shop_day_sun: { en: "Sunday", mr: "रविवार" },
   shop_day_mon: { en: "Monday", mr: "सोमवार" },

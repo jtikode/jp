@@ -1,7 +1,7 @@
 "use client";
 
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
-import { byStrengthMatchThenStockThenName, alternativesCap } from "@/lib/stockRank";
+import { byStockThenStrengthMatchThenName, alternativesCap } from "@/lib/stockRank";
 import type { CatalogProduct } from "@/lib/productCatalog";
 import type { SearchProductItem } from "@/lib/productSearch";
 
@@ -69,7 +69,7 @@ export function filterOfflineCatalog(
       ? (() => {
           const sortedAlts = (byComposition.get(compKey) ?? [])
             .filter((alt) => alt.id !== p.id)
-            .sort(byStrengthMatchThenStockThenName(p.name));
+            .sort(byStockThenStrengthMatchThenName(p.name));
           return sortedAlts
             .slice(0, alternativesCap(sortedAlts, MAX_ALTERNATIVES))
             .map((alt) => ({ id: alt.id, name: alt.name, company: alt.company, price: alt.price, stock: alt.stock }));

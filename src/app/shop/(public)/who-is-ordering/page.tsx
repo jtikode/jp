@@ -17,7 +17,7 @@ export default function WhoIsOrderingPage() {
         <h1 className="mb-1 text-2xl font-bold text-slate-900">Who&apos;s Ordering?</h1>
         <p className="mb-6 text-slate-500">
           Before you start, please share the WhatsApp number of whoever will be placing orders on
-          this account — this helps us know who we&apos;re speaking with.
+          this account, this helps us know who we&apos;re speaking with.
         </p>
 
         <form action={formAction} className="flex flex-col gap-4">

@@ -170,6 +170,8 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
         />
       </Card>
 
+      <p className="text-center text-xs font-medium text-amber-700">{t(lang, "shop_rates_disclaimer")}</p>
+
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
       <div className="fixed inset-x-0 bottom-16 z-10 border-t-2 border-slate-200 bg-white p-3">
@@ -179,7 +181,7 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
           disabled={placing}
           className="mx-auto flex w-full max-w-2xl items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-base font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {placing ? t(lang, "shop_placing_order") : `${t(lang, "shop_place_order")} — ₹${total.toLocaleString("en-IN")}`}
+          {placing ? t(lang, "shop_placing_order") : `${t(lang, "shop_place_order")}: ₹${total.toLocaleString("en-IN")}`}
         </button>
       </div>
     </div>

@@ -27,7 +27,7 @@ export default async function AdminBannersPage() {
         <h2 className="mb-1 text-lg font-bold text-slate-900">Send Notification</h2>
         <p className="mb-4 text-sm text-slate-500">
           Sends an instant push notification to every retailer who has notifications enabled on the
-          shop app — for one-off announcements, unlike the automatic order-status pushes.
+          shop app, for one-off announcements, unlike the automatic order-status pushes.
         </p>
         <SendNotificationForm />
       </Card>
@@ -73,7 +73,7 @@ export default async function AdminBannersPage() {
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-slate-900">
                   {b.placement === "HERO" ? "Home top carousel" : "Special Offers"}
-                  {b.title ? ` — ${b.title}` : ""}
+                  {b.title ? `: ${b.title}` : ""}
                 </p>
                 <p className="text-xs text-slate-500">Sort order: {b.sortOrder}</p>
               </div>

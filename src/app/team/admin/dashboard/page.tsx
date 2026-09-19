@@ -69,7 +69,7 @@ export default async function AdminDashboardPage({
     <div className="mx-auto max-w-6xl space-y-6">
       <Card className="overflow-x-auto">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-slate-900">Salesmen — At a Glance</h2>
+          <h2 className="text-lg font-bold text-slate-900">Salesmen: At a Glance</h2>
           <ExportExcelButton
             data={glanceRows.map((r) => ({
               Salesman: r.name,

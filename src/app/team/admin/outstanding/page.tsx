@@ -43,7 +43,7 @@ export default async function OutstandingPage() {
           />
         </div>
         <p className="mb-4 text-xs font-medium text-amber-700">
-          Updated weekly from the last uploaded statement — not real-time.
+          Updated weekly from the last uploaded statement, not real-time.
         </p>
         <table className="w-full min-w-[600px] text-left text-sm">
           <thead>

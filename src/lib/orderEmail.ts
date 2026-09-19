@@ -24,6 +24,10 @@ export async function sendOrderNotificationEmail(params: {
   totalAmount: number;
   notes?: string;
   lines: OrderEmailLine[];
+  // Count of this store's orders today, including this one — lets billing
+  // spot a repeat order from the same store the same day (a common sign the
+  // orders should be combined on one invoice) without cross-checking manually.
+  ordersTodayCount?: number;
 }): Promise<void> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -45,8 +49,16 @@ async function attemptSend(params: {
   totalAmount: number;
   notes?: string;
   lines: OrderEmailLine[];
+  ordersTodayCount?: number;
 }): Promise<void> {
   if (!resend) throw new Error("RESEND_API_KEY is not configured — order notification email cannot be sent.");
+
+  const isRepeatOrderToday = (params.ordersTodayCount ?? 1) > 1;
+  const repeatBanner = isRepeatOrderToday
+    ? `<p style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;font-weight:bold;margin:0 0 12px;">
+        ⚠️ This is order #${params.ordersTodayCount} from ${params.storeName} today — check with billing before invoicing separately.
+      </p>`
+    : "";
 
   const rows = params.lines
     .map(
@@ -59,6 +71,7 @@ async function attemptSend(params: {
     <div style="font-family:Arial,sans-serif;max-width:480px;">
       <h2 style="margin-bottom:4px;">New order from ${params.storeName}</h2>
       <p style="color:#64748b;margin-top:0;">Order #${params.orderNumber}</p>
+      ${repeatBanner}
       ${params.orderGiverWhatsapp ? `<p style="color:#475569;"><strong>Ordered by (WhatsApp):</strong> ${params.orderGiverWhatsapp}</p>` : ""}
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead>
@@ -81,7 +94,7 @@ async function attemptSend(params: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `New order #${params.orderNumber} — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber} — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a

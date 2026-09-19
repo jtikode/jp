@@ -7,7 +7,7 @@ const workSans = Work_Sans({ variable: "--font-work-sans", subsets: ["latin"], w
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
-  title: "How to Order — J P Traders",
+  title: "How to Order | J P Traders",
   description: "A step-by-step guide for retailers to install the JP Traders shop app and place their first order.",
 };
 
@@ -102,7 +102,7 @@ export default function HowToOrderPage() {
         <div className="g-header">
           <div className="g-rule" />
           <h1>Start ordering from your phone</h1>
-          <p>Five steps to get the JP Traders shop app running on your phone and place your first order — no Play Store, no paperwork.</p>
+          <p>Five steps to get the JP Traders shop app running on your phone and place your first order, no Play Store, no paperwork.</p>
           <div className="g-link-chip">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
             app.jpkop.in
@@ -115,7 +115,7 @@ export default function HowToOrderPage() {
             <svg className="g-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M12 18h.01" /></svg>
             <div className="g-step-body">
               <h3>Open the link</h3>
-              <p>On your phone, open Chrome and type in <strong>app.jpkop.in</strong>. It opens straight to sign-in — nothing to search for on the Play Store.</p>
+              <p>On your phone, open Chrome and type in <strong>app.jpkop.in</strong>. It opens straight to sign-in, nothing to search for on the Play Store.</p>
             </div>
           </div>
 
@@ -134,7 +134,7 @@ export default function HowToOrderPage() {
             <svg className="g-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
             <div className="g-step-body">
               <h3>Allow notifications</h3>
-              <p>When the app asks, tap <span className="g-chip solid">🔔 Enable order updates</span>. You&apos;ll get a push alert the moment an order is confirmed, dispatched, or a new offer goes live — no need to keep checking.</p>
+              <p>When the app asks, tap <span className="g-chip solid">🔔 Enable order updates</span>. You&apos;ll get a push alert the moment an order is confirmed, dispatched, or a new offer goes live, no need to keep checking.</p>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export default function HowToOrderPage() {
             <svg className="g-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
             <div className="g-step-body">
               <h3>Search &amp; add to cart</h3>
-              <p>Type a product name, or narrow it down with the Company and Salt filters. Tap the <strong>+</strong> on any item to add it — change the quantity any time before checkout.</p>
+              <p>Type a product name, or narrow it down with the Company and Salt filters. Tap the <strong>+</strong> on any item to add it, change the quantity any time before checkout.</p>
               <div className="g-mock-search">
                 <div className="g-bar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
@@ -162,7 +162,7 @@ export default function HowToOrderPage() {
             <svg className="g-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
             <div className="g-step-body">
               <h3>Place your order</h3>
-              <p>Open your cart, add a note if you need to, and tap <span className="g-chip solid">Place Order</span>. Your distributor sees it instantly — done in under two minutes.</p>
+              <p>Open your cart, add a note if you need to, and tap <span className="g-chip solid">Place Order</span>. Your distributor sees it instantly, done in under two minutes.</p>
             </div>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function HowToOrderPage() {
             Worth knowing
           </span>
           <h2>Search the salt, not just the brand</h2>
-          <p>Type the <strong>composition</strong> instead of one brand name — every product with that salt shows up at once, so you can compare rates and never lose a sale just because one brand is out of stock.</p>
+          <p>Type the <strong>composition</strong> instead of one brand name, every product with that salt shows up at once, so you can compare rates and never lose a sale just because one brand is out of stock.</p>
 
           <div className="g-compare">
             <div className="g-card">
