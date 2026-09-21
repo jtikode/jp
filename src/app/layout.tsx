@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Hostinger's CDN caches statically pre-built pages for a year and ignores Vary,
+// which served stale HTML (and raw RSC payloads) to phones after deploys.
+// Rendering on demand makes Next send no-store, so nothing caches them.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "J P Traders",
   description: "Field terminal, telecalling, warehouse and admin operations hub for pharma distributors.",
