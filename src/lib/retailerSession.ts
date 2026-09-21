@@ -1,5 +1,5 @@
-import { getIronSession, type IronSession } from "iron-session";
-import { cookies } from "next/headers";
+import { getIronSession, unsealData, sealData, type IronSession } from "iron-session";
+import { cookies, headers } from "next/headers";
 
 export interface RetailerSessionData {
   storeId?: string;
@@ -25,7 +25,32 @@ const retailerSessionOptions = {
   },
 };
 
+const MOBILE_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;
+
+/** Long-lived signed token the native app stores instead of a browser cookie. */
+export async function issueMobileToken(data: Required<RetailerSessionData>): Promise<string> {
+  return sealData(data, { password: process.env.SESSION_SECRET as string, ttl: MOBILE_TOKEN_TTL_SECONDS });
+}
+
 export async function getRetailerSession(): Promise<IronSession<RetailerSessionData>> {
+  // The native app authenticates with "Authorization: Bearer <token>" instead
+  // of the cookie. Everything downstream (server actions, lib functions) reads
+  // the session through this one function, so they work unchanged for both.
+  const bearer = (await headers()).get("authorization");
+  if (bearer?.startsWith("Bearer ")) {
+    let data: RetailerSessionData = {};
+    try {
+      data = await unsealData<RetailerSessionData>(bearer.slice(7), {
+        password: process.env.SESSION_SECRET as string,
+        ttl: MOBILE_TOKEN_TTL_SECONDS,
+      });
+    } catch {
+      // Invalid or expired token: fall through as an anonymous session.
+    }
+    const noop = async () => {};
+    return Object.assign(data, { save: noop, destroy: noop, updateConfig: () => {} }) as unknown as IronSession<RetailerSessionData>;
+  }
+
   const cookieStore = await cookies();
   return getIronSession<RetailerSessionData>(cookieStore, retailerSessionOptions);
 }
