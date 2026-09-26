@@ -54,10 +54,58 @@ export function byStockThenStrengthMatchThenName<T extends { stock: number | nul
   };
 }
 
-/** How many items to keep from a stock-sorted list so every in-stock/
- * untracked item survives the cut, even past the normal cap — only
+// An item counts as "near expiry" once its soonest expiry is within this many
+// days — the same window the Clearance list uses for its deepest markdowns.
+export const NEAR_EXPIRY_DAYS = 90;
+
+/** True for stocked items that expire soon (not yet expired, and actually in stock to sell). */
+export function isNearExpiry(item: { stock: number | null; expiryDate?: string | null }, now = Date.now()): boolean {
+  if (!item.expiryDate || item.stock == null || item.stock <= 0) return false;
+  const expires = new Date(item.expiryDate).getTime();
+  return expires >= now && expires - now <= NEAR_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+}
+
+// Alternatives are ranked by what a retailer can actually buy: real stock
+// first, then low stock, then items with no stock figure at all (never
+// counted, so not known to be on the shelf), then confirmed zero.
+function alternativeStockTier(stock: number | null): number {
+  if (stock == null) return 2;
+  if (stock >= LOW_STOCK_THRESHOLD) return 0;
+  if (stock > 0) return 1;
+  return 3;
+}
+
+/** Ranking for the "alternatives" list: near-expiry stock first (soonest to
+ * expire first, so it gets moved), then in stock, then low stock, then
+ * items without stock — a same-strength match and then name break ties. */
+export function byExpiryThenStockThenStrengthThenName<
+  T extends { stock: number | null; name: string; expiryDate?: string | null },
+>(referenceName: string): (a: T, b: T) => number {
+  const refStrength = extractStrength(referenceName);
+  const now = Date.now();
+  return (a, b) => {
+    const aNear = isNearExpiry(a, now);
+    const bNear = isNearExpiry(b, now);
+    if (aNear !== bNear) return aNear ? -1 : 1;
+    if (aNear && bNear) {
+      const diff = new Date(a.expiryDate!).getTime() - new Date(b.expiryDate!).getTime();
+      if (diff !== 0) return diff;
+    }
+    const tierDiff = alternativeStockTier(a.stock) - alternativeStockTier(b.stock);
+    if (tierDiff !== 0) return tierDiff;
+    if (refStrength) {
+      const aMatches = extractStrength(a.name) === refStrength;
+      const bMatches = extractStrength(b.name) === refStrength;
+      if (aMatches !== bMatches) return aMatches ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  };
+}
+
+/** How many items to keep from a stock-sorted list so every
+ * stocked item survives the cut, even past the normal cap — only
  * low-stock/out-of-stock entries ever get truncated. */
 export function alternativesCap<T extends { stock: number | null }>(sorted: T[], maxDefault: number): number {
-  const inStockCount = sorted.filter((item) => stockTier(item.stock) === 0).length;
+  const inStockCount = sorted.filter((item) => item.stock != null && item.stock > 0).length;
   return Math.max(maxDefault, inStockCount);
 }

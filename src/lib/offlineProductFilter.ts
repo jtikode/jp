@@ -1,7 +1,7 @@
 "use client";
 
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
-import { byStockThenStrengthMatchThenName, alternativesCap } from "@/lib/stockRank";
+import { byExpiryThenStockThenStrengthThenName, alternativesCap } from "@/lib/stockRank";
 import type { CatalogProduct } from "@/lib/productCatalog";
 import type { SearchProductItem } from "@/lib/productSearch";
 
@@ -33,7 +33,9 @@ export function filterOfflineCatalog(
   catalog: CatalogProduct[],
   params: OfflineSearchParams,
 ): OfflineSearchResult {
-  const sorted = [...catalog].sort(
+  const sorted = catalog
+    .map((p) => ({ ...p, expiryDate: p.nearestExpiry ?? null }))
+    .sort(
     (a, b) => (a.company ?? "").localeCompare(b.company ?? "") || a.name.localeCompare(b.name),
   );
 
@@ -69,10 +71,23 @@ export function filterOfflineCatalog(
       ? (() => {
           const sortedAlts = (byComposition.get(compKey) ?? [])
             .filter((alt) => alt.id !== p.id)
-            .sort(byStockThenStrengthMatchThenName(p.name));
+            .sort(byExpiryThenStockThenStrengthThenName(p.name));
           return sortedAlts
             .slice(0, alternativesCap(sortedAlts, MAX_ALTERNATIVES))
-            .map((alt) => ({ id: alt.id, name: alt.name, company: alt.company, price: alt.price, stock: alt.stock }));
+            .map((alt) => ({
+              id: alt.id,
+              name: alt.name,
+              company: alt.company,
+              unit: alt.unit,
+              price: alt.price,
+              mrp: alt.mrp,
+              taxPercent: alt.taxPercent,
+              scheme: alt.scheme,
+              composition: alt.composition,
+              category: alt.category,
+              stock: alt.stock,
+              expiryDate: alt.expiryDate,
+            }));
         })()
       : [];
 
@@ -86,6 +101,7 @@ export function filterOfflineCatalog(
       taxPercent: p.taxPercent,
       scheme: p.scheme,
       composition: p.composition,
+      category: p.category ?? null,
       stock: p.stock,
       hot: false,
       deal: null,

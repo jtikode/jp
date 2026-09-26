@@ -5,17 +5,27 @@ import { getHotSellingProductIds } from "@/lib/hotSelling";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
-import { byStockThenStrengthMatchThenName, alternativesCap } from "@/lib/stockRank";
+import { byExpiryThenStockThenStrengthThenName, alternativesCap } from "@/lib/stockRank";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
 
 export { PRODUCT_PAGE_SIZE };
 
+// Alternatives carry the same details as a main product row (pack, MRP, tax,
+// scheme, expiry, category…) so a retailer can compare and order them without
+// having to search for each one first.
 export interface AlternativeItem {
   id: string;
   name: string;
   company: string | null;
+  unit: string | null;
   price: number;
+  mrp: number | null;
+  taxPercent: number | null;
+  scheme: string | null;
+  composition: string | null;
+  category: string | null;
   stock: number | null;
+  expiryDate: string | null;
 }
 
 export interface SearchProductItem {
@@ -28,6 +38,7 @@ export interface SearchProductItem {
   taxPercent: number | null;
   scheme: string | null;
   composition: string | null;
+  category: string | null;
   stock: number | null;
   hot: boolean;
   deal: { id: string; price: number; remainingQty: number } | null;
@@ -191,10 +202,25 @@ export async function searchProductCatalog(
       ? (() => {
           const sortedAlts = (byComposition.get(compKey) ?? [])
             .filter((alt) => alt.id !== p.id)
-            .sort(byStockThenStrengthMatchThenName(p.name));
+            .sort(byExpiryThenStockThenStrengthThenName(p.name));
           return sortedAlts
             .slice(0, alternativesCap(sortedAlts, MAX_ALTERNATIVES))
-            .map((alt) => ({ id: alt.id, name: alt.name, company: alt.company, price: alt.price, stock: alt.stock }));
+            .map(
+              (alt): AlternativeItem => ({
+                id: alt.id,
+                name: alt.name,
+                company: alt.company,
+                unit: alt.unit,
+                price: alt.price,
+                mrp: alt.mrp,
+                taxPercent: alt.taxPercent,
+                scheme: alt.scheme,
+                composition: alt.composition,
+                category: alt.category,
+                stock: alt.stock,
+                expiryDate: alt.expiryDate,
+              }),
+            );
         })()
       : [];
 
@@ -208,6 +234,7 @@ export async function searchProductCatalog(
       taxPercent: p.taxPercent,
       scheme: p.scheme,
       composition: p.composition,
+      category: p.category,
       stock: p.stock,
       hot: p.hot,
       deal: dealByProductId.get(p.id) ?? null,

@@ -14,6 +14,7 @@ const PRODUCT_ALIASES = {
   taxPercent: ["tax", "tax %", "gst", "gst %", "igst"],
   scheme: ["scheme"],
   composition: ["composition", "salt", "salt composition", "molecule"],
+  category: ["category", "product category"],
   stock: ["stock", "qty", "quantity", "stock qty"],
 };
 
@@ -79,6 +80,7 @@ export async function importProducts(
     taxPercent?: number;
     scheme?: string;
     composition?: string;
+    category?: string;
     stock?: number;
   }> = [];
   for (const row of rows) {
@@ -94,6 +96,9 @@ export async function importProducts(
     const taxPercentRaw = findColumn(row, PRODUCT_ALIASES.taxPercent);
     const scheme = findColumn(row, PRODUCT_ALIASES.scheme);
     const composition = findColumn(row, PRODUCT_ALIASES.composition);
+    // The billing export writes "-BLANK-" for items with no category.
+    const categoryRaw = findColumn(row, PRODUCT_ALIASES.category)?.trim();
+    const category = categoryRaw && categoryRaw.toUpperCase() !== "-BLANK-" ? categoryRaw : undefined;
     const stockRaw = findColumn(row, PRODUCT_ALIASES.stock);
     parsedRows.push({
       name,
@@ -104,6 +109,7 @@ export async function importProducts(
       taxPercent: taxPercentRaw ? Number(taxPercentRaw) : undefined,
       scheme,
       composition,
+      category,
       stock: stockRaw ? Number(stockRaw) : undefined,
     });
   }
@@ -134,6 +140,7 @@ export async function importProducts(
         taxPercent: row.taxPercent,
         scheme: row.scheme,
         composition: row.composition,
+        category: row.category,
         stock: row.stock,
         active: true,
       },
@@ -147,6 +154,7 @@ export async function importProducts(
         taxPercent: row.taxPercent,
         scheme: row.scheme,
         composition: row.composition,
+        category: row.category,
         stock: row.stock,
       },
     });

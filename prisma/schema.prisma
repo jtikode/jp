@@ -689,6 +689,9 @@ model Product {
   // lets a retailer or telecaller find/verify a product by its salt, not
   // just its brand name.
   composition   String?
+  // Product type from the billing software's Category column (e.g. "EYE DROPS",
+  // "MEDICATED SOAP"). Only some items have one; shown on the shop's product cards.
+  category      String?
   // Admin-uploaded shelf quantity. Retailers see the exact number once it's
   // 3 or more; below that, the shop shows a plain "Low Stock" warning
   // instead of the number itself. Null means stock hasn't been set yet.

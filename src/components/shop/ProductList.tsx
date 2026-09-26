@@ -13,7 +13,7 @@ import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
 import type { SearchProductItem } from "@/lib/productSearch";
 import { getCatalogSnapshot } from "@/lib/offlineCatalog";
 import { filterOfflineCatalog } from "@/lib/offlineProductFilter";
-import { LOW_STOCK_THRESHOLD } from "@/lib/stockRank";
+import { LOW_STOCK_THRESHOLD, isNearExpiry } from "@/lib/stockRank";
 
 export type ProductListItem = SearchProductItem;
 
@@ -214,7 +214,7 @@ export function ProductList({
                     </span>
                   )}
                 </p>
-                {p.composition && <p className="text-xs text-slate-400">{p.composition}</p>}
+                {p.composition && <p className="break-words text-xs text-slate-400">{p.composition}</p>}
                 <p className="text-sm text-slate-500">
                   {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
                 </p>
@@ -255,9 +255,21 @@ export function ProductList({
                     ))}
                 </p>
                 {p.expiryDate && (
-                  <p className="text-xs text-slate-400">
-                    {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                  <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                    <span>
+                      {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                    </span>
+                    {isNearExpiry(p) && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 font-bold text-red-700">
+                        {t(lang, "shop_near_expiry")}
+                      </span>
+                    )}
                   </p>
+                )}
+                {p.category && (
+                  <span className="mt-1 mr-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                    {p.category}
+                  </span>
                 )}
                 {p.scheme && (
                   <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
@@ -309,11 +321,24 @@ export function ProductList({
                       >
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-slate-900">{alt.name}</p>
-                          <p className="text-xs text-slate-500">{alt.company ?? ""}</p>
-                          <p className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-medium text-blue-700">
+                          {alt.composition && <p className="break-words text-xs text-slate-400">{alt.composition}</p>}
+                          <p className="text-xs text-slate-500">
+                            {[alt.company, alt.unit].filter(Boolean).join(" · ")}
+                          </p>
+                          <p className="flex flex-wrap items-baseline gap-2">
+                            <span className="text-xs font-bold text-blue-700">
                               ₹{alt.price.toLocaleString("en-IN")}
                             </span>
+                            {alt.mrp != null && alt.mrp > alt.price && (
+                              <span className="text-xs text-slate-400 line-through">
+                                ₹{alt.mrp.toLocaleString("en-IN")}
+                              </span>
+                            )}
+                            {alt.taxPercent != null && (
+                              <span className="text-xs text-slate-400">
+                                {t(lang, "shop_tax")} {alt.taxPercent}%
+                              </span>
+                            )}
                             {alt.stock != null &&
                               (alt.stock < LOW_STOCK_THRESHOLD ? (
                                 <span className="text-xs font-semibold text-red-600">{t(lang, "shop_low_stock")}</span>
@@ -323,6 +348,29 @@ export function ProductList({
                                 </span>
                               ))}
                           </p>
+                          {alt.expiryDate && (
+                            <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                              <span>
+                                {t(lang, "shop_expiry")}:{" "}
+                                {new Date(alt.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                              </span>
+                              {isNearExpiry(alt) && (
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 font-bold text-red-700">
+                                  {t(lang, "shop_near_expiry")}
+                                </span>
+                              )}
+                            </p>
+                          )}
+                          {alt.category && (
+                            <span className="mt-1 mr-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                              {alt.category}
+                            </span>
+                          )}
+                          {alt.scheme && (
+                            <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                              {t(lang, "shop_scheme")}: {alt.scheme}
+                            </span>
+                          )}
                         </div>
                         <QuantityStepper
                           quantity={altQuantity}

@@ -6,6 +6,8 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
+import { parseMargOutstandingReport } from "@/lib/margOutstanding";
+import { applyMargOutstandingSnapshot } from "@/lib/outstandingSnapshot";
 import { parseRegularItemsExcel, parseFastOrderItemsReport } from "@/lib/regularItems";
 import { parseCompanySaleReport } from "@/lib/companySales";
 import { parseStockExpiryReport, stockMatchKey } from "@/lib/stockExpiryReport";
@@ -160,6 +162,22 @@ export async function importOutstanding(
 
   const buffer = await file.arrayBuffer();
   const isPdf = file.name.toLowerCase().endsWith(".pdf");
+
+  if (!isPdf) {
+    const marg = parseMargOutstandingReport(buffer);
+    if (marg) {
+      const result = await applyMargOutstandingSnapshot(db, {
+        orgId: session.orgId,
+        uploadedById: session.userId as string,
+        fileName: file.name,
+        report: marg,
+      });
+      if (!result.ok) return { ok: false, error: result.error ?? "Import failed." };
+      revalidatePath("/team/admin/imports");
+      revalidatePath("/team/admin/outstanding");
+      return { ok: true, rowCount: result.imported };
+    }
+  }
 
   // { code, invoiceNo, invoiceDate, amount, outstandingAmount }[]
   const parsedRows: Array<{
