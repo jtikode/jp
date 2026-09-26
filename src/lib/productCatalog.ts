@@ -64,6 +64,20 @@ const getCachedActiveCatalog = unstable_cache(
   { revalidate: 60 },
 );
 
-export function getActiveCatalog(orgId: string): Promise<CatalogProduct[]> {
-  return getCachedActiveCatalog(orgId);
+// unstable_cache hands back a freshly JSON-parsed copy of the whole catalog on
+// every call, which adds up when hundreds of retailers hit search at once.
+// The catalog is read-only to every caller, so one in-process copy is shared
+// for a short while (the array is typed readonly to keep it that way).
+const SHARED_TTL_MS = 30_000;
+const sharedCatalog = new Map<string, { at: number; value: Promise<readonly CatalogProduct[]> }>();
+
+export function getActiveCatalog(orgId: string): Promise<readonly CatalogProduct[]> {
+  const hit = sharedCatalog.get(orgId);
+  if (hit && Date.now() - hit.at < SHARED_TTL_MS) return hit.value;
+  const value = getCachedActiveCatalog(orgId);
+  sharedCatalog.set(orgId, { at: Date.now(), value });
+  value.catch(() => {
+    if (sharedCatalog.get(orgId)?.value === value) sharedCatalog.delete(orgId);
+  });
+  return value;
 }

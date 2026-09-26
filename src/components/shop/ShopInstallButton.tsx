@@ -41,12 +41,12 @@ export function ShopInstallButton({ lang }: { lang: Lang }) {
   return (
     <button
       onClick={handleInstall}
-      className="flex h-11 items-center gap-1.5 rounded-full bg-blue-700 px-3.5 text-xs font-bold text-white hover:bg-blue-800"
+      className="flex h-9 items-center gap-1.5 rounded-full bg-blue-700 px-2.5 text-xs font-bold text-white hover:bg-blue-800 sm:h-11 sm:px-3.5"
       aria-label={t(lang, "shop_install_app")}
       title={t(lang, "shop_install_app")}
     >
       <Download size={16} strokeWidth={2} />
-      {t(lang, "shop_install_app")}
+      <span className="hidden sm:inline">{t(lang, "shop_install_app")}</span>
     </button>
   );
 }

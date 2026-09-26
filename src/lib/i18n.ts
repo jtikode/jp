@@ -284,6 +284,7 @@ export const translations = {
     mr: "QR कोड स्कॅन करा किंवा UPI ने पेमेंट करण्यासाठी बटण दाबा.",
   },
   shop_pay_now: { en: "Pay Now", mr: "आता पेमेंट करा" },
+  shop_offer_popup_cta: { en: "View Mankind products", mr: "मॅनकाइंड प्रॉडक्ट्स पहा" },
   shop_rates_disclaimer: {
     en: "Note: Rates and stock shown in the app are indicative. Actual rates and stock may vary.",
     mr: "टीप: ॲपमध्ये दाखवलेले दर आणि साठा अंदाजित आहेत. प्रत्यक्ष दर आणि साठा वेगळा असू शकतो.",

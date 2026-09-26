@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { setLanguage } from "@/actions/languageActions";
 import type { Lang } from "@/lib/i18n";
 
-export function LanguageToggle({ initialLang }: { initialLang: Lang }) {
+export function LanguageToggle({ initialLang, compact = false }: { initialLang: Lang; compact?: boolean }) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>(initialLang);
   const [pending, startTransition] = useTransition();
@@ -24,7 +24,9 @@ export function LanguageToggle({ initialLang }: { initialLang: Lang }) {
       type="button"
       onClick={toggle}
       disabled={pending}
-      className="min-h-11 shrink-0 rounded-lg border-2 border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      className={`shrink-0 rounded-lg border-2 border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 ${
+        compact ? "min-h-9 px-2 text-xs sm:min-h-11 sm:px-3 sm:text-sm" : "min-h-11 px-3 text-sm"
+      }`}
     >
       {lang === "mr" ? "English" : "मराठी"}
     </button>
