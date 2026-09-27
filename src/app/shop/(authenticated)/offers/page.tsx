@@ -36,9 +36,13 @@ export default async function ShopOffersPage() {
                 <Image
                   src={o.imageUrl}
                   alt={o.title ?? "Offer"}
-                  width={640}
-                  height={280}
-                  className="w-full object-cover"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  // Distributor flyers are usually a tall, full-page poster, not a wide
+                  // banner strip — scale to the image's own aspect ratio instead of
+                  // cropping to a fixed box, so none of the offer's fine print gets cut off.
+                  style={{ width: "100%", height: "auto" }}
                   unoptimized
                 />
                 {countdown && (
