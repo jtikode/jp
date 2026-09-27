@@ -316,14 +316,20 @@ export function ProductList({
                       {t(lang, "shop_tax")} {p.taxPercent}%
                     </span>
                   )}
-                  {p.stock != null &&
+                  {p.onRequest ? (
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                      {t(lang, "shop_available_on_request")}
+                    </span>
+                  ) : (
+                    p.stock != null &&
                     (p.stock < LOW_STOCK_THRESHOLD ? (
                       <span className="text-xs font-semibold text-red-600">{t(lang, "shop_low_stock")}</span>
                     ) : (
                       <span className="text-xs font-medium text-green-700">
                         {t(lang, "shop_in_stock")}: {p.stock}
                       </span>
-                    ))}
+                    ))
+                  )}
                 </p>
                 {p.expiryDate && (
                   <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
@@ -418,14 +424,20 @@ export function ProductList({
                                 {t(lang, "shop_tax")} {alt.taxPercent}%
                               </span>
                             )}
-                            {alt.stock != null &&
+                            {alt.onRequest ? (
+                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                {t(lang, "shop_available_on_request")}
+                              </span>
+                            ) : (
+                              alt.stock != null &&
                               (alt.stock < LOW_STOCK_THRESHOLD ? (
                                 <span className="text-xs font-semibold text-red-600">{t(lang, "shop_low_stock")}</span>
                               ) : (
                                 <span className="text-xs font-medium text-green-700">
                                   {t(lang, "shop_in_stock")}: {alt.stock}
                                 </span>
-                              ))}
+                              ))
+                            )}
                           </p>
                           {alt.expiryDate && (
                             <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">

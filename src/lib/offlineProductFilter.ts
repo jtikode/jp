@@ -86,6 +86,7 @@ export function filterOfflineCatalog(
               composition: alt.composition,
               category: alt.category,
               imageUrl: alt.imageUrl,
+              onRequest: alt.onRequest,
               stock: alt.stock,
               expiryDate: alt.expiryDate,
             }));
@@ -104,6 +105,7 @@ export function filterOfflineCatalog(
       composition: p.composition,
       category: p.category ?? null,
       imageUrl: p.imageUrl ?? null,
+      onRequest: p.onRequest ?? false,
       stock: p.stock,
       hot: false,
       deal: null,

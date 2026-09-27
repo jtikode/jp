@@ -55,6 +55,7 @@ export default async function AdminProductsPage() {
                 ? p.nearestExpiry.toLocaleDateString("en-IN", { month: "short", year: "numeric" })
                 : "",
               Status: p.active ? "Active" : "Hidden",
+              "On Request": p.onRequest ? "Yes" : "",
             }))}
             filename="products"
           />
@@ -82,6 +83,7 @@ export default async function AdminProductsPage() {
                   }
                 : null,
             active: p.active,
+            onRequest: p.onRequest,
             hot: hotIds.has(p.id),
           }))}
         />

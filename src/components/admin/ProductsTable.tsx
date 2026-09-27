@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/Input";
-import { toggleProductActive } from "@/actions/productActions";
+import { toggleProductActive, toggleProductOnRequest } from "@/actions/productActions";
 
 interface ProductRow {
   id: string;
@@ -17,6 +17,7 @@ interface ProductRow {
   stock: number | null;
   nearestExpiry: { label: string; daysLeft: number } | null;
   active: boolean;
+  onRequest: boolean;
   hot: boolean;
 }
 
@@ -56,6 +57,7 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
               <th className="py-2 pr-4">Stock</th>
               <th className="py-2 pr-4">Nearest Expiry</th>
               <th className="py-2 pr-4">Status</th>
+              <th className="py-2 pr-4">On Request</th>
               <th className="py-2 pr-4"></th>
             </tr>
           </thead>
@@ -103,6 +105,20 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
                   </span>
                 </td>
                 <td className="py-2 pr-4">
+                  <form action={toggleProductOnRequest.bind(null, p.id, !p.onRequest)}>
+                    <button
+                      type="submit"
+                      className={
+                        p.onRequest
+                          ? "rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-200"
+                          : "rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-200"
+                      }
+                    >
+                      {p.onRequest ? "On Request" : "Mark on request"}
+                    </button>
+                  </form>
+                </td>
+                <td className="py-2 pr-4">
                   <form action={toggleProductActive.bind(null, p.id, !p.active)}>
                     <button type="submit" className="text-sm font-semibold text-blue-700 hover:underline">
                       {p.active ? "Hide" : "Show"}
@@ -113,7 +129,7 @@ export function ProductsTable({ products }: { products: ProductRow[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={12} className="py-6 text-center text-slate-400">
+                <td colSpan={13} className="py-6 text-center text-slate-400">
                   No products match your search.
                 </td>
               </tr>

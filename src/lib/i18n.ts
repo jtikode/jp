@@ -309,6 +309,7 @@ export const translations = {
   shop_clear_selection: { en: "Clear", mr: "निवड काढा" },
   shop_low_stock: { en: "Low Stock", mr: "मर्यादित साठा" },
   shop_in_stock: { en: "In Stock", mr: "साठा" },
+  shop_available_on_request: { en: "Available on Request", mr: "मागणीनुसार उपलब्ध" },
   shop_expiry: { en: "Expiry", mr: "एक्सपायरी" },
   shop_show_alternatives: { en: "Show alternatives", mr: "पर्याय दाखवा" },
   shop_hide_alternatives: { en: "Hide alternatives", mr: "पर्याय लपवा" },

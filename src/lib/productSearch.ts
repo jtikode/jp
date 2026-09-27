@@ -25,6 +25,7 @@ export interface AlternativeItem {
   composition: string | null;
   category: string | null;
   imageUrl: string | null;
+  onRequest: boolean;
   stock: number | null;
   expiryDate: string | null;
 }
@@ -41,6 +42,7 @@ export interface SearchProductItem {
   composition: string | null;
   category: string | null;
   imageUrl: string | null;
+  onRequest: boolean;
   stock: number | null;
   hot: boolean;
   deal: { id: string; price: number; remainingQty: number } | null;
@@ -220,6 +222,7 @@ export async function searchProductCatalog(
                 composition: alt.composition,
                 category: alt.category,
                 imageUrl: alt.imageUrl,
+                onRequest: alt.onRequest,
                 stock: alt.stock,
                 expiryDate: alt.expiryDate,
               }),
@@ -239,6 +242,7 @@ export async function searchProductCatalog(
       composition: p.composition,
       category: p.category,
       imageUrl: p.imageUrl,
+      onRequest: p.onRequest,
       stock: p.stock,
       hot: p.hot,
       deal: dealByProductId.get(p.id) ?? null,

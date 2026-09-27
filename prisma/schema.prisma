@@ -705,6 +705,12 @@ model Product {
   // on the admin inventory list); the Clearance list (ExpiryItem) below is
   // the separate, curated set that actually drives retailer-facing markdowns.
   nearestExpiry DateTime?
+  // True for a product the org doesn't stock but can source from the
+  // distributor when a retailer orders it — e.g. added from a distributor's
+  // catalogue for reference, with no shelf quantity of its own. Shown on the
+  // shop as "Available on Request" instead of a stock indicator; still
+  // orderable as normal.
+  onRequest     Boolean   @default(false)
   active        Boolean   @default(true)
   createdAt     DateTime  @default(now())
 

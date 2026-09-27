@@ -16,7 +16,10 @@ const PRODUCT_ALIASES = {
   composition: ["composition", "salt", "salt composition", "molecule"],
   category: ["category", "product category"],
   stock: ["stock", "qty", "quantity", "stock qty"],
+  onRequest: ["on request", "available on request", "order on demand", "special order"],
 };
+
+const TRUTHY = new Set(["yes", "y", "true", "1", "on request", "available on request"]);
 
 export async function createProduct(
   _prevState: { ok: boolean; error?: string } | null,
@@ -82,6 +85,7 @@ export async function importProducts(
     composition?: string;
     category?: string;
     stock?: number;
+    onRequest?: boolean;
   }> = [];
   for (const row of rows) {
     const name = findColumn(row, PRODUCT_ALIASES.name);
@@ -100,6 +104,7 @@ export async function importProducts(
     const categoryRaw = findColumn(row, PRODUCT_ALIASES.category)?.trim();
     const category = categoryRaw && categoryRaw.toUpperCase() !== "-BLANK-" ? categoryRaw : undefined;
     const stockRaw = findColumn(row, PRODUCT_ALIASES.stock);
+    const onRequestRaw = findColumn(row, PRODUCT_ALIASES.onRequest)?.trim().toLowerCase();
     parsedRows.push({
       name,
       company,
@@ -111,6 +116,7 @@ export async function importProducts(
       composition,
       category,
       stock: stockRaw ? Number(stockRaw) : undefined,
+      onRequest: onRequestRaw ? TRUTHY.has(onRequestRaw) : undefined,
     });
   }
 
@@ -142,6 +148,7 @@ export async function importProducts(
         composition: row.composition,
         category: row.category,
         stock: row.stock,
+        onRequest: row.onRequest,
         active: true,
       },
       create: {
@@ -156,6 +163,7 @@ export async function importProducts(
         composition: row.composition,
         category: row.category,
         stock: row.stock,
+        onRequest: row.onRequest ?? false,
       },
     });
     imported += 1;
@@ -173,6 +181,20 @@ export async function toggleProductActive(productId: string, active: boolean): P
   const db = getOrgScopedDb(session.orgId);
 
   await db.product.update({ where: { id: productId }, data: { active } });
+
+  revalidatePath("/team/admin/products");
+  revalidatePath("/shop/products");
+}
+
+// "On Request" = we don't stock it ourselves but can source it from the
+// distributor when a retailer orders it — shown on the shop in place of a
+// stock indicator, so the retailer knows to expect it's ordered in, not
+// pulled off the shelf.
+export async function toggleProductOnRequest(productId: string, onRequest: boolean): Promise<void> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  await db.product.update({ where: { id: productId }, data: { onRequest } });
 
   revalidatePath("/team/admin/products");
   revalidatePath("/shop/products");
