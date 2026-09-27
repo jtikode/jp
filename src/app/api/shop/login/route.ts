@@ -7,7 +7,16 @@ const loginSchema = z.object({
   businessCode: z.string().min(1),
   loginId: z.string().min(1),
   pin: z.string().min(1),
+  // Where to send the retailer after signing in — e.g. back to the product
+  // they were viewing on the public, unauthenticated product page. Must be a
+  // same-site path under /shop/ so this can't be turned into an open redirect.
+  redirectTo: z.string().optional(),
 });
+
+function safeRedirect(path: string | undefined): string {
+  if (path && path.startsWith("/shop/")) return path;
+  return "/shop/home";
+}
 
 export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(await request.json());
@@ -28,5 +37,5 @@ export async function POST(request: Request) {
   session.storeName = result.store.name;
   await session.save();
 
-  return NextResponse.json({ redirectTo: "/shop/home" });
+  return NextResponse.json({ redirectTo: safeRedirect(parsed.data.redirectTo) });
 }

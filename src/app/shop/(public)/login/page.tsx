@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -13,7 +13,21 @@ import { Card } from "@/components/ui/Card";
 const BUSINESS_CODE = "jptraders";
 
 export default function ShopLoginPage() {
+  // useSearchParams needs a Suspense boundary around it, per Next.js.
+  return (
+    <Suspense>
+      <ShopLoginForm />
+    </Suspense>
+  );
+}
+
+function ShopLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Set when this login was reached from the public product page's "Add to
+  // cart" (see PublicAddToCart) — sends them back to finish that instead of
+  // dropping them on the generic home screen.
+  const redirectTo = searchParams.get("redirect");
   const [loginId, setLoginId] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +42,7 @@ export default function ShopLoginPage() {
       const res = await fetch("/api/shop/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessCode: BUSINESS_CODE, loginId, pin }),
+        body: JSON.stringify({ businessCode: BUSINESS_CODE, loginId, pin, redirectTo: redirectTo ?? undefined }),
       });
       const data = await res.json();
 
@@ -49,9 +63,13 @@ export default function ShopLoginPage() {
       <Card className="w-full max-w-sm">
         <h1 className="mb-1 text-2xl font-bold text-slate-900">Shop Generic Medicines</h1>
         <p className="mb-2 text-slate-500">Sign in to order from your distributor</p>
-        <p className="mb-6 text-xs font-medium text-blue-700">
-          India&apos;s first AI-based ordering platform, personalized to your store&apos;s buying history.
-        </p>
+        {redirectTo ? (
+          <p className="mb-6 text-xs font-medium text-blue-700">Sign in to continue with your order.</p>
+        ) : (
+          <p className="mb-6 text-xs font-medium text-blue-700">
+            India&apos;s first AI-based ordering platform, personalized to your store&apos;s buying history.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

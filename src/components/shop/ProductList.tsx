@@ -21,7 +21,7 @@ export type ProductListItem = SearchProductItem;
 const SEARCH_DEBOUNCE_MS = 300;
 
 /** Pack photo thumbnail; tapping it opens a large view (tap anywhere, press Esc, or use the close button to dismiss). */
-function ProductThumb({ src, alt, size }: { src: string; alt: string; size: number }) {
+export function ProductThumb({ src, alt, size }: { src: string; alt: string; size: number }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {

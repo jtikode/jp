@@ -313,6 +313,8 @@ export const translations = {
   shop_expiry: { en: "Expiry", mr: "एक्सपायरी" },
   shop_show_alternatives: { en: "Show alternatives", mr: "पर्याय दाखवा" },
   shop_hide_alternatives: { en: "Hide alternatives", mr: "पर्याय लपवा" },
+  shop_public_add_note: { en: "Sign in to place your order", mr: "ऑर्डर करण्यासाठी लॉग इन करा" },
+  shop_public_browse_catalog: { en: "Browse full catalog", mr: "संपूर्ण यादी पहा" },
   shop_offline_catalog_notice: {
     en: "You're offline, showing your device's saved catalog. Prices and stock may be a few hours old.",
     mr: "तुम्ही ऑफलाइन आहात, डिव्हाइसवर साठवलेला कॅटलॉग दाखवत आहोत. किंमत/साठा काही तास जुना असू शकतो.",
