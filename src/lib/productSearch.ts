@@ -24,6 +24,7 @@ export interface AlternativeItem {
   scheme: string | null;
   composition: string | null;
   category: string | null;
+  imageUrl: string | null;
   stock: number | null;
   expiryDate: string | null;
 }
@@ -39,6 +40,7 @@ export interface SearchProductItem {
   scheme: string | null;
   composition: string | null;
   category: string | null;
+  imageUrl: string | null;
   stock: number | null;
   hot: boolean;
   deal: { id: string; price: number; remainingQty: number } | null;
@@ -217,6 +219,7 @@ export async function searchProductCatalog(
                 scheme: alt.scheme,
                 composition: alt.composition,
                 category: alt.category,
+                imageUrl: alt.imageUrl,
                 stock: alt.stock,
                 expiryDate: alt.expiryDate,
               }),
@@ -235,6 +238,7 @@ export async function searchProductCatalog(
       scheme: p.scheme,
       composition: p.composition,
       category: p.category,
+      imageUrl: p.imageUrl,
       stock: p.stock,
       hot: p.hot,
       deal: dealByProductId.get(p.id) ?? null,

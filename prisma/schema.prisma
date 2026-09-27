@@ -692,6 +692,9 @@ model Product {
   // Product type from the billing software's Category column (e.g. "EYE DROPS",
   // "MEDICATED SOAP"). Only some items have one; shown on the shop's product cards.
   category      String?
+  // Pack photo shown on the shop's product cards: a site-relative path under
+  // /product-images/ or a full URL. Null means no photo yet.
+  imageUrl      String?
   // Admin-uploaded shelf quantity. Retailers see the exact number once it's
   // 3 or more; below that, the shop shows a plain "Low Stock" warning
   // instead of the number itself. Null means stock hasn't been set yet.

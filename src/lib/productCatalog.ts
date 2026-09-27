@@ -12,6 +12,7 @@ export interface CatalogProduct {
   scheme: string | null;
   composition: string | null;
   category: string | null;
+  imageUrl: string | null;
   stock: number | null;
   // Soonest expiry across this product's batches, from the last stock &
   // expiry upload — shown as a fallback whenever the item isn't one of the
@@ -44,6 +45,7 @@ const getCachedActiveCatalog = unstable_cache(
         scheme: true,
         composition: true,
         category: true,
+        imageUrl: true,
         stock: true,
         nearestExpiry: true,
       },
@@ -59,6 +61,7 @@ const getCachedActiveCatalog = unstable_cache(
       scheme: p.scheme,
       composition: p.composition,
       category: p.category,
+      imageUrl: p.imageUrl,
       nearestExpiry: p.nearestExpiry != null ? p.nearestExpiry.toISOString() : null,
       stock: p.stock,
     }));

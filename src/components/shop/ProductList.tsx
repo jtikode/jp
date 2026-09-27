@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Flame, Sparkles, ClipboardList, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Flame, Sparkles, ClipboardList, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { SearchableSelect } from "@/components/shop/SearchableSelect";
 import { useCart } from "@/components/shop/CartProvider";
@@ -18,6 +19,69 @@ import { LOW_STOCK_THRESHOLD, isNearExpiry } from "@/lib/stockRank";
 export type ProductListItem = SearchProductItem;
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+/** Pack photo thumbnail; tapping it opens a large view (tap anywhere, press Esc, or use the close button to dismiss). */
+function ProductThumb({ src, alt, size }: { src: string; alt: string; size: number }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`View photo of ${alt}`}
+        className="shrink-0 cursor-zoom-in rounded-lg"
+      >
+        <Image
+          src={src}
+          alt={alt}
+          width={size}
+          height={size}
+          unoptimized
+          loading="lazy"
+          className="rounded-lg border border-slate-100 bg-white object-contain"
+          style={{ width: size, height: size }}
+        />
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={alt}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-black/80 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close"
+            className="absolute top-3 right-3 rounded-full bg-white/90 p-2 text-slate-900"
+          >
+            <X size={20} strokeWidth={2} />
+          </button>
+          <Image
+            src={src}
+            alt={alt}
+            width={900}
+            height={900}
+            unoptimized
+            className="max-h-[80dvh] w-auto max-w-full rounded-xl bg-white object-contain"
+          />
+          <p className="max-w-full text-center text-sm font-semibold text-white">{alt}</p>
+        </div>
+      )}
+    </>
+  );
+}
 
 export function ProductList({
   initialProducts,
@@ -204,6 +268,7 @@ export function ProductList({
           return (
             <div key={p.id} className="rounded-xl border-2 border-slate-200 bg-white p-3">
               <div className="flex items-center justify-between gap-3">
+              {p.imageUrl && <ProductThumb src={p.imageUrl} alt={p.name} size={72} />}
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900">
                   <span>{p.name}</span>
@@ -220,9 +285,15 @@ export function ProductList({
                 </p>
                 <p className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-bold text-blue-700">
-                    ₹{(p.deal ? p.deal.price : p.price).toLocaleString("en-IN")}
+                    {p.price > 0 || p.deal ? `₹${(p.deal ? p.deal.price : p.price).toLocaleString("en-IN")}` : "—"}
                   </span>
-                  {p.deal ? (
+                  {p.price <= 0 && !p.deal ? (
+                    p.mrp != null && (
+                      <span className="text-xs font-medium text-slate-500">
+                        MRP ₹{p.mrp.toLocaleString("en-IN")}
+                      </span>
+                    )
+                  ) : p.deal ? (
                     <span className="text-xs text-slate-400 line-through">
                       ₹{p.price.toLocaleString("en-IN")}
                     </span>
@@ -319,6 +390,7 @@ export function ProductList({
                         key={alt.id}
                         className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-2"
                       >
+                        {alt.imageUrl && <ProductThumb src={alt.imageUrl} alt={alt.name} size={56} />}
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-slate-900">{alt.name}</p>
                           {alt.composition && <p className="break-words text-xs text-slate-400">{alt.composition}</p>}
@@ -327,13 +399,20 @@ export function ProductList({
                           </p>
                           <p className="flex flex-wrap items-baseline gap-2">
                             <span className="text-xs font-bold text-blue-700">
-                              ₹{alt.price.toLocaleString("en-IN")}
+                              {alt.price > 0 ? `₹${alt.price.toLocaleString("en-IN")}` : "—"}
                             </span>
-                            {alt.mrp != null && alt.mrp > alt.price && (
-                              <span className="text-xs text-slate-400 line-through">
-                                ₹{alt.mrp.toLocaleString("en-IN")}
-                              </span>
-                            )}
+                            {alt.price <= 0
+                              ? alt.mrp != null && (
+                                  <span className="text-xs font-medium text-slate-500">
+                                    MRP ₹{alt.mrp.toLocaleString("en-IN")}
+                                  </span>
+                                )
+                              : alt.mrp != null &&
+                                alt.mrp > alt.price && (
+                                  <span className="text-xs text-slate-400 line-through">
+                                    ₹{alt.mrp.toLocaleString("en-IN")}
+                                  </span>
+                                )}
                             {alt.taxPercent != null && (
                               <span className="text-xs text-slate-400">
                                 {t(lang, "shop_tax")} {alt.taxPercent}%
