@@ -149,6 +149,7 @@ export default async function ShopHomePage() {
         <div>
           <h2 className="mb-2 text-sm font-semibold text-slate-500">{t(lang, "shop_special_offers")}</h2>
           <BannerCarousel
+            fit="contain"
             banners={offerBanners.map((b) => ({
               id: b.id,
               imageUrl: b.imageUrl,

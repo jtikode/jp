@@ -1,18 +1,26 @@
-const CACHE_NAME = "jptraders-offline-v3";
+const CACHE_NAME = "jptraders-offline-v4";
 const OFFLINE_URL = "/offline.html";
 
 // Catalog/item-listing pages: what a retailer actually wants fast is the
 // product list, not the freshest-possible price. Serve the copy already on
 // the phone instantly, then refresh it in the background for next time
 // (stale-while-revalidate) instead of making them wait on the network first.
+//
+// /shop/home and /shop/offers are deliberately NOT in this list, even though
+// they used to be: their whole content is admin-pushed promotional banners
+// (Special Offers, scheme popups) meant to be seen as soon as they're live,
+// not served from whatever snapshot happened to be cached — and unlike a
+// price being a few minutes stale, a stale banner set can hide new offers
+// entirely (e.g. only the oldest of several ever showing) with no natural
+// expiry, since this cache is never invalidated by a data change, only by a
+// change to this file. They fall through to networkFirstThenCache below —
+// still offline-friendly, but online visits always get current banners.
 const CATALOG_PATHS = [
-  "/shop/home",
   "/shop/products",
   "/shop/fast-order",
   "/shop/quick-check",
   "/shop/lowest-rate",
   "/shop/clearance",
-  "/shop/offers",
 ];
 
 self.addEventListener("install", (event) => {

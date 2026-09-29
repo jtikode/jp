@@ -25,7 +25,18 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
-export function BannerCarousel({ banners }: { banners: BannerCarouselItem[] }) {
+export function BannerCarousel({
+  banners,
+  fit = "cover",
+}: {
+  banners: BannerCarouselItem[];
+  // "cover": fixed-height landscape crop — right for Hero banners, which are
+  // designed as a wide strip. "contain": scales to the image's own aspect
+  // ratio with no crop — right for Offer banners, which are usually a tall,
+  // full-page distributor flyer where cropping to a landscape box was
+  // cutting off most of the actual offer (same reasoning as the Offers page).
+  fit?: "cover" | "contain";
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -50,14 +61,27 @@ export function BannerCarousel({ banners }: { banners: BannerCarouselItem[] }) {
           const countdown = b.expiresAt ? formatCountdown(new Date(b.expiresAt)) : "";
           const img = (
             <div className="relative">
-              <Image
-                src={b.imageUrl}
-                alt={b.title ?? "Banner"}
-                width={640}
-                height={280}
-                className="h-40 w-full shrink-0 snap-center rounded-2xl object-cover sm:h-48"
-                unoptimized
-              />
+              {fit === "cover" ? (
+                <Image
+                  src={b.imageUrl}
+                  alt={b.title ?? "Banner"}
+                  width={640}
+                  height={280}
+                  className="h-40 w-full shrink-0 snap-center rounded-2xl object-cover sm:h-48"
+                  unoptimized
+                />
+              ) : (
+                <Image
+                  src={b.imageUrl}
+                  alt={b.title ?? "Banner"}
+                  width={0}
+                  height={0}
+                  sizes="85vw"
+                  style={{ width: "100%", height: "auto" }}
+                  className="shrink-0 snap-center rounded-2xl border border-slate-100 bg-white"
+                  unoptimized
+                />
+              )}
               {countdown && (
                 <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
                   <Clock size={12} strokeWidth={2} />
