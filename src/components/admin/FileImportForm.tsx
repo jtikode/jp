@@ -4,11 +4,11 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 
 type ImportAction = (
-  prevState: { ok: boolean; error?: string; rowCount?: number } | null,
+  prevState: { ok: boolean; error?: string; rowCount?: number; note?: string } | null,
   formData: FormData,
-) => Promise<{ ok: boolean; error?: string; rowCount?: number }>;
+) => Promise<{ ok: boolean; error?: string; rowCount?: number; note?: string }>;
 
-const initialState = { ok: false, error: undefined, rowCount: undefined };
+const initialState = { ok: false, error: undefined, rowCount: undefined, note: undefined };
 
 interface FileImportFormProps {
   action: ImportAction;
@@ -40,9 +40,12 @@ export function FileImportForm({
 
       {state.error && <p className="text-sm font-medium text-red-600">{state.error}</p>}
       {state.ok && (
-        <p className="text-sm font-medium text-green-700">
-          Imported {state.rowCount} {itemLabel}.
-        </p>
+        <div>
+          <p className="text-sm font-medium text-green-700">
+            Imported {state.rowCount} {itemLabel}.
+          </p>
+          {state.note && <p className="text-sm text-slate-500">{state.note}</p>}
+        </div>
       )}
     </form>
   );

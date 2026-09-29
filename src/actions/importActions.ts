@@ -149,9 +149,9 @@ const OUTSTANDING_ALIASES = {
 };
 
 export async function importOutstanding(
-  _prevState: (ActionResult & { rowCount?: number }) | null,
+  _prevState: (ActionResult & { rowCount?: number; note?: string }) | null,
   formData: FormData,
-): Promise<ActionResult & { rowCount?: number }> {
+): Promise<ActionResult & { rowCount?: number; note?: string }> {
   const session = await assertRole(["ADMIN"]);
   const db = getOrgScopedDb(session.orgId);
 
@@ -175,7 +175,20 @@ export async function importOutstanding(
       if (!result.ok) return { ok: false, error: result.error ?? "Import failed." };
       revalidatePath("/team/admin/imports");
       revalidatePath("/team/admin/outstanding");
-      return { ok: true, rowCount: result.imported };
+      revalidatePath("/team/admin/stores");
+      const notes: string[] = [];
+      if (result.createdStores.length > 0) {
+        notes.push(
+          `Added ${result.createdStores.length} new store${result.createdStores.length === 1 ? "" : "s"} not seen before: ` +
+            result.createdStores.slice(0, 8).map((s) => s.name).join(", ") +
+            (result.createdStores.length > 8 ? `, +${result.createdStores.length - 8} more` : "") +
+            ". Check their address/route on the Stores page.",
+        );
+      }
+      if (result.skippedUnknownCodes.length > 0) {
+        notes.push(`${result.skippedUnknownCodes.length} code(s) couldn't be read well enough to add: ${result.skippedUnknownCodes.join(", ")}.`);
+      }
+      return { ok: true, rowCount: result.imported, note: notes.join(" ") || undefined };
     }
   }
 
