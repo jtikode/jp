@@ -186,16 +186,10 @@ export async function searchProductCatalog(
   if (params.salt) scoped = scoped.filter((p) => p.composition === params.salt);
   if (params.hotOnly) scoped = scoped.filter((p) => p.hot);
 
-  // Out-of-stock products are hidden from ordinary browsing/search — they
-  // only reappear when the retailer types the exact product name, so an
-  // exact lookup still confirms the item exists (as "Low Stock") without
-  // cluttering everyday browsing with things that can't be fulfilled.
-  const exactQuery = (params.query ?? "").trim().toLowerCase();
-  const stockVisible = scoped.filter(
-    (p) => p.stock == null || p.stock > 0 || (exactQuery.length > 0 && p.name.trim().toLowerCase() === exactQuery),
-  );
-
-  const filtered = cascadingProductSearch(stockVisible, params.query ?? "", (p) => p.name, (p) => p.composition);
+  // Out-of-stock products stay visible in browsing/search — they show a
+  // "Low Stock" badge (see ProductList) instead of being hidden, so a
+  // retailer can still see and order something that's momentarily at 0.
+  const filtered = cascadingProductSearch(scoped, params.query ?? "", (p) => p.name, (p) => p.composition);
 
   const pageItems = filtered.slice(params.offset, params.offset + params.limit);
   const hasMore = filtered.length > params.offset + params.limit;

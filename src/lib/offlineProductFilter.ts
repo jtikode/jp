@@ -55,12 +55,7 @@ export function filterOfflineCatalog(
   if (params.company) scoped = scoped.filter((p) => p.company === params.company);
   if (params.salt) scoped = scoped.filter((p) => p.composition === params.salt);
 
-  const exactQuery = (params.query ?? "").trim().toLowerCase();
-  const stockVisible = scoped.filter(
-    (p) => p.stock == null || p.stock > 0 || (exactQuery.length > 0 && p.name.trim().toLowerCase() === exactQuery),
-  );
-
-  const filtered = cascadingProductSearch(stockVisible, params.query ?? "", (p) => p.name, (p) => p.composition);
+  const filtered = cascadingProductSearch(scoped, params.query ?? "", (p) => p.name, (p) => p.composition);
 
   const pageItems = filtered.slice(params.offset, params.offset + params.limit);
   const hasMore = filtered.length > params.offset + params.limit;
