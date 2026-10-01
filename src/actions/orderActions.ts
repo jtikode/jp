@@ -166,7 +166,7 @@ export async function placeOrder(
   const [orderingStore, ordersTodayCount] = await Promise.all([
     db.store.findUnique({
       where: { id: session.storeId },
-      select: { orderGiverWhatsapp: true },
+      select: { orderGiverWhatsapp: true, externalCode: true, address: true },
     }),
     // Counts this order too (already committed above) — so billing sees "2nd
     // order today" rather than having to infer it from a count that excludes
@@ -178,6 +178,8 @@ export async function placeOrder(
   sendOrderNotificationEmail({
     orderNumber: order.orderNumber,
     storeName: session.storeName ?? "Retailer",
+    storeCode: orderingStore?.externalCode,
+    storeAddress: orderingStore?.address,
     orderGiverWhatsapp: orderingStore?.orderGiverWhatsapp,
     ordersTodayCount,
     totalAmount,

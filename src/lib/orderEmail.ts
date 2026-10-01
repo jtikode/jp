@@ -20,6 +20,11 @@ export interface OrderEmailLine {
 export async function sendOrderNotificationEmail(params: {
   orderNumber: number;
   storeName: string;
+  // MARG party code and store address — several retailers can share a very
+  // similar name, so billing needs these to tell them apart at a glance
+  // instead of opening the order to check.
+  storeCode?: string | null;
+  storeAddress?: string | null;
   orderGiverWhatsapp?: string | null;
   totalAmount: number;
   notes?: string;
@@ -45,6 +50,8 @@ export async function sendOrderNotificationEmail(params: {
 async function attemptSend(params: {
   orderNumber: number;
   storeName: string;
+  storeCode?: string | null;
+  storeAddress?: string | null;
   orderGiverWhatsapp?: string | null;
   totalAmount: number;
   notes?: string;
@@ -69,9 +76,10 @@ async function attemptSend(params: {
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:480px;">
-      <h2 style="margin-bottom:4px;">New order from ${params.storeName}</h2>
+      <h2 style="margin-bottom:4px;">New order from ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""}</h2>
       <p style="color:#64748b;margin-top:0;">Order #${params.orderNumber}</p>
       ${repeatBanner}
+      ${params.storeAddress ? `<p style="color:#475569;"><strong>Address:</strong> ${params.storeAddress}</p>` : ""}
       ${params.orderGiverWhatsapp ? `<p style="color:#475569;"><strong>Ordered by (WhatsApp):</strong> ${params.orderGiverWhatsapp}</p>` : ""}
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead>
@@ -94,7 +102,7 @@ async function attemptSend(params: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber} — ${params.storeName} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber} — ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a
