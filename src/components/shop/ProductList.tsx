@@ -372,7 +372,7 @@ export function ProductList({
               </div>
               <QuantityStepper
                 quantity={quantity}
-                onChange={(q) =>
+                onChange={(q) => {
                   setQuantity(
                     {
                       productId: p.id,
@@ -381,8 +381,12 @@ export function ProductList({
                       dealId: p.deal?.id,
                     },
                     q,
-                  )
-                }
+                  );
+                  // Freshly added (not just a +/- tweak to an existing line) —
+                  // clear the search so the field is ready for the next item
+                  // instead of the retailer having to erase it by hand.
+                  if (quantity === 0 && q > 0 && query) setQuery("");
+                }}
                 max={p.deal?.remainingQty}
                 accentClassName={p.deal ? "bg-purple-700 hover:bg-purple-800" : undefined}
               />
