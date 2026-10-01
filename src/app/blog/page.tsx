@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/Card";
 import { blogPosts } from "@/lib/blogPosts";
 
 export const metadata: Metadata = {
-  title: "Blog — J P Traders",
+  title: "Blog | J P Traders",
   description:
-    "Notes on generic medicine margins, branded generics, product range and running a better medical store — from J P Traders, generic medicine distributor.",
+    "Notes on generic medicine margins, branded generics, product range and running a better medical store, from J P Traders, generic medicine distributor.",
 };
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -22,7 +22,7 @@ export default function BlogIndexPage() {
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">J P Traders Blog</h1>
         <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 sm:text-base">
           Straight talk on margins, branded generics, product range and running a better medical
-          store — from your generic medicine distributor.
+          store, from your generic medicine distributor.
         </p>
       </div>
 

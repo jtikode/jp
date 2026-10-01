@@ -13,10 +13,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = getBlogPost(slug);
-  if (!post) return { title: "Post not found — J P Traders" };
+  if (!post) return { title: "Post not found | J P Traders" };
 
   return {
-    title: `${post.title} — J P Traders`,
+    title: `${post.title} | J P Traders`,
     description: post.description,
   };
 }

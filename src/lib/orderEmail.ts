@@ -63,7 +63,7 @@ async function attemptSend(params: {
   const isRepeatOrderToday = (params.ordersTodayCount ?? 1) > 1;
   const repeatBanner = isRepeatOrderToday
     ? `<p style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;font-weight:bold;margin:0 0 12px;">
-        ⚠️ This is order #${params.ordersTodayCount} from ${params.storeName} today — check with billing before invoicing separately.
+        ⚠️ This is order #${params.ordersTodayCount} from ${params.storeName} today. Check with billing before invoicing separately.
       </p>`
     : "";
 
@@ -102,7 +102,7 @@ async function attemptSend(params: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber} — ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber}: ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a
