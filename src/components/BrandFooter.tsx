@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function BrandFooter() {
   const year = new Date().getFullYear();
@@ -9,6 +10,10 @@ export function BrandFooter() {
       <span>© {year} J P Traders</span>
       <span className="text-slate-300">·</span>
       <span>Powered by AI</span>
+      <span className="text-slate-300">·</span>
+      <Link href="/blog" className="font-semibold text-blue-700 hover:underline">
+        Blog
+      </Link>
     </div>
   );
 }
