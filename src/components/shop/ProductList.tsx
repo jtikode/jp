@@ -188,9 +188,18 @@ export function ProductList({
   // debounced so typing doesn't fire a request per keystroke. Skips the very
   // first render since the server already fetched that exact page.
   const isFirstRun = useRef(true);
+  // Set right before clearing the box after an add (see QuantityStepper
+  // onChange below) — that clear is just to ready the field for the next
+  // search, not a real "show me everything" query, so it should leave the
+  // current results on screen instead of replacing them with a fresh fetch.
+  const skipNextSearchRef = useRef(false);
   useEffect(() => {
     if (isFirstRun.current) {
       isFirstRun.current = false;
+      return;
+    }
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
       return;
     }
     const handle = setTimeout(() => {
@@ -384,8 +393,12 @@ export function ProductList({
                   );
                   // Freshly added (not just a +/- tweak to an existing line) —
                   // clear the search so the field is ready for the next item
-                  // instead of the retailer having to erase it by hand.
-                  if (quantity === 0 && q > 0 && query) setQuery("");
+                  // instead of the retailer having to erase it by hand. The
+                  // results on screen stay put; only the typed text clears.
+                  if (quantity === 0 && q > 0 && query) {
+                    skipNextSearchRef.current = true;
+                    setQuery("");
+                  }
                 }}
                 max={p.deal?.remainingQty}
                 accentClassName={p.deal ? "bg-purple-700 hover:bg-purple-800" : undefined}
