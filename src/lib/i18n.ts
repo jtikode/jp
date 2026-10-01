@@ -208,6 +208,14 @@ export const translations = {
   },
   shop_place_order: { en: "Place Order", mr: "ऑर्डर द्या" },
   shop_placing_order: { en: "Placing order...", mr: "ऑर्डर देत आहे..." },
+  shop_out_of_stock_confirm_prefix: {
+    en: "These items are currently out of stock:",
+    mr: "या वस्तू सध्या साठ्यात नाहीत:",
+  },
+  shop_out_of_stock_confirm_suffix: {
+    en: "They'll still be ordered in for you. Place the order anyway?",
+    mr: "तरीही त्या तुमच्यासाठी मागवल्या जातील. तरीही ऑर्डर द्यायची आहे का?",
+  },
   shop_my_orders_heading: { en: "My Orders", mr: "माझ्या ऑर्डर्स" },
   shop_no_orders_yet: { en: "No orders placed yet.", mr: "अजून कोणतीही ऑर्डर दिली नाही." },
   shop_order_status_pending: { en: "PENDING", mr: "प्रलंबित" },

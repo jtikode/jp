@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCart } from "@/components/shop/CartProvider";
-import { placeOrder } from "@/actions/orderActions";
+import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
 
@@ -20,6 +20,22 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
 
   async function handlePlaceOrder() {
     setError(null);
+
+    // A heads-up, not a block — placeOrder still accepts these lines (the
+    // distributor can source on-demand), but a retailer tapping through
+    // several zero-stock items without noticing was turning into orders
+    // nobody could actually fulfill on time.
+    try {
+      const outOfStockNames = await getOutOfStockNames(items.map((i) => i.productId));
+      if (outOfStockNames.length > 0) {
+        const message = `${t(lang, "shop_out_of_stock_confirm_prefix")}\n\n${outOfStockNames.join("\n")}\n\n${t(lang, "shop_out_of_stock_confirm_suffix")}`;
+        if (!window.confirm(message)) return;
+      }
+    } catch {
+      // Best-effort check — if it fails (offline, etc.) just proceed to the
+      // normal placeOrder flow rather than blocking the order on this.
+    }
+
     setPlacing(true);
     const lines = items.map((i) => ({
       productId: i.productId,

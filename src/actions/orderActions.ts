@@ -26,6 +26,20 @@ export interface CartLine {
   dealId?: string;
 }
 
+// Checked right before submit so the retailer gets a last-chance warning for
+// anything that's actually at 0 — placeOrder itself still allows these lines
+// through (the distributor can source on-demand), this is purely a heads-up.
+export async function getOutOfStockNames(productIds: string[]): Promise<string[]> {
+  if (productIds.length === 0) return [];
+  const session = await assertStoreSession();
+  const db = getOrgScopedDb(session.orgId);
+  const products = await db.product.findMany({
+    where: { id: { in: productIds }, stock: 0 },
+    select: { name: true },
+  });
+  return products.map((p) => p.name);
+}
+
 export async function placeOrder(
   lines: CartLine[],
   notes?: string,
