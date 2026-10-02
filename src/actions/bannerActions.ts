@@ -78,19 +78,35 @@ export async function searchBannerProducts(query: string): Promise<BannerProduct
   return products.map((p) => ({ ...p, price: Number(p.price) }));
 }
 
+const MAX_REMARK_LENGTH = 200;
+
+function cleanRemark(raw: string | null | undefined): { ok: true; remark: string | null } | { ok: false; error: string } {
+  const remark = raw?.trim().replace(/\s+/g, " ") ?? "";
+  if (remark.length > MAX_REMARK_LENGTH) {
+    return { ok: false, error: `The remark can be at most ${MAX_REMARK_LENGTH} characters.` };
+  }
+  return { ok: true, remark: remark || null };
+}
+
 export async function updateBannerCartItems(
   bannerId: string,
   cartItemsJson: string,
+  cartRemark: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await assertRole(["ADMIN"]);
   const db = getOrgScopedDb(session.orgId);
 
   const bundle = await validateBundleInput(db, cartItemsJson);
   if (!bundle.ok) return { ok: false, error: bundle.error };
+  const remark = cleanRemark(cartRemark);
+  if (!remark.ok) return { ok: false, error: remark.error };
 
   await db.shopBanner.update({
     where: { id: bannerId },
-    data: { cartItems: bundle.items ? toJson(bundle.items) : Prisma.DbNull },
+    data: {
+      cartItems: bundle.items ? toJson(bundle.items) : Prisma.DbNull,
+      cartRemark: bundle.items ? remark.remark : null,
+    },
   });
 
   revalidatePath("/team/admin/banners");
@@ -128,6 +144,8 @@ export async function createBanner(
 
   const bundle = await validateBundleInput(db, formData.get("cartItems") as string | null);
   if (!bundle.ok) return { ok: false, error: bundle.error };
+  const remark = cleanRemark(formData.get("cartRemark") as string | null);
+  if (!remark.ok) return { ok: false, error: remark.error };
 
   const buffer = Buffer.from(await image.arrayBuffer());
   const imageUrl = await uploadPhoto(`banner-${Date.now()}-${image.name}`, buffer, image.type);
@@ -142,6 +160,7 @@ export async function createBanner(
       sortOrder,
       expiresAt,
       cartItems: bundle.items ? toJson(bundle.items) : undefined,
+      cartRemark: bundle.items ? remark.remark : null,
     },
   });
 

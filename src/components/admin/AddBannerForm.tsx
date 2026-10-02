@@ -5,13 +5,19 @@ import { createBanner } from "@/actions/bannerActions";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { BannerBundleEditor, serializeBundle, type EditorBundleItem } from "@/components/admin/BannerBundleEditor";
+import {
+  BannerBundleEditor,
+  BannerRemarkField,
+  serializeBundle,
+  type EditorBundleItem,
+} from "@/components/admin/BannerBundleEditor";
 
 const initialState = { ok: false, error: undefined };
 
 export function AddBannerForm() {
   const [state, formAction, pending] = useActionState(createBanner, initialState);
   const [bundle, setBundle] = useState<EditorBundleItem[]>([]);
+  const [remark, setRemark] = useState("");
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -54,6 +60,9 @@ export function AddBannerForm() {
         </p>
         <BannerBundleEditor items={bundle} onChange={setBundle} />
         <input type="hidden" name="cartItems" value={bundle.length > 0 ? serializeBundle(bundle) : ""} />
+        <div className="mt-3">
+          <BannerRemarkField name="cartRemark" value={remark} onChange={setRemark} />
+        </div>
       </div>
 
       <div>

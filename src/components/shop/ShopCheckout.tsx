@@ -17,6 +17,9 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  // Shown for information only: the server adds each live offer's remark to
+  // the order's notes itself, so nothing here needs to be sent.
+  const offerRemarks = [...new Set(items.map((i) => i.bannerRemark).filter((r): r is string => !!r))];
 
   async function handlePlaceOrder() {
     setError(null);
@@ -185,6 +188,11 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
             ))}
           </tbody>
         </table>
+        {offerRemarks.map((r) => (
+          <p key={r} className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800">
+            {t(lang, "shop_offer_label")}: {r}
+          </p>
+        ))}
         <div className="mt-4 flex justify-end">
           <p className="text-lg font-bold text-slate-900">
             {t(lang, "shop_total")}: ₹{total.toLocaleString("en-IN")}

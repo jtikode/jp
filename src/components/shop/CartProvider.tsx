@@ -19,6 +19,7 @@ export interface CartItem {
   // is the only place a free unit is actually honoured.
   bannerId?: string;
   bannerTitle?: string;
+  bannerRemark?: string;
   freeQty?: number;
 }
 
@@ -36,7 +37,7 @@ interface CartContextValue {
   items: CartItem[];
   setQuantity: (product: Omit<CartItem, "quantity">, quantity: number) => void;
   removeItem: (productId: string) => void;
-  addBundle: (bannerId: string, title: string | null, lines: BundleLine[]) => AddBundleResult;
+  addBundle: (bannerId: string, title: string | null, lines: BundleLine[], remark: string | null) => AddBundleResult;
   removeBundle: (bannerId: string) => void;
   clear: () => void;
   total: number;
@@ -52,7 +53,9 @@ export function paidQuantity(item: CartItem): number {
 // remaining lines stay as ordinary, fully paid items.
 function detachBanner(list: CartItem[], bannerId: string): CartItem[] {
   return list.map((i) =>
-    i.bannerId === bannerId ? { ...i, bannerId: undefined, bannerTitle: undefined, freeQty: undefined } : i,
+    i.bannerId === bannerId
+      ? { ...i, bannerId: undefined, bannerTitle: undefined, bannerRemark: undefined, freeQty: undefined }
+      : i,
   );
 }
 
@@ -113,7 +116,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Tapping the same offer again adds another full set (quantities and free
   // units both grow by one set), which is what a retailer wanting 100 strips
   // instead of 50 expects.
-  function addBundle(bannerId: string, title: string | null, lines: BundleLine[]): AddBundleResult {
+  function addBundle(
+    bannerId: string,
+    title: string | null,
+    lines: BundleLine[],
+    remark: string | null,
+  ): AddBundleResult {
     const blocked = lines.some((l) => {
       const existing = items.find((i) => i.productId === l.productId);
       return (
@@ -135,6 +143,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 quantity: i.quantity + l.quantity,
                 bannerId,
                 bannerTitle: title ?? undefined,
+                bannerRemark: remark ?? undefined,
                 freeQty: (i.bannerId === bannerId ? (i.freeQty ?? 0) : 0) + l.freeQty,
               }
             : i,
@@ -149,6 +158,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             quantity: l.quantity,
             bannerId,
             bannerTitle: title ?? undefined,
+            bannerRemark: remark ?? undefined,
             freeQty: l.freeQty,
           },
         ];

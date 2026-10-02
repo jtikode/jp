@@ -122,10 +122,12 @@ export async function placeOrder(
   const bannerRows = bannerIds.length
     ? await db.shopBanner.findMany({
         where: { id: { in: bannerIds }, active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
-        select: { id: true, title: true, cartItems: true },
+        select: { id: true, title: true, cartItems: true, cartRemark: true },
       })
     : [];
-  const bannerMap = new Map(bannerRows.map((b) => [b.id, { title: b.title, items: parseBundleItems(b.cartItems) }]));
+  const bannerMap = new Map(
+    bannerRows.map((b) => [b.id, { title: b.title, remark: b.cartRemark, items: parseBundleItems(b.cartItems) }]),
+  );
   if (bannerMap.size !== bannerIds.length) {
     return {
       ok: false,
@@ -191,6 +193,13 @@ export async function placeOrder(
   });
   const totalAmount = orderLines.reduce((sum, l) => sum + l.lineTotal, 0);
 
+  // Each live offer in the order stamps its remark (e.g. "Free lunch box")
+  // into the notes, so billing sees it on the order and in the email.
+  const offerRemarks = [...bannerMap.values()]
+    .filter((b) => b.remark)
+    .map((b) => `${b.title ?? "Offer"}: ${b.remark}`);
+  const finalNotes = [notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
+
   let order;
   try {
     order = await db.$transaction(async (tx) => {
@@ -199,7 +208,7 @@ export async function placeOrder(
           orgId: session.orgId,
           storeId: session.storeId,
           totalAmount,
-          notes: notes?.trim() || undefined,
+          notes: finalNotes,
           clientRequestId,
         },
       });
@@ -247,7 +256,7 @@ export async function placeOrder(
     orderGiverWhatsapp: orderingStore?.orderGiverWhatsapp,
     ordersTodayCount,
     totalAmount,
-    notes: notes?.trim() || undefined,
+    notes: finalNotes,
     lines: orderLines.map((l) => ({
       productName: l.productName,
       quantity: l.quantity,

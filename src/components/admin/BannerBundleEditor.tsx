@@ -164,15 +164,47 @@ export function BannerBundleEditor({
   );
 }
 
+// Free-text note that goes into the order's remarks whenever this offer is in
+// the order, for gifts that aren't a catalogue product (e.g. a free lunch box).
+export function BannerRemarkField({
+  value,
+  onChange,
+  name,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  name?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-slate-700">Order remark (optional)</label>
+      <Input
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={200}
+        placeholder="e.g. Free Lunch Box with 50 strips"
+        className="min-h-12 text-base"
+      />
+      <p className="mt-1 text-xs text-slate-500">
+        Added to the order&apos;s remarks (and the order email) whenever this offer is in the order.
+      </p>
+    </div>
+  );
+}
+
 // Edit panel for an existing banner: same editor plus a Save button.
 export function EditBannerCartItems({
   bannerId,
   initialItems,
+  initialRemark,
 }: {
   bannerId: string;
   initialItems: EditorBundleItem[];
+  initialRemark: string;
 }) {
   const [items, setItems] = useState(initialItems);
+  const [remark, setRemark] = useState(initialRemark);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -180,7 +212,7 @@ export function EditBannerCartItems({
     setSaving(true);
     setMessage(null);
     try {
-      const result = await updateBannerCartItems(bannerId, serializeBundle(items));
+      const result = await updateBannerCartItems(bannerId, serializeBundle(items), remark);
       setMessage(result.ok ? { ok: true, text: "Saved." } : { ok: false, text: result.error ?? "Could not save." });
     } catch {
       setMessage({ ok: false, text: "Could not save. Please try again." });
@@ -192,6 +224,7 @@ export function EditBannerCartItems({
   return (
     <div className="flex flex-col gap-3">
       <BannerBundleEditor items={items} onChange={setItems} />
+      <BannerRemarkField value={remark} onChange={setRemark} />
       <div className="flex items-center gap-3">
         <button
           type="button"

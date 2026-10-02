@@ -42,10 +42,12 @@ export function parseBundleItems(raw: unknown): BundleItem[] {
 // Shape handed to the shop's tap-to-add component for one banner.
 export async function getOfferBundle(
   orgId: string,
-  banner: { id: string; title: string | null; cartItems: unknown },
-): Promise<{ bannerId: string; title: string | null; lines: ResolvedBundleItem[] } | null> {
+  banner: { id: string; title: string | null; cartItems: unknown; cartRemark: string | null },
+): Promise<{ bannerId: string; title: string | null; remark: string | null; lines: ResolvedBundleItem[] } | null> {
   const lines = await resolveBundle(orgId, banner.cartItems);
-  return lines.length > 0 ? { bannerId: banner.id, title: banner.title, lines } : null;
+  return lines.length > 0
+    ? { bannerId: banner.id, title: banner.title, remark: banner.cartRemark, lines }
+    : null;
 }
 
 // Joins the stored bundle with the live catalog (name, current rate, stock).

@@ -9,6 +9,7 @@ import { t, type Lang } from "@/lib/i18n";
 export interface OfferBundle {
   bannerId: string;
   title: string | null;
+  remark: string | null;
   lines: BundleLine[];
 }
 
@@ -30,7 +31,7 @@ export function OfferBundleTap({
   const [status, setStatus] = useState<Status>(null);
 
   function add() {
-    const result = addBundle(bundle.bannerId, bundle.title, bundle.lines);
+    const result = addBundle(bundle.bannerId, bundle.title, bundle.lines, bundle.remark);
     setStatus(result.ok ? { kind: "added", sets: result.sets } : { kind: "conflict" });
   }
 
@@ -61,6 +62,7 @@ export function OfferBundleTap({
                 `${l.name.replace(/\s+/g, " ")} × ${l.quantity}${l.freeQty > 0 ? ` (${l.freeQty} ${t(lang, "shop_free")})` : ""}`,
             )
             .join(" · ")}
+          {bundle.remark ? ` · ${bundle.remark}` : ""}
         </p>
         <button
           type="button"

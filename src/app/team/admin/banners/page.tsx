@@ -95,6 +95,7 @@ export default async function AdminBannersPage() {
                         {editorItems
                           .map((i) => `${i.name} × ${i.quantity}${i.freeQty > 0 ? ` (${i.freeQty} free)` : ""}`)
                           .join(", ")}
+                        {b.cartRemark ? `. Remark: ${b.cartRemark}` : ""}
                       </p>
                     )}
                   </div>
@@ -118,7 +119,7 @@ export default async function AdminBannersPage() {
                     {editorItems.length > 0 ? "Edit cart items" : "Set cart items (tap to add to cart)"}
                   </summary>
                   <div className="mt-3">
-                    <EditBannerCartItems bannerId={b.id} initialItems={editorItems} />
+                    <EditBannerCartItems bannerId={b.id} initialItems={editorItems} initialRemark={b.cartRemark ?? ""} />
                   </div>
                 </details>
               </div>

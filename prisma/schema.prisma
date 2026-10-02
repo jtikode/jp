@@ -839,6 +839,9 @@ model ShopBanner {
   // `quantity` is the total units added to the cart, `freeQty` how many of
   // those are free (billed at 0). Null/empty means a plain image banner.
   cartItems Json?
+  // Text added to the order's remarks whenever this offer is in the order,
+  // for things that aren't a catalogue product (e.g. "Free lunch box").
+  cartRemark String?
 
   org Organization @relation(fields: [orgId], references: [id])
 
