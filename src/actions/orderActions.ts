@@ -9,6 +9,7 @@ import { sendOrderNotificationEmail } from "@/lib/orderEmail";
 import { orderStatusLabel } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
+import { parseBundleItems } from "@/lib/bannerBundle";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Prisma, type OrderStatus } from "@/generated/prisma/client";
@@ -24,6 +25,12 @@ export interface CartLine {
   // never-trust-the-client rule: re-verified against the live deal record,
   // today's day-of-week, and the store's remaining quota for it.
   dealId?: string;
+  // Present when this line came from an Offer banner's "add to cart". The
+  // server re-verifies the offer is still live and works out for itself how
+  // many units are genuinely free; `freeQty` is only the client's claim and
+  // can lower, never raise, what the server grants.
+  bannerId?: string;
+  freeQty?: number;
 }
 
 // Checked right before submit so the retailer gets a last-chance warning for
@@ -107,6 +114,45 @@ export async function placeOrder(
     }
   }
 
+  // Offer banners: each line tagged with a bannerId must point at an offer
+  // that is still live. An offer that ended while the item sat in the cart is
+  // rejected outright rather than silently billed at full price, same
+  // reasoning as the Wednesday Deal cap above.
+  const bannerIds = [...new Set(cleanLines.map((l) => l.bannerId).filter((id): id is string => !!id))];
+  const bannerRows = bannerIds.length
+    ? await db.shopBanner.findMany({
+        where: { id: { in: bannerIds }, active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+        select: { id: true, title: true, cartItems: true },
+      })
+    : [];
+  const bannerMap = new Map(bannerRows.map((b) => [b.id, { title: b.title, items: parseBundleItems(b.cartItems) }]));
+  if (bannerMap.size !== bannerIds.length) {
+    return {
+      ok: false,
+      error: "An offer in your cart is no longer available. Please remove it from your cart and try again.",
+    };
+  }
+
+  // How many free units a banner line really earns: the offer's free units
+  // per set, times the number of complete sets in this order, never more than
+  // the client claimed or the line holds.
+  function freeUnitsFor(line: CartLine): { free: number; label?: string } {
+    const banner = line.bannerId ? bannerMap.get(line.bannerId) : undefined;
+    if (!banner) return { free: 0 };
+    const item = banner.items.find((i) => i.productId === line.productId);
+    if (!item || item.freeQty <= 0) return { free: 0 };
+    let sets = Infinity;
+    for (const bundleItem of banner.items) {
+      const ordered = cleanLines
+        .filter((l) => l.bannerId === line.bannerId && l.productId === bundleItem.productId)
+        .reduce((sum, l) => sum + l.quantity, 0);
+      sets = Math.min(sets, Math.floor(ordered / bundleItem.quantity));
+    }
+    const claimed = Math.max(0, Math.floor(Number(line.freeQty) || 0));
+    const free = Math.min(line.quantity, item.freeQty * (Number.isFinite(sets) ? sets : 0), claimed);
+    return { free, label: banner.title ?? "Offer" };
+  }
+
   // Prices are always taken from the current catalog on the server — never
   // trust a client-submitted price. A clearance/deal line only gets the
   // special rate if the deal it points at is still live AND actually names
@@ -129,14 +175,18 @@ export async function placeOrder(
         ? Number(dealMap.get(l.dealId!)!.dealPrice)
         : Number(product.price);
 
+    // A free offer unit never stacks with a clearance/deal rate on the same line.
+    const offer = expiryDealIsValid || weeklyDealIsValid ? { free: 0 } : freeUnitsFor(l);
+    const scheme = offer.free > 0 ? `${offer.label}: ${offer.free} free` : (product.scheme ?? undefined);
+
     return {
       productId: product.id,
       productName: product.name,
       unitPrice,
       quantity: l.quantity,
-      lineTotal: unitPrice * l.quantity,
+      lineTotal: unitPrice * (l.quantity - offer.free),
       dealId: weeklyDealIsValid ? l.dealId : undefined,
-      scheme: product.scheme ?? undefined,
+      scheme,
     };
   });
   const totalAmount = orderLines.reduce((sum, l) => sum + l.lineTotal, 0);

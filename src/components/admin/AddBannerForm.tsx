@@ -1,15 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createBanner } from "@/actions/bannerActions";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { BannerBundleEditor, serializeBundle, type EditorBundleItem } from "@/components/admin/BannerBundleEditor";
 
 const initialState = { ok: false, error: undefined };
 
 export function AddBannerForm() {
   const [state, formAction, pending] = useActionState(createBanner, initialState);
+  const [bundle, setBundle] = useState<EditorBundleItem[]>([]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -40,6 +42,18 @@ export function AddBannerForm() {
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">Link (optional)</label>
         <Input name="linkUrl" placeholder="https://..." />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          Add to cart when tapped (optional)
+        </label>
+        <p className="mb-2 text-xs text-slate-500">
+          Pick the products this offer puts in the retailer&apos;s cart when they tap it, with the total
+          quantity of each and how many of those are free. Leave empty for a plain banner.
+        </p>
+        <BannerBundleEditor items={bundle} onChange={setBundle} />
+        <input type="hidden" name="cartItems" value={bundle.length > 0 ? serializeBundle(bundle) : ""} />
       </div>
 
       <div>

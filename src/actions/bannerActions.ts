@@ -5,7 +5,99 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { uploadPhoto } from "@/lib/blob";
 import { sendPushToOrg, isWebPushConfigured } from "@/lib/webPush";
-import type { BannerPlacement } from "@/generated/prisma/client";
+import { Prisma, type BannerPlacement } from "@/generated/prisma/client";
+import { parseBundleItems, MAX_BUNDLE_ITEMS, type BundleItem } from "@/lib/bannerBundle";
+
+type OrgDb = ReturnType<typeof getOrgScopedDb>;
+
+function toJson(items: BundleItem[]): Prisma.InputJsonArray {
+  return items.map(({ productId, quantity, freeQty }) => ({ productId, quantity, freeQty }));
+}
+
+// Strict check of the admin's cart-items JSON: every entry must be well formed
+// and point at a real, active product. Empty input means "no bundle".
+async function validateBundleInput(
+  db: OrgDb,
+  raw: string | null | undefined,
+): Promise<{ ok: true; items: BundleItem[] | null } | { ok: false; error: string }> {
+  const text = raw?.trim();
+  if (!text) return { ok: true, items: null };
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "The cart items could not be read. Please re-add them." };
+  }
+  if (!Array.isArray(parsedJson)) return { ok: false, error: "The cart items could not be read." };
+  if (parsedJson.length === 0) return { ok: true, items: null };
+  if (parsedJson.length > MAX_BUNDLE_ITEMS) {
+    return { ok: false, error: `An offer can add at most ${MAX_BUNDLE_ITEMS} different products.` };
+  }
+
+  const items = parseBundleItems(parsedJson);
+  if (items.length !== parsedJson.length) {
+    return {
+      ok: false,
+      error: "Each cart item needs a unique product, a whole quantity of at least 1, and free units no higher than the quantity.",
+    };
+  }
+
+  const found = await db.product.findMany({
+    where: { id: { in: items.map((i) => i.productId) }, active: true },
+    select: { id: true },
+  });
+  if (found.length !== items.length) {
+    return { ok: false, error: "One of the selected products is no longer available. Please re-add it." };
+  }
+  return { ok: true, items };
+}
+
+export interface BannerProductHit {
+  id: string;
+  name: string;
+  company: string | null;
+  price: number;
+  stock: number | null;
+}
+
+// Product picker for the admin's offer editor.
+export async function searchBannerProducts(query: string): Promise<BannerProductHit[]> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const products = await db.product.findMany({
+    where: { active: true, name: { contains: q, mode: "insensitive" } },
+    select: { id: true, name: true, company: true, price: true, stock: true },
+    orderBy: { name: "asc" },
+    take: 15,
+  });
+  return products.map((p) => ({ ...p, price: Number(p.price) }));
+}
+
+export async function updateBannerCartItems(
+  bannerId: string,
+  cartItemsJson: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const bundle = await validateBundleInput(db, cartItemsJson);
+  if (!bundle.ok) return { ok: false, error: bundle.error };
+
+  await db.shopBanner.update({
+    where: { id: bannerId },
+    data: { cartItems: bundle.items ? toJson(bundle.items) : Prisma.DbNull },
+  });
+
+  revalidatePath("/team/admin/banners");
+  revalidatePath("/shop/home");
+  revalidatePath("/shop/offers");
+  return { ok: true };
+}
 
 export async function createBanner(
   _prevState: { ok: boolean; error?: string } | null,
@@ -34,11 +126,23 @@ export async function createBanner(
     return { ok: false, error: "The flash deal's end time must be in the future." };
   }
 
+  const bundle = await validateBundleInput(db, formData.get("cartItems") as string | null);
+  if (!bundle.ok) return { ok: false, error: bundle.error };
+
   const buffer = Buffer.from(await image.arrayBuffer());
   const imageUrl = await uploadPhoto(`banner-${Date.now()}-${image.name}`, buffer, image.type);
 
   await db.shopBanner.create({
-    data: { orgId: session.orgId, placement, imageUrl, title, linkUrl, sortOrder, expiresAt },
+    data: {
+      orgId: session.orgId,
+      placement,
+      imageUrl,
+      title,
+      linkUrl,
+      sortOrder,
+      expiresAt,
+      cartItems: bundle.items ? toJson(bundle.items) : undefined,
+    },
   });
 
   revalidatePath("/team/admin/banners");

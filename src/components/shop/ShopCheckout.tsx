@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
-import { useCart } from "@/components/shop/CartProvider";
+import { useCart, paidQuantity } from "@/components/shop/CartProvider";
 import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
 
 export function ShopCheckout({ lang }: { lang: Lang }) {
   const router = useRouter();
-  const { items, setQuantity, removeItem, clear, total } = useCart();
+  const { items, setQuantity, removeItem, removeBundle, clear, total } = useCart();
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
@@ -42,6 +42,8 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
       quantity: i.quantity,
       expiryItemId: i.expiryItemId,
       dealId: i.dealId,
+      bannerId: i.bannerId,
+      freeQty: i.freeQty,
     }));
     // Generated once per submit attempt and reused on every retry of it
     // (including the automatic offline-queue retry below) — lets the server
@@ -136,31 +138,47 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
                       {t(lang, "shop_wednesday_deal")}
                     </span>
                   )}
+                  {i.bannerId && (
+                    <span className="ml-1.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                      {t(lang, "shop_offer_label")}
+                    </span>
+                  )}
                 </td>
                 <td className="py-2 pr-4">
-                  <input
-                    type="number"
-                    min={1}
-                    value={i.quantity}
-                    onChange={(e) =>
-                      setQuantity(
-                        { productId: i.productId, name: i.name, unitPrice: i.unitPrice },
-                        Math.max(1, Number(e.target.value) || 1),
-                      )
-                    }
-                    className="w-16 rounded-lg border-2 border-slate-300 px-2 py-1 text-sm"
-                  />
+                  {i.bannerId ? (
+                    <span className="font-semibold text-slate-900">
+                      {i.quantity}
+                      {(i.freeQty ?? 0) > 0 && (
+                        <span className="ml-1 text-xs font-bold text-green-700">
+                          ({Math.min(i.freeQty ?? 0, i.quantity)} {t(lang, "shop_free")})
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <input
+                      type="number"
+                      min={1}
+                      value={i.quantity}
+                      onChange={(e) =>
+                        setQuantity(
+                          { productId: i.productId, name: i.name, unitPrice: i.unitPrice },
+                          Math.max(1, Number(e.target.value) || 1),
+                        )
+                      }
+                      className="w-16 rounded-lg border-2 border-slate-300 px-2 py-1 text-sm"
+                    />
+                  )}
                 </td>
                 <td className="py-2 pr-4 text-slate-600">
-                  ₹{(i.unitPrice * i.quantity).toLocaleString("en-IN")}
+                  ₹{(i.unitPrice * paidQuantity(i)).toLocaleString("en-IN")}
                 </td>
                 <td className="py-2 pr-4">
                   <button
                     type="button"
-                    onClick={() => removeItem(i.productId)}
+                    onClick={() => (i.bannerId ? removeBundle(i.bannerId) : removeItem(i.productId))}
                     className="text-sm font-semibold text-red-600 hover:underline"
                   >
-                    {t(lang, "shop_remove")}
+                    {i.bannerId ? t(lang, "shop_remove_offer") : t(lang, "shop_remove")}
                   </button>
                 </td>
               </tr>

@@ -27,6 +27,7 @@ import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } fro
 import { getOneTapReorderData } from "@/actions/orderActions";
 import { getStartOfIstYearUtc } from "@/lib/istTime";
 import { COMPANY_SALE_GROUPS, formatSaleDate } from "@/lib/companySales";
+import { getOfferBundle } from "@/lib/bannerBundle";
 
 const MENU_TILES = [
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
@@ -69,6 +70,14 @@ export default async function ShopHomePage() {
     getOneTapReorderData(),
     db.companySale.findMany({ where: { storeId: session.storeId } }),
   ]);
+
+  const bundleByBannerId = new Map(
+    await Promise.all(
+      [...heroBanners, ...offerBanners].map(
+        async (b) => [b.id, await getOfferBundle(session.orgId, b)] as const,
+      ),
+    ),
+  );
 
   const salePeriodEnd = companySales[0]?.periodEnd ?? (await db.companySale.findFirst({ select: { periodEnd: true } }))?.periodEnd;
   const saleByCompany = new Map(companySales.map((c) => [c.company, Number(c.amount)]));
@@ -114,12 +123,14 @@ export default async function ShopHomePage() {
       <NotificationOptIn lang={lang} />
 
       <BannerCarousel
+        lang={lang}
         banners={heroBanners.map((b) => ({
           id: b.id,
           imageUrl: b.imageUrl,
           title: b.title,
           linkUrl: b.linkUrl,
           expiresAt: b.expiresAt ? b.expiresAt.toISOString() : null,
+          bundle: bundleByBannerId.get(b.id) ?? null,
         }))}
       />
 
@@ -150,12 +161,14 @@ export default async function ShopHomePage() {
           <h2 className="mb-2 text-sm font-semibold text-slate-500">{t(lang, "shop_special_offers")}</h2>
           <BannerCarousel
             fit="contain"
+            lang={lang}
             banners={offerBanners.map((b) => ({
               id: b.id,
               imageUrl: b.imageUrl,
               title: b.title,
               linkUrl: b.linkUrl,
               expiresAt: b.expiresAt ? b.expiresAt.toISOString() : null,
+              bundle: bundleByBannerId.get(b.id) ?? null,
             }))}
           />
         </div>

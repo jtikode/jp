@@ -5,6 +5,8 @@ import { useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import { formatCountdown } from "@/lib/formatCountdown";
 import { clsx } from "@/lib/clsx";
+import { OfferBundleTap, type OfferBundle } from "@/components/shop/OfferBundleTap";
+import type { Lang } from "@/lib/i18n";
 
 export interface BannerCarouselItem {
   id: string;
@@ -12,6 +14,8 @@ export interface BannerCarouselItem {
   title: string | null;
   linkUrl: string | null;
   expiresAt?: string | null;
+  // Present when tapping the banner should add products to the cart.
+  bundle?: OfferBundle | null;
 }
 
 // Banner links are admin-entered free text — only ever render them as a
@@ -28,8 +32,10 @@ function isSafeHttpUrl(value: string): boolean {
 export function BannerCarousel({
   banners,
   fit = "cover",
+  lang = "en",
 }: {
   banners: BannerCarouselItem[];
+  lang?: Lang;
   // "cover": fixed-height landscape crop — right for Hero banners, which are
   // designed as a wide strip. "contain": scales to the image's own aspect
   // ratio with no crop — right for Offer banners, which are usually a tall,
@@ -92,7 +98,11 @@ export function BannerCarousel({
           );
           return (
             <div key={b.id} className="w-[85%] shrink-0 snap-center sm:w-[60%]">
-              {b.linkUrl && isSafeHttpUrl(b.linkUrl) ? (
+              {b.bundle ? (
+                <OfferBundleTap bundle={b.bundle} lang={lang}>
+                  {img}
+                </OfferBundleTap>
+              ) : b.linkUrl && isSafeHttpUrl(b.linkUrl) ? (
                 <a href={b.linkUrl} target="_blank" rel="noopener noreferrer">
                   {img}
                 </a>

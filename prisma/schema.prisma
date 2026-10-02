@@ -835,6 +835,10 @@ model ShopBanner {
   // notification when one is created, and the banner stops showing once
   // this passes. Null means an ordinary, non-expiring banner.
   expiresAt DateTime?
+  // Optional "tap to add to cart" bundle: [{ productId, quantity, freeQty }].
+  // `quantity` is the total units added to the cart, `freeQty` how many of
+  // those are free (billed at 0). Null/empty means a plain image banner.
+  cartItems Json?
 
   org Organization @relation(fields: [orgId], references: [id])
 

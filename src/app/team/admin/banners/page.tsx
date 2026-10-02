@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/Card";
 import { AddBannerForm } from "@/components/admin/AddBannerForm";
 import { SendNotificationForm } from "@/components/admin/SendNotificationForm";
 import { ScheduledNotificationsList } from "@/components/admin/ScheduledNotificationsList";
+import { EditBannerCartItems } from "@/components/admin/BannerBundleEditor";
+import { parseBundleItems } from "@/lib/bannerBundle";
 import { toggleBannerActive } from "@/actions/bannerActions";
 
 export default async function AdminBannersPage() {
@@ -20,6 +22,13 @@ export default async function AdminBannersPage() {
       take: 20,
     }),
   ]);
+
+  const bundleByBanner = new Map(banners.map((b) => [b.id, parseBundleItems(b.cartItems)]));
+  const bundleProductIds = [...new Set([...bundleByBanner.values()].flatMap((items) => items.map((i) => i.productId)))];
+  const bundleProducts = bundleProductIds.length
+    ? await db.product.findMany({ where: { id: { in: bundleProductIds } }, select: { id: true, name: true } })
+    : [];
+  const productName = new Map(bundleProducts.map((p) => [p.id, p.name]));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -57,42 +66,64 @@ export default async function AdminBannersPage() {
       <Card>
         <h2 className="mb-4 text-lg font-bold text-slate-900">Banners ({banners.length})</h2>
         <div className="flex flex-col gap-3">
-          {banners.map((b) => (
-            <div
-              key={b.id}
-              className="flex items-center gap-3 rounded-xl border-2 border-slate-200 p-3"
-            >
-              <Image
-                src={b.imageUrl}
-                alt={b.title ?? "Banner"}
-                width={96}
-                height={54}
-                className="h-14 w-24 shrink-0 rounded-lg object-cover"
-                unoptimized
-              />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-slate-900">
-                  {b.placement === "HERO" ? "Home top carousel" : "Special Offers"}
-                  {b.title ? `: ${b.title}` : ""}
-                </p>
-                <p className="text-xs text-slate-500">Sort order: {b.sortOrder}</p>
+          {banners.map((b) => {
+            const bundle = bundleByBanner.get(b.id) ?? [];
+            const editorItems = bundle.map((i) => ({
+              ...i,
+              name: productName.get(i.productId) ?? "(unavailable product)",
+            }));
+            return (
+              <div key={b.id} className="rounded-xl border-2 border-slate-200 p-3">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src={b.imageUrl}
+                    alt={b.title ?? "Banner"}
+                    width={96}
+                    height={54}
+                    className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                    unoptimized
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-900">
+                      {b.placement === "HERO" ? "Home top carousel" : "Special Offers"}
+                      {b.title ? `: ${b.title}` : ""}
+                    </p>
+                    <p className="text-xs text-slate-500">Sort order: {b.sortOrder}</p>
+                    {editorItems.length > 0 && (
+                      <p className="mt-0.5 text-xs font-medium text-blue-700">
+                        Adds to cart:{" "}
+                        {editorItems
+                          .map((i) => `${i.name} × ${i.quantity}${i.freeQty > 0 ? ` (${i.freeQty} free)` : ""}`)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className={
+                      b.active
+                        ? "shrink-0 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
+                        : "shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500"
+                    }
+                  >
+                    {b.active ? "Active" : "Hidden"}
+                  </span>
+                  <form action={toggleBannerActive.bind(null, b.id, !b.active)}>
+                    <button type="submit" className="text-sm font-semibold text-blue-700 hover:underline">
+                      {b.active ? "Hide" : "Show"}
+                    </button>
+                  </form>
+                </div>
+                <details className="mt-3 border-t border-slate-100 pt-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-blue-700">
+                    {editorItems.length > 0 ? "Edit cart items" : "Set cart items (tap to add to cart)"}
+                  </summary>
+                  <div className="mt-3">
+                    <EditBannerCartItems bannerId={b.id} initialItems={editorItems} />
+                  </div>
+                </details>
               </div>
-              <span
-                className={
-                  b.active
-                    ? "shrink-0 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700"
-                    : "shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500"
-                }
-              >
-                {b.active ? "Active" : "Hidden"}
-              </span>
-              <form action={toggleBannerActive.bind(null, b.id, !b.active)}>
-                <button type="submit" className="text-sm font-semibold text-blue-700 hover:underline">
-                  {b.active ? "Hide" : "Show"}
-                </button>
-              </form>
-            </div>
-          ))}
+            );
+          })}
           {banners.length === 0 && (
             <p className="py-4 text-center text-slate-400">No banners yet.</p>
           )}
