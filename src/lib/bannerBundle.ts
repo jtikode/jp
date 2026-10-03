@@ -39,6 +39,24 @@ export function parseBundleItems(raw: unknown): BundleItem[] {
   return items.slice(0, MAX_BUNDLE_ITEMS);
 }
 
+// How many units of one cart line are free under its offer: the offer's free
+// units per set, times the number of complete sets in the order, never more
+// than the client claimed or the line holds. Pure so it can be tested alone.
+export function computeFreeUnits(
+  offerItems: BundleItem[],
+  orderedByProduct: Map<string, number>,
+  line: { productId: string; quantity: number; freeQty?: number },
+): number {
+  const item = offerItems.find((i) => i.productId === line.productId);
+  if (!item || item.freeQty <= 0) return 0;
+  let sets = Infinity;
+  for (const bundleItem of offerItems) {
+    sets = Math.min(sets, Math.floor((orderedByProduct.get(bundleItem.productId) ?? 0) / bundleItem.quantity));
+  }
+  const claimed = Math.max(0, Math.floor(Number(line.freeQty) || 0));
+  return Math.min(line.quantity, item.freeQty * (Number.isFinite(sets) ? sets : 0), claimed);
+}
+
 // Shape handed to the shop's tap-to-add component for one banner.
 export async function getOfferBundle(
   orgId: string,

@@ -9,7 +9,7 @@ import { sendOrderNotificationEmail } from "@/lib/orderEmail";
 import { orderStatusLabel } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
-import { parseBundleItems } from "@/lib/bannerBundle";
+import { parseBundleItems, computeFreeUnits } from "@/lib/bannerBundle";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
 import { Prisma, type OrderStatus } from "@/generated/prisma/client";
@@ -141,18 +141,13 @@ export async function placeOrder(
   function freeUnitsFor(line: CartLine): { free: number; label?: string } {
     const banner = line.bannerId ? bannerMap.get(line.bannerId) : undefined;
     if (!banner) return { free: 0 };
-    const item = banner.items.find((i) => i.productId === line.productId);
-    if (!item || item.freeQty <= 0) return { free: 0 };
-    let sets = Infinity;
-    for (const bundleItem of banner.items) {
-      const ordered = cleanLines
-        .filter((l) => l.bannerId === line.bannerId && l.productId === bundleItem.productId)
-        .reduce((sum, l) => sum + l.quantity, 0);
-      sets = Math.min(sets, Math.floor(ordered / bundleItem.quantity));
+    const orderedByProduct = new Map<string, number>();
+    for (const l of cleanLines) {
+      if (l.bannerId === line.bannerId) {
+        orderedByProduct.set(l.productId, (orderedByProduct.get(l.productId) ?? 0) + l.quantity);
+      }
     }
-    const claimed = Math.max(0, Math.floor(Number(line.freeQty) || 0));
-    const free = Math.min(line.quantity, item.freeQty * (Number.isFinite(sets) ? sets : 0), claimed);
-    return { free, label: banner.title ?? "Offer" };
+    return { free: computeFreeUnits(banner.items, orderedByProduct, line), label: banner.title ?? "Offer" };
   }
 
   // Prices are always taken from the current catalog on the server — never
