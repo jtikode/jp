@@ -10,10 +10,19 @@ export interface EditorBundleItem {
   name: string;
   quantity: number;
   freeQty: number;
+  // Optional per-unit rate for this offer (ex-GST); empty = catalog rate.
+  offerPrice?: number | null;
 }
 
 export function serializeBundle(items: EditorBundleItem[]): string {
-  return JSON.stringify(items.map(({ productId, quantity, freeQty }) => ({ productId, quantity, freeQty })));
+  return JSON.stringify(
+    items.map(({ productId, quantity, freeQty, offerPrice }) => ({
+      productId,
+      quantity,
+      freeQty,
+      ...(offerPrice ? { offerPrice } : {}),
+    })),
+  );
 }
 
 const SMALL_INPUT = "min-h-10 w-20 rounded-lg border-2 border-slate-300 px-2 text-center text-base";
@@ -67,6 +76,7 @@ export function BannerBundleEditor({
         const next = { ...i, ...patch };
         next.quantity = Math.max(1, Math.floor(next.quantity) || 1);
         next.freeQty = Math.min(next.quantity, Math.max(0, Math.floor(next.freeQty) || 0));
+        if (!(Number(next.offerPrice) > 0)) next.offerPrice = null;
         return next;
       }),
     );
@@ -76,16 +86,17 @@ export function BannerBundleEditor({
     <div className="flex flex-col gap-3">
       {items.length > 0 && (
         <div className="flex flex-col gap-2">
-          <div className="hidden grid-cols-[1fr_5rem_5rem_2.5rem] gap-2 px-1 text-xs font-semibold text-slate-500 sm:grid">
+          <div className="hidden grid-cols-[1fr_5rem_5rem_6rem_2.5rem] gap-2 px-1 text-xs font-semibold text-slate-500 sm:grid">
             <span>Product</span>
             <span className="text-center">Total qty</span>
             <span className="text-center">Of which free</span>
+            <span className="text-center">Offer price</span>
             <span />
           </div>
           {items.map((i) => (
             <div
               key={i.productId}
-              className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-slate-200 p-2 sm:grid sm:grid-cols-[1fr_5rem_5rem_2.5rem]"
+              className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-slate-200 p-2 sm:grid sm:grid-cols-[1fr_5rem_5rem_6rem_2.5rem]"
             >
               <p className="min-w-0 flex-1 text-sm font-medium text-slate-900 sm:flex-none">{i.name}</p>
               <label className="flex items-center gap-1 text-xs text-slate-500 sm:block">
@@ -109,6 +120,19 @@ export function BannerBundleEditor({
                   onChange={(e) => update(i.productId, { freeQty: Number(e.target.value) })}
                   className={SMALL_INPUT}
                   aria-label={`Free units of ${i.name}`}
+                />
+              </label>
+              <label className="flex items-center gap-1 text-xs text-slate-500 sm:block">
+                <span className="sm:hidden">Offer ₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={i.offerPrice ?? ""}
+                  placeholder="Catalog"
+                  onChange={(e) => update(i.productId, { offerPrice: e.target.value === "" ? null : Number(e.target.value) })}
+                  className="min-h-10 w-24 rounded-lg border-2 border-slate-300 px-2 text-center text-base"
+                  aria-label={`Offer price per unit of ${i.name}`}
                 />
               </label>
               <button
@@ -158,7 +182,9 @@ export function BannerBundleEditor({
         )}
       </div>
       <p className="text-xs text-slate-500">
-        Free units are billed at ₹0 on the order. Gift items already priced at ₹0 can leave the free box at 0.
+        Free units are billed at ₹0 on the order. Gift items already priced at ₹0 can leave the free box at 0. Offer
+        price (per unit, before GST) replaces the catalog rate for that product in this offer; leave it empty to use the
+        catalog rate.
       </p>
     </div>
   );

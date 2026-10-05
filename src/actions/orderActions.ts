@@ -150,6 +150,15 @@ export async function placeOrder(
     return { free: computeFreeUnits(banner.items, orderedByProduct, line), label: banner.title ?? "Offer" };
   }
 
+  // An offer can fix its own per-unit rate for a product (e.g. a bundle price
+  // for the main item). Read from the stored offer, never from the client, and
+  // only for a line tagged with that live offer; a clearance/deal rate on the
+  // same line wins over it below.
+  function offerPriceFor(line: CartLine): number | undefined {
+    const banner = line.bannerId ? bannerMap.get(line.bannerId) : undefined;
+    return banner?.items.find((i) => i.productId === line.productId)?.offerPrice;
+  }
+
   // Prices are always taken from the current catalog on the server — never
   // trust a client-submitted price. A clearance/deal line only gets the
   // special rate if the deal it points at is still live AND actually names
@@ -170,7 +179,7 @@ export async function placeOrder(
       ? Number(expiryItem!.specialRate)
       : weeklyDealIsValid
         ? Number(dealMap.get(l.dealId!)!.dealPrice)
-        : Number(product.price);
+        : offerPriceFor(l) ?? Number(product.price);
 
     // A free offer unit never stacks with a clearance/deal rate on the same line.
     const offer = expiryDealIsValid || weeklyDealIsValid ? { free: 0 } : freeUnitsFor(l);

@@ -4,10 +4,13 @@ import { getActiveCatalog } from "@/lib/productCatalog";
 // many of each) that get dropped into the cart when a retailer taps the offer.
 // `quantity` is the total units added; `freeQty` is how many of those are
 // free of charge (0 = all paid). Gift items already priced at 0 can use 0 too.
+// `offerPrice` (per unit, ex-GST like the catalog) replaces the catalog rate for
+// this product while it is bought through the offer; omitted = catalog rate.
 export interface BundleItem {
   productId: string;
   quantity: number;
   freeQty: number;
+  offerPrice?: number;
 }
 
 export interface ResolvedBundleItem extends BundleItem {
@@ -27,14 +30,16 @@ export function parseBundleItems(raw: unknown): BundleItem[] {
   const items: BundleItem[] = [];
   for (const entry of raw) {
     if (!entry || typeof entry !== "object") continue;
-    const { productId, quantity, freeQty } = entry as Record<string, unknown>;
+    const { productId, quantity, freeQty, offerPrice } = entry as Record<string, unknown>;
     if (typeof productId !== "string" || !productId || seen.has(productId)) continue;
     const q = Number(quantity);
     const f = Number(freeQty ?? 0);
     if (!Number.isInteger(q) || q < 1 || q > MAX_BUNDLE_QTY) continue;
     if (!Number.isInteger(f) || f < 0 || f > q) continue;
+    const p = offerPrice == null || offerPrice === "" ? undefined : Number(offerPrice);
+    if (p !== undefined && (!Number.isFinite(p) || p <= 0 || p > 10_000_000)) continue;
     seen.add(productId);
-    items.push({ productId, quantity: q, freeQty: f });
+    items.push(p === undefined ? { productId, quantity: q, freeQty: f } : { productId, quantity: q, freeQty: f, offerPrice: p });
   }
   return items.slice(0, MAX_BUNDLE_ITEMS);
 }
@@ -80,7 +85,7 @@ export async function resolveBundle(orgId: string, raw: unknown): Promise<Resolv
   for (const item of items) {
     const p = byId.get(item.productId);
     if (!p) return [];
-    resolved.push({ ...item, name: p.name, unitPrice: p.price, stock: p.stock });
+    resolved.push({ ...item, name: p.name, unitPrice: item.offerPrice ?? p.price, stock: p.stock });
   }
   return resolved;
 }

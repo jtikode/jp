@@ -93,7 +93,10 @@ export default async function AdminBannersPage() {
                       <p className="mt-0.5 text-xs font-medium text-blue-700">
                         Adds to cart:{" "}
                         {editorItems
-                          .map((i) => `${i.name} × ${i.quantity}${i.freeQty > 0 ? ` (${i.freeQty} free)` : ""}`)
+                          .map(
+                            (i) =>
+                              `${i.name} × ${i.quantity}${i.freeQty > 0 ? ` (${i.freeQty} free)` : ""}${i.offerPrice ? ` @ ₹${i.offerPrice}` : ""}`,
+                          )
                           .join(", ")}
                         {b.cartRemark ? `. Remark: ${b.cartRemark}` : ""}
                       </p>
