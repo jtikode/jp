@@ -1,11 +1,10 @@
 import Image from "next/image";
-import { Clock } from "lucide-react";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
-import { formatCountdown } from "@/lib/formatCountdown";
+import { OfferExpiryBadge } from "@/components/shop/OfferExpiryBadge";
 import { getOfferBundle } from "@/lib/bannerBundle";
 import { OfferBundleTap } from "@/components/shop/OfferBundleTap";
 
@@ -33,7 +32,6 @@ export default async function ShopOffersPage() {
 
       <div className="flex flex-col gap-3">
         {offers.map((o, index) => {
-          const countdown = o.expiresAt ? formatCountdown(o.expiresAt) : "";
           const bundle = bundles[index];
           const image = (
             <div className="relative">
@@ -49,12 +47,7 @@ export default async function ShopOffersPage() {
                 className="aspect-[4/5] w-full object-contain"
                 unoptimized
               />
-              {countdown && (
-                <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
-                  <Clock size={12} strokeWidth={2} />
-                  Ends in {countdown}
-                </span>
-              )}
+              <OfferExpiryBadge expiresAt={o.expiresAt} lang={lang} />
             </div>
           );
           return (

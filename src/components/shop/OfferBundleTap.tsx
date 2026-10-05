@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, ShoppingCart } from "lucide-react";
 import { useCart, type BundleLine } from "@/components/shop/CartProvider";
 import { t, type Lang } from "@/lib/i18n";
+import { trackOfferAdd } from "@/actions/bannerTrackingActions";
 
 export interface OfferBundle {
   bannerId: string;
@@ -33,6 +34,7 @@ export function OfferBundleTap({
   function add() {
     const result = addBundle(bundle.bannerId, bundle.title, bundle.lines, bundle.remark);
     setStatus(result.ok ? { kind: "added", sets: result.sets } : { kind: "conflict" });
+    if (result.ok) void trackOfferAdd(bundle.bannerId);
   }
 
   return (
@@ -54,16 +56,28 @@ export function OfferBundleTap({
       </div>
 
       <div className="mt-2 rounded-xl bg-blue-50 p-2.5">
-        <p className="text-xs text-slate-600">
-          <span className="font-semibold text-slate-800">{t(lang, "shop_offer_adds")}: </span>
-          {bundle.lines
-            .map(
-              (l) =>
-                `${l.name.replace(/\s+/g, " ")} × ${l.quantity}${l.freeQty > 0 ? ` (${l.freeQty} ${t(lang, "shop_free")})` : ""}`,
-            )
-            .join(" · ")}
-          {bundle.remark ? ` · ${bundle.remark}` : ""}
-        </p>
+        <p className="text-xs font-semibold text-slate-800">{t(lang, "shop_offer_adds")}:</p>
+        <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+          {bundle.lines.map((l) => {
+            const paid = l.quantity - l.freeQty;
+            return (
+              <li key={l.productId} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0">
+                  {l.name.replace(/\s+/g, " ")} × {l.quantity}
+                  {paid > 0 && l.freeQty > 0 ? ` (${l.freeQty} ${t(lang, "shop_free")})` : ""}
+                </span>
+                {paid > 0 && l.unitPrice > 0 ? (
+                  <span className="shrink-0 font-semibold text-slate-800">
+                    ₹{l.unitPrice.toLocaleString("en-IN", { maximumFractionDigits: 2 })} {t(lang, "shop_each_plus_gst")}
+                  </span>
+                ) : (
+                  <span className="shrink-0 font-bold uppercase text-green-700">{t(lang, "shop_free")}</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {bundle.remark && <p className="mt-1 text-xs text-slate-600">{bundle.remark}</p>}
         <button
           type="button"
           onClick={add}

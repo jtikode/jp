@@ -806,6 +806,10 @@ model OrderItem {
   // sum up how much of a deal's max-qty-per-store cap a retailer has already
   // used today.
   dealId      String?
+  // Set when this line was bought through an Offer banner (priced and/or
+  // given free units by it) — lets admin see how many orders each offer
+  // earned and keeps one-tap reorder from repeating offer-only lines.
+  bannerId    String?
 
   org     Organization   @relation(fields: [orgId], references: [id])
   order   Order          @relation(fields: [orderId], references: [id])
@@ -846,6 +850,20 @@ model ShopBanner {
   org Organization @relation(fields: [orgId], references: [id])
 
   @@index([orgId])
+}
+
+// One row each time a retailer taps an Offer banner's add-to-cart (kind
+// ADD_TO_CART), feeding the per-offer stats on the admin Banners page. Orders
+// are counted from OrderItem.bannerId instead, so they can't drift.
+model BannerEvent {
+  id        String   @id @default(cuid())
+  orgId     String
+  bannerId  String
+  storeId   String
+  kind      String
+  createdAt DateTime @default(now())
+
+  @@index([orgId, bannerId])
 }
 
 enum ScheduledNotificationStatus {

@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { Clock } from "lucide-react";
-import { formatCountdown } from "@/lib/formatCountdown";
 import { clsx } from "@/lib/clsx";
+import { OfferExpiryBadge } from "@/components/shop/OfferExpiryBadge";
 import { OfferBundleTap, type OfferBundle } from "@/components/shop/OfferBundleTap";
 import type { Lang } from "@/lib/i18n";
 
@@ -64,7 +63,6 @@ export function BannerCarousel({
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
       >
         {banners.map((b) => {
-          const countdown = b.expiresAt ? formatCountdown(new Date(b.expiresAt)) : "";
           const img = (
             <div className="relative">
               {fit === "cover" ? (
@@ -87,12 +85,7 @@ export function BannerCarousel({
                   unoptimized
                 />
               )}
-              {countdown && (
-                <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow">
-                  <Clock size={12} strokeWidth={2} />
-                  Ends in {countdown}
-                </span>
-              )}
+              <OfferExpiryBadge expiresAt={b.expiresAt} lang={lang} />
             </div>
           );
           return (

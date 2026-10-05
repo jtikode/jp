@@ -192,6 +192,10 @@ export async function placeOrder(
       quantity: l.quantity,
       lineTotal: unitPrice * (l.quantity - offer.free),
       dealId: weeklyDealIsValid ? l.dealId : undefined,
+      // Only a line the live offer actually priced/discounted counts as bought
+      // through it (a clearance/deal rate on the line wins over the offer).
+      bannerId:
+        l.bannerId && bannerMap.has(l.bannerId) && !expiryDealIsValid && !weeklyDealIsValid ? l.bannerId : undefined,
       scheme,
     };
   });
@@ -293,16 +297,22 @@ export interface ReorderLine {
 // one-tap reorder.
 async function buildReorderLines(
   orgId: string,
-  order: { items: Array<{ productId: string; productName: string; quantity: number }> },
+  order: {
+    items: Array<{ productId: string; productName: string; quantity: number; bannerId?: string | null; lineTotal?: unknown }>;
+  },
 ): Promise<{ lines: ReorderLine[]; unavailable: string[] }> {
   const db = getOrgScopedDb(orgId);
-  const productIds = order.items.map((i) => i.productId);
+  // Lines bought through an offer (offer-only price, free units) and lines that
+  // were entirely free are not repeated here: they would come back at the
+  // plain catalog rate (or as paid items). The retailer taps the offer again.
+  const repeatable = order.items.filter((i) => !i.bannerId && !(i.lineTotal != null && Number(i.lineTotal) === 0));
+  const productIds = repeatable.map((i) => i.productId);
   const products = await db.product.findMany({ where: { id: { in: productIds }, active: true } });
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   const lines: ReorderLine[] = [];
   const unavailable: string[] = [];
-  for (const item of order.items) {
+  for (const item of repeatable) {
     const product = productMap.get(item.productId);
     if (!product) {
       unavailable.push(item.productName);

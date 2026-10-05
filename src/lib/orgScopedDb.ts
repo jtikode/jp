@@ -29,6 +29,7 @@ const TENANT_MODELS = new Set([
   "order",
   "orderItem",
   "shopBanner",
+  "bannerEvent",
   "loyaltyTier",
   "requestedProduct",
   "paymentReport",

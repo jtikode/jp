@@ -5,6 +5,7 @@ import { createBanner } from "@/actions/bannerActions";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { ExpiryField } from "@/components/admin/ExpiryField";
 import {
   BannerBundleEditor,
   BannerRemarkField,
@@ -71,15 +72,24 @@ export function AddBannerForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Flash deal, ends at (optional)
-        </label>
-        <Input name="expiresAt" type="datetime-local" />
+        <label className="mb-1 block text-sm font-medium text-slate-700">Offer ends at (optional)</label>
+        <ExpiryField name="expiresAt" />
         <p className="mt-1 text-xs text-slate-500">
-          Set this to make it a time-boxed flash deal, every retailer with notifications enabled
-          gets a push the moment you add it, and the banner disappears once this time passes.
+          The banner disappears from the shop at this time. Retailers see &quot;Valid till&quot; on it, or a
+          countdown in its last 2 days. Leave empty to keep it until you hide it.
         </p>
       </div>
+
+      <label className="flex items-start gap-2 text-sm text-slate-700">
+        <input type="checkbox" name="notify" className="mt-1 h-4 w-4" />
+        <span>
+          <span className="font-medium">Notify retailers now</span>
+          <span className="block text-xs text-slate-500">
+            Sends a push notification to every retailer who has notifications on. You can also send it later from the
+            banner&apos;s list below.
+          </span>
+        </span>
+      </label>
 
       {state.error && <p className="text-sm font-medium text-red-600">{state.error}</p>}
       <Button type="submit" disabled={pending}>

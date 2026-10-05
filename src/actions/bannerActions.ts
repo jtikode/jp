@@ -12,7 +12,12 @@ import { parseBundleItems, MAX_BUNDLE_ITEMS, type BundleItem } from "@/lib/banne
 type OrgDb = ReturnType<typeof getOrgScopedDb>;
 
 function toJson(items: BundleItem[]): Prisma.InputJsonArray {
-  return items.map(({ productId, quantity, freeQty }) => ({ productId, quantity, freeQty }));
+  return items.map(({ productId, quantity, freeQty, offerPrice }) => ({
+    productId,
+    quantity,
+    freeQty,
+    ...(offerPrice ? { offerPrice } : {}),
+  }));
 }
 
 // Strict check of the admin's cart-items JSON: every entry must be well formed
@@ -137,11 +142,15 @@ export async function createBanner(
   const linkUrl = (formData.get("linkUrl") as string | null)?.trim() || undefined;
   const sortOrderRaw = formData.get("sortOrder") as string | null;
   const sortOrder = sortOrderRaw ? Number(sortOrderRaw) : 0;
+  // The form's ExpiryField sends an ISO instant (already converted from the
+  // admin's local time in the browser), so the server's own timezone never
+  // shifts the end time.
   const expiresAtRaw = formData.get("expiresAt") as string | null;
   const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : undefined;
-  if (expiresAt && expiresAt.getTime() <= Date.now()) {
-    return { ok: false, error: "The flash deal's end time must be in the future." };
+  if (expiresAt && (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now())) {
+    return { ok: false, error: "The offer's end time must be in the future." };
   }
+  const notifyRetailers = formData.get("notify") === "on";
 
   const bundle = await validateBundleInput(db, formData.get("cartItems") as string | null);
   if (!bundle.ok) return { ok: false, error: bundle.error };
@@ -178,16 +187,67 @@ export async function createBanner(
   revalidatePath("/shop/home");
   revalidatePath("/shop/offers");
 
-  // Only a genuinely time-boxed banner (expiresAt set) is worth interrupting
-  // every retailer for — an ordinary evergreen banner doesn't push.
-  if (expiresAt) {
-    sendPushToOrg(session.orgId, {
-      title: "⚡ Flash Deal",
-      body: title ? `${title}, limited time only!` : "A limited-time deal just went live.",
-      url: "/shop/offers",
-    }).catch(() => {});
+  // Pushing every retailer is an explicit choice ("Notify retailers now"),
+  // not a side effect of setting an end date, now that ordinary offers can
+  // carry an end date too.
+  if (notifyRetailers) {
+    sendPushToOrg(session.orgId, offerPushPayload(title, expiresAt)).catch(() => {});
   }
 
+  return { ok: true };
+}
+
+function offerPushPayload(title: string | null | undefined, expiresAt: Date | null | undefined) {
+  const soon = expiresAt && expiresAt.getTime() - Date.now() < 48 * 60 * 60 * 1000;
+  return {
+    title: soon ? "⚡ Flash Deal" : "🎁 New Offer",
+    body: title ? `${title}${soon ? ", limited time only!" : ". Tap to see it."}` : "A new offer just went live.",
+    url: "/shop/offers",
+  };
+}
+
+// Admin "Send alert" button on an existing offer: pushes it to every retailer
+// with notifications on. Not idempotent on purpose (admin may resend later),
+// so the UI asks for confirmation first.
+export async function sendOfferAlert(bannerId: string): Promise<{ ok: boolean; error?: string; sentCount?: number; storeCount?: number }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const banner = await db.shopBanner.findFirst({ where: { id: bannerId }, select: { title: true, active: true, expiresAt: true } });
+  if (!banner) return { ok: false, error: "Offer not found." };
+  if (!banner.active || (banner.expiresAt && banner.expiresAt.getTime() <= Date.now())) {
+    return { ok: false, error: "This offer is hidden or has ended, so there is nothing to announce." };
+  }
+  if (!isWebPushConfigured()) {
+    return { ok: false, error: "Push notifications aren't configured on this server." };
+  }
+  const { sentCount, storeCount } = await sendPushToOrg(session.orgId, offerPushPayload(banner.title, banner.expiresAt));
+  return { ok: true, sentCount, storeCount };
+}
+
+// Sets or clears the offer's end time. `expiresAtIso` is an instant computed
+// in the admin's browser; null/empty means "no end date".
+export async function updateBannerExpiry(
+  bannerId: string,
+  expiresAtIso: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  let expiresAt: Date | null = null;
+  if (expiresAtIso) {
+    expiresAt = new Date(expiresAtIso);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+      return { ok: false, error: "The end time must be in the future." };
+    }
+  }
+
+  const result = await db.shopBanner.updateMany({ where: { id: bannerId }, data: { expiresAt } });
+  if (result.count === 0) return { ok: false, error: "Offer not found." };
+
+  revalidatePath("/team/admin/banners");
+  revalidatePath("/shop/home");
+  revalidatePath("/shop/offers");
   return { ok: true };
 }
 

@@ -8,6 +8,9 @@ import { ScheduledNotificationsList } from "@/components/admin/ScheduledNotifica
 import { EditBannerCartItems } from "@/components/admin/BannerBundleEditor";
 import { parseBundleItems } from "@/lib/bannerBundle";
 import { toggleBannerActive } from "@/actions/bannerActions";
+import { OfferAdminTools } from "@/components/admin/OfferAdminTools";
+import { buildOfferShareText, formatIstDateTime, msUntil } from "@/lib/offerShare";
+import { getOfferStats, OfferStatsLine } from "@/components/admin/OfferStats";
 
 export default async function AdminBannersPage() {
   const session = await requireRole(["ADMIN"]);
@@ -26,9 +29,11 @@ export default async function AdminBannersPage() {
   const bundleByBanner = new Map(banners.map((b) => [b.id, parseBundleItems(b.cartItems)]));
   const bundleProductIds = [...new Set([...bundleByBanner.values()].flatMap((items) => items.map((i) => i.productId)))];
   const bundleProducts = bundleProductIds.length
-    ? await db.product.findMany({ where: { id: { in: bundleProductIds } }, select: { id: true, name: true } })
+    ? await db.product.findMany({ where: { id: { in: bundleProductIds } }, select: { id: true, name: true, price: true } })
     : [];
   const productName = new Map(bundleProducts.map((p) => [p.id, p.name]));
+  const productPrice = new Map(bundleProducts.map((p) => [p.id, Number(p.price)]));
+  const stats = await getOfferStats(db);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -88,7 +93,12 @@ export default async function AdminBannersPage() {
                       {b.placement === "HERO" ? "Home top carousel" : "Special Offers"}
                       {b.title ? `: ${b.title}` : ""}
                     </p>
-                    <p className="text-xs text-slate-500">Sort order: {b.sortOrder}</p>
+                    <p className="text-xs text-slate-500">
+                      Sort order: {b.sortOrder}
+                      {b.expiresAt ? ` · Ends ${formatIstDateTime(b.expiresAt)}` : ""}
+                      {b.expiresAt && msUntil(b.expiresAt) <= 0 ? " (ended)" : ""}
+                    </p>
+                    {bundle.length > 0 && <OfferStatsLine stat={stats.get(b.id)} />}
                     {editorItems.length > 0 && (
                       <p className="mt-0.5 text-xs font-medium text-blue-700">
                         Adds to cart:{" "}
@@ -124,6 +134,26 @@ export default async function AdminBannersPage() {
                   <div className="mt-3">
                     <EditBannerCartItems bannerId={b.id} initialItems={editorItems} initialRemark={b.cartRemark ?? ""} />
                   </div>
+                </details>
+                <details className="mt-3 border-t border-slate-100 pt-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-blue-700">
+                    End date and alert
+                  </summary>
+                  <OfferAdminTools
+                    bannerId={b.id}
+                    endsAtLabel={b.expiresAt ? formatIstDateTime(b.expiresAt) : null}
+                    canAlert={b.active && (!b.expiresAt || msUntil(b.expiresAt) > 0)}
+                    shareText={buildOfferShareText({
+                      title: b.title,
+                      endsAt: b.expiresAt,
+                      lines: bundle.map((i) => ({
+                        name: productName.get(i.productId) ?? "Item",
+                        quantity: i.quantity,
+                        freeQty: i.freeQty,
+                        unitPrice: i.offerPrice ?? productPrice.get(i.productId) ?? 0,
+                      })),
+                    })}
+                  />
                 </details>
               </div>
             );
