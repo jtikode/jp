@@ -9,6 +9,7 @@ import { useCart, paidQuantity } from "@/components/shop/CartProvider";
 import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
+import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
 
 export function ShopCheckout({ lang }: { lang: Lang }) {
   const router = useRouter();
@@ -17,6 +18,9 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  // Set once the server accepted the order: shows the full-screen
+  // "Order Placed!" page instead of dropping straight into the order.
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   // Shown for information only: the server adds each live offer's remark to
   // the order's notes itself, so nothing here needs to be sent.
   const offerRemarks = [...new Set(items.map((i) => i.bannerRemark).filter((r): r is string => !!r))];
@@ -61,7 +65,7 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
         return;
       }
       clear();
-      router.push(`/shop/orders/${result.orderId}`);
+      setPlacedOrderId(result.orderId ?? null);
     } catch (err) {
       // No network reached the server at all (offline, or connection dropped
       // mid-request) — save the order on the device instead of losing it.
@@ -76,6 +80,16 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
     } finally {
       setPlacing(false);
     }
+  }
+
+  if (placedOrderId) {
+    return (
+      <OrderPlacedScreen
+        lang={lang}
+        onClose={() => router.push("/shop/home")}
+        onViewOrder={() => router.push(`/shop/orders/${placedOrderId}`)}
+      />
+    );
   }
 
   if (savedOffline) {
