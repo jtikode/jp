@@ -44,6 +44,16 @@ const SHOP_PUBLIC_PATHS = ["/shop/login", "/shop/register"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // cipla.jpkop.in serves the Cipla OTC booking portal: its root, /login and
+  // /orders map onto the /cipla pages. Everything else (api, _next, assets)
+  // is outside the matcher and goes through untouched.
+  const host = request.headers.get("host") ?? "";
+  if (host.startsWith("cipla.")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/cipla" : `/cipla${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   if (pathname.startsWith("/shop")) {
     if (SHOP_PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
       return NextResponse.next();
@@ -99,5 +109,8 @@ export const config = {
   matcher: [
     "/team/:path*",
     "/shop/:path*",
+    "/",
+    "/login",
+    "/orders",
   ],
 };
