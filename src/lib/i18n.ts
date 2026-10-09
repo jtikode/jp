@@ -312,6 +312,13 @@ export const translations = {
     mr: "QR कोड स्कॅन करा किंवा UPI ने पेमेंट करण्यासाठी बटण दाबा.",
   },
   shop_pay_now: { en: "Pay Now", mr: "आता पेमेंट करा" },
+  shop_part_payment_label: {
+    en: "Part payment: change the amount to pay",
+    mr: "भाग पेमेंट: भरायची रक्कम बदला",
+  },
+  shop_part_payment_over: { en: "Amount can't be more than", mr: "रक्कम यापेक्षा जास्त असू शकत नाही" },
+  shop_part_payment_balance: { en: "Balance left after this payment", mr: "या पेमेंटनंतर शिल्लक" },
+  shop_pay_full_amount: { en: "Pay full amount", mr: "पूर्ण रक्कम भरा" },
   shop_near_expiry: { en: "Near expiry", mr: "मुदत लवकरच संपणार" },
   shop_offer_popup_cta: { en: "View Mankind products", mr: "मॅनकाइंड प्रॉडक्ट्स पहा" },
   shop_rates_disclaimer: {
@@ -367,8 +374,8 @@ export const translations = {
     en: "Notifications are blocked in your browser settings",
     mr: "तुमच्या ब्राउझर सेटिंगमध्ये सूचना बंद आहेत",
   },
-  shop_menu_fast_order: { en: "Fast Order", mr: "जलद ऑर्डर" },
-  shop_fast_order_heading: { en: "Fast Order", mr: "जलद ऑर्डर" },
+  shop_menu_fast_order: { en: "My Items", mr: "माझा माल" },
+  shop_fast_order_heading: { en: "My Items", mr: "माझा माल" },
   shop_fast_order_subtitle: {
     en: "Your regular items, just enter quantity and go.",
     mr: "तुमचा नियमित माल, फक्त प्रमाण टाका आणि पुढे जा.",

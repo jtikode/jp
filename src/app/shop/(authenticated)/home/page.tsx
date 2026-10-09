@@ -103,9 +103,29 @@ export default async function ShopHomePage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <p className="text-center text-xs font-medium text-blue-700">{t(lang, "shop_ai_tagline")}</p>
 
-      <ShopSearchBar lang={lang} />
+      <Card>
+        <h2 className="mb-3 text-base font-bold text-slate-900">{t(lang, "shop_explore")}</h2>
+        <div
+          className="grid gap-y-4 text-center"
+          style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+        >
+          {MENU_TILES.map((tile) => {
+            const Icon = tile.icon;
+            return (
+              <Link key={tile.href} href={tile.href} className="group flex flex-col items-center gap-1.5">
+                <span
+                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 group-active:scale-95 ${tile.bg}`}
+                >
+                  <Icon className={tile.fg} size={24} strokeWidth={1.75} />
+                </span>
+                <span className="text-xs font-semibold leading-tight text-slate-700">{t(lang, tile.key)}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </Card>
 
-      <OneTapReorderCard data={oneTapReorder} lang={lang} />
+      <ShopSearchBar lang={lang} />
 
       <WednesdayDealsStrip
         lang={lang}
@@ -134,28 +154,6 @@ export default async function ShopHomePage() {
         }))}
       />
 
-      <Card>
-        <h2 className="mb-3 text-base font-bold text-slate-900">{t(lang, "shop_explore")}</h2>
-        <div
-          className="grid gap-y-4 text-center"
-          style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
-        >
-          {MENU_TILES.map((tile) => {
-            const Icon = tile.icon;
-            return (
-              <Link key={tile.href} href={tile.href} className="group flex flex-col items-center gap-1.5">
-                <span
-                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 group-active:scale-95 ${tile.bg}`}
-                >
-                  <Icon className={tile.fg} size={24} strokeWidth={1.75} />
-                </span>
-                <span className="text-xs font-semibold leading-tight text-slate-700">{t(lang, tile.key)}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </Card>
-
       {offerBanners.length > 0 && (
         <div>
           <h2 className="mb-2 text-sm font-semibold text-slate-500">{t(lang, "shop_special_offers")}</h2>
@@ -173,6 +171,8 @@ export default async function ShopHomePage() {
           />
         </div>
       )}
+
+      <OneTapReorderCard data={oneTapReorder} lang={lang} />
 
       {salePeriodEnd && (
         <Card>
