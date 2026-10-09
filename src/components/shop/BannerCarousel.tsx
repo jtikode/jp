@@ -80,11 +80,10 @@ export function BannerCarousel({
                 <Image
                   src={b.imageUrl}
                   alt={b.title ?? "Banner"}
-                  width={0}
-                  height={0}
+                  width={1080}
+                  height={1350}
                   sizes="85vw"
-                  style={{ width: "100%", height: "auto" }}
-                  className="shrink-0 snap-center rounded-2xl border border-slate-100 bg-white"
+                  className="aspect-[4/5] w-full shrink-0 snap-center rounded-2xl border border-slate-100 bg-white object-contain"
                   unoptimized
                 />
               )}

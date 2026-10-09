@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { uploadPhoto } from "@/lib/blob";
+import { normalizeOfferImage } from "@/lib/offerImage";
 import { sendPushToOrg, isWebPushConfigured } from "@/lib/webPush";
 import { Prisma, type BannerPlacement } from "@/generated/prisma/client";
 import { parseBundleItems, MAX_BUNDLE_ITEMS, type BundleItem } from "@/lib/bannerBundle";
@@ -148,7 +149,16 @@ export async function createBanner(
   if (!remark.ok) return { ok: false, error: remark.error };
 
   const buffer = Buffer.from(await image.arrayBuffer());
-  const imageUrl = await uploadPhoto(`banner-${Date.now()}-${image.name}`, buffer, image.type);
+  let upload: { data: Buffer; name: string; type: string } = { data: buffer, name: image.name, type: image.type };
+  if (placement === "OFFER") {
+    // Offer flyers are all stored at one size so the offers list looks uniform.
+    try {
+      upload = { data: await normalizeOfferImage(buffer), name: `${image.name.replace(/\.[^.]+$/, "")}.jpg`, type: "image/jpeg" };
+    } catch {
+      // Not an image sharp can read: keep the file as uploaded.
+    }
+  }
+  const imageUrl = await uploadPhoto(`banner-${Date.now()}-${upload.name}`, upload.data, upload.type);
 
   await db.shopBanner.create({
     data: {

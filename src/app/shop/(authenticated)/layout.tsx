@@ -8,7 +8,6 @@ import { CartProvider } from "@/components/shop/CartProvider";
 import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
-import { OfferPopup } from "@/components/shop/OfferPopup";
 import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 import { t } from "@/lib/i18n";
 
@@ -47,7 +46,6 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
           </p>
         </main>
         <ShopBottomNav lang={lang} />
-        <OfferPopup lang={lang} />
       </div>
     </CartProvider>
   );
