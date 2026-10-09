@@ -9,6 +9,7 @@ import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
 import { OfferPopup } from "@/components/shop/OfferPopup";
+import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +27,15 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
     where: { id: session.storeId },
     select: { orderGiverWhatsapp: true },
   });
-  if (!store?.orderGiverWhatsapp) {
+  // Skipped while staff are booking for the party: the question is for the retailer.
+  if (!store?.orderGiverWhatsapp && !session.bookedBy) {
     redirect("/shop/who-is-ordering");
   }
 
   return (
     <CartProvider>
       <div className="flex min-h-dvh flex-col bg-slate-100">
+        {session.bookedBy && <StaffBookingBanner partyName={session.storeName} staffName={session.bookedBy} />}
         <OfflineBanner lang={lang} />
         <ShopHeader storeName={session.storeName} lang={lang} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">

@@ -44,6 +44,9 @@ export async function subscribeToPush(
   }
 
   const session = await assertStoreSession();
+  // A staff member taking an order for a shop must not register their own
+  // device for that shop's notifications.
+  if (session.bookedBy) return { ok: false, error: "Notifications are off while booking for a retailer." };
   const db = getOrgScopedDb(session.orgId);
 
   await db.pushSubscription.upsert({

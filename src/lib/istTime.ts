@@ -123,3 +123,8 @@ export function getIstMonthKey(at: Date): string {
   const { year, month } = getIstDateParts(at);
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
+
+/** Current time in ms. Lives here so server components can read the clock without calling Date.now() inline. */
+export function currentTimeMs(): number {
+  return Date.now();
+}

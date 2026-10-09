@@ -26,7 +26,6 @@ const GROUPS: NavGroup[] = [
       { href: "/team/admin/intelligence", label: "Intelligence" },
       { href: "/team/admin/outstanding", label: "Outstanding" },
       { href: "/team/admin/payments", label: "Payments" },
-      { href: "/team/admin/login-activity", label: "Login Activity" },
       { href: "/team/admin/settings", label: "Settings" },
     ],
   },

@@ -5,6 +5,10 @@ export interface RetailerSessionData {
   storeId?: string;
   orgId?: string;
   storeName?: string;
+  // Set only while an admin or salesman is taking an order on a retailer's
+  // behalf from the team area; a real retailer login never carries these.
+  bookedBy?: string;
+  bookedByRole?: string;
 }
 
 const retailerSessionOptions = {
@@ -28,7 +32,7 @@ const retailerSessionOptions = {
 const MOBILE_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;
 
 /** Long-lived signed token the native app stores instead of a browser cookie. */
-export async function issueMobileToken(data: Required<RetailerSessionData>): Promise<string> {
+export async function issueMobileToken(data: Required<Pick<RetailerSessionData, "storeId" | "orgId" | "storeName">>): Promise<string> {
   return sealData(data, { password: process.env.SESSION_SECRET as string, ttl: MOBILE_TOKEN_TTL_SECONDS });
 }
 

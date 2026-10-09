@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/permissions";
 import { AppHeader } from "@/components/AppHeader";
 import { SalesmanNav } from "@/components/salesman/SalesmanNav";
+import { TakeOrderButton } from "@/components/TakeOrderButton";
 import { ScoreBadge } from "@/components/salesman/ScoreBadge";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
@@ -20,7 +21,12 @@ export default async function SalesmanLayout({ children }: { children: React.Rea
         name={session.name ?? ""}
         lang={lang}
         logOutLabel={t(lang, "log_out")}
-        extra={<ScoreBadge lang={lang} score={score} />}
+        extra={
+          <>
+            <TakeOrderButton />
+            <ScoreBadge lang={lang} score={score} />
+          </>
+        }
       />
       <SalesmanNav lang={lang} />
       <main className="flex-1 p-4 sm:p-6">{children}</main>

@@ -202,7 +202,10 @@ export async function placeOrder(
   const offerRemarks = [...bannerMap.values()]
     .filter((b) => b.remark)
     .map((b) => `${b.title ?? "Offer"}: ${b.remark}`);
-  const finalNotes = [notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
+  const bookedNote = session.bookedBy
+    ? `Booked by ${session.bookedBy}${session.bookedByRole ? ` (${session.bookedByRole.toLowerCase()})` : ""} for the retailer`
+    : undefined;
+  const finalNotes = [bookedNote, notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
 
   let order;
   try {

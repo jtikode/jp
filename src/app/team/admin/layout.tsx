@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/permissions";
 import { AppHeader } from "@/components/AppHeader";
+import { TakeOrderButton } from "@/components/TakeOrderButton";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
@@ -15,7 +16,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-dvh flex-col bg-slate-100">
-      <AppHeader title="Admin Dashboard" name={session.name ?? ""} lang={lang} logOutLabel={t(lang, "log_out")} />
+      <AppHeader
+        title="Admin Dashboard"
+        name={session.name ?? ""}
+        lang={lang}
+        logOutLabel={t(lang, "log_out")}
+        extra={<TakeOrderButton />}
+      />
       <AdminNav unseenOrderCount={unseenOrderCount} />
       <main className="flex-1 p-4 sm:p-6">{children}</main>
     </div>
