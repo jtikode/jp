@@ -10,6 +10,8 @@ const PRODUCT_ALIASES = {
   company: ["company", "company name", "manufacturer", "brand"],
   unit: ["unit", "uom", "pack", "pack size"],
   price: ["price", "rate", "unit price", "selling price", "ptr"],
+  // The billing sheet's purchase rate: stored for special-rate shops only, never shown.
+  purchaseRate: ["p.rate", "p rate", "purchase rate", "purchase price", "prate"],
   mrp: ["mrp", "m.r.p", "m.r.p.", "max retail price"],
   taxPercent: ["tax", "tax %", "gst", "gst %", "igst"],
   scheme: ["scheme"],
@@ -79,6 +81,7 @@ export async function importProducts(
     company?: string;
     unit?: string;
     price: number;
+    purchaseRate?: number;
     mrp?: number;
     taxPercent?: number;
     scheme?: string;
@@ -96,6 +99,8 @@ export async function importProducts(
 
     const company = findColumn(row, PRODUCT_ALIASES.company);
     const unit = findColumn(row, PRODUCT_ALIASES.unit);
+    const purchaseRaw = findColumn(row, PRODUCT_ALIASES.purchaseRate);
+    const purchaseNum = purchaseRaw ? Number(purchaseRaw) : NaN;
     const mrpRaw = findColumn(row, PRODUCT_ALIASES.mrp);
     const taxPercentRaw = findColumn(row, PRODUCT_ALIASES.taxPercent);
     const scheme = findColumn(row, PRODUCT_ALIASES.scheme);
@@ -110,6 +115,7 @@ export async function importProducts(
       company,
       unit,
       price,
+      purchaseRate: Number.isFinite(purchaseNum) && purchaseNum > 0 ? purchaseNum : undefined,
       mrp: mrpRaw ? Number(mrpRaw) : undefined,
       taxPercent: taxPercentRaw ? Number(taxPercentRaw) : undefined,
       scheme,
@@ -142,6 +148,7 @@ export async function importProducts(
         company: row.company,
         unit: row.unit,
         price: row.price,
+        purchaseRate: row.purchaseRate,
         mrp: row.mrp,
         taxPercent: row.taxPercent,
         scheme: row.scheme,
@@ -157,6 +164,7 @@ export async function importProducts(
         company: row.company,
         unit: row.unit,
         price: row.price,
+        purchaseRate: row.purchaseRate,
         mrp: row.mrp,
         taxPercent: row.taxPercent,
         scheme: row.scheme,

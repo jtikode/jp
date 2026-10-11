@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRetailerSession } from "@/lib/retailerSession";
 import { getActiveCatalog } from "@/lib/productCatalog";
+import { applyStoreRates, getStoreRatePercent } from "@/lib/storeRates";
 
 // Not covered by middleware's SHOP_PUBLIC_PATHS/auth gate (that only matches
 // "/shop/:path*", not "/api/shop/:path*"), so the session check happens here
@@ -14,6 +15,15 @@ export async function GET() {
   // Every device downloads the whole catalog once per refresh window, so a
   // wave of new retailers arrives as a burst of identical multi-hundred-KB
   // responses. Serialize once per org per half minute instead of per request.
+  // A special-rate shop gets its own copy, built per request (it never goes in
+  // the shared cache), so nobody receives another shop's rates.
+  if (await getStoreRatePercent(session.orgId, session.storeId)) {
+    const own = await applyStoreRates(session.orgId, session.storeId, await getActiveCatalog(session.orgId));
+    return new NextResponse(JSON.stringify({ products: own }), {
+      headers: { "Content-Type": "application/json", "Cache-Control": "private, max-age=300" },
+    });
+  }
+
   const cached = snapshotCache.get(session.orgId);
   let body: string;
   if (cached && Date.now() - cached.at < 30_000) {

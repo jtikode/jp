@@ -2,6 +2,7 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog, type CatalogProduct } from "@/lib/productCatalog";
 import { getHotSellingProductIds } from "@/lib/hotSelling";
+import { getRateAdjuster } from "@/lib/storeRates";
 import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } from "@/lib/wednesdayDeals";
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
@@ -191,6 +192,7 @@ export async function searchProductCatalog(
   // retailer can still see and order something that's momentarily at 0.
   const filtered = cascadingProductSearch(scoped, params.query ?? "", (p) => p.name, (p) => p.composition);
 
+  const { adjust } = await getRateAdjuster(orgId, storeId);
   const pageItems = filtered.slice(params.offset, params.offset + params.limit);
   const hasMore = filtered.length > params.offset + params.limit;
 
@@ -209,7 +211,7 @@ export async function searchProductCatalog(
                 name: alt.name,
                 company: alt.company,
                 unit: alt.unit,
-                price: alt.price,
+                price: adjust(alt.id, alt.price),
                 mrp: alt.mrp,
                 taxPercent: alt.taxPercent,
                 scheme: alt.scheme,
@@ -229,7 +231,7 @@ export async function searchProductCatalog(
       name: p.name,
       company: p.company,
       unit: p.unit,
-      price: p.price,
+      price: adjust(p.id, p.price),
       mrp: p.mrp,
       taxPercent: p.taxPercent,
       scheme: p.scheme,

@@ -9,6 +9,7 @@ import { sendOrderNotificationEmail } from "@/lib/orderEmail";
 import { orderStatusLabel } from "@/lib/i18n";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
+import { getRateAdjuster } from "@/lib/storeRates";
 import { parseBundleItems, computeFreeUnits } from "@/lib/bannerBundle";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
@@ -165,6 +166,10 @@ export async function placeOrder(
   // this same product — otherwise a client could pair a cheap deal's id
   // with an unrelated, expensive product to buy it at the wrong price.
   const today = getStartOfIstDayUtc();
+  // Special-rate shops pay purchase rate + their percentage on the plain list
+  // price; clearance, Wednesday deal and offer prices below are never touched.
+  const rates = await getRateAdjuster(session.orgId, session.storeId);
+  let specialLines = 0;
   const orderLines = cleanLines.map((l) => {
     const product = productMap.get(l.productId)!;
     const expiryItem = l.expiryItemId ? expiryItemMap.get(l.expiryItemId) : undefined;
@@ -179,7 +184,13 @@ export async function placeOrder(
       ? Number(expiryItem!.specialRate)
       : weeklyDealIsValid
         ? Number(dealMap.get(l.dealId!)!.dealPrice)
-        : offerPriceFor(l) ?? Number(product.price);
+        : (offerPriceFor(l) ??
+          (() => {
+            const normal = Number(product.price);
+            const special = rates.adjust(product.id, normal);
+            if (special !== normal) specialLines += 1;
+            return special;
+          })());
 
     // A free offer unit never stacks with a clearance/deal rate on the same line.
     const offer = expiryDealIsValid || weeklyDealIsValid ? { free: 0 } : freeUnitsFor(l);
@@ -209,7 +220,11 @@ export async function placeOrder(
   const bookedNote = session.bookedBy
     ? `Booked by ${session.bookedBy}${session.bookedByRole ? ` (${session.bookedByRole.toLowerCase()})` : ""} for the retailer`
     : undefined;
-  const finalNotes = [bookedNote, notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
+  const rateNote =
+    rates.special && specialLines > 0
+      ? `SPECIAL RATE: purchase rate + ${rates.percent}% on ${specialLines} item${specialLines === 1 ? "" : "s"}`
+      : undefined;
+  const finalNotes = [rateNote, bookedNote, notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
 
   let order;
   try {
@@ -425,6 +440,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
     getActiveCatalog(session.orgId),
   ]);
 
+  const { adjust: adjustRate } = await getRateAdjuster(session.orgId, session.storeId);
   const productById = new Map(catalog.map((p) => [p.id, p]));
   const productByNormalizedName = new Map(catalog.map((p) => [normalizeName(p.name), p]));
 
@@ -439,7 +455,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       productId: product.id,
       name: product.name,
       company: product.company,
-      unitPrice: product.price,
+      unitPrice: adjustRate(product.id, product.price),
       stock: product.stock,
       usualQuantity: Math.round(Number(g._sum.quantity ?? 0)),
       source: "ordered",
@@ -454,7 +470,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
       productId: product.id,
       name: product.name,
       company: product.company,
-      unitPrice: product.price,
+      unitPrice: adjustRate(product.id, product.price),
       stock: product.stock,
       usualQuantity: Math.round(Number(g._sum.quantity ?? 0)),
       source: "history",

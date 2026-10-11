@@ -254,6 +254,10 @@ model Store {
   // own registered `phone`), since one shared login can be used by different
   // staff at the store. Null means we haven't asked yet.
   orderGiverWhatsapp String?
+  // Set only for shops on a special rate: they pay purchase rate + this
+  // percentage (e.g. 10 or 15) instead of the normal selling rate, but never
+  // more than the normal rate. Null means the normal rate list.
+  specialRatePercent Decimal?
 
   org               Organization          @relation(fields: [orgId], references: [id])
   visits            Visit[]
@@ -680,6 +684,9 @@ model Product {
   company       String?
   unit          String?
   price         Decimal
+  // Purchase rate (billing software's P.Rate). Never sent to retailers: it only
+  // feeds the special rate some shops get (purchaseRate + a percentage).
+  purchaseRate  Decimal?
   // Reference/pre-discount price shown struck through next to the selling
   // price, and the applicable GST-style tax rate, both purely informational.
   mrp           Decimal?

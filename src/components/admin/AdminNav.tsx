@@ -50,6 +50,7 @@ const GROUPS: NavGroup[] = [
       { href: "/team/admin/imports", label: "Imports" },
       { href: "/team/admin/orders", label: "Orders" },
       { href: "/team/admin/banners", label: "Banners" },
+      { href: "/team/admin/special-rates", label: "Special Rates" },
       { href: "/team/admin/loyalty-tiers", label: "Loyalty Tiers" },
       { href: "/team/admin/requested-products", label: "Requested Products" },
     ],

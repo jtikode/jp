@@ -4,6 +4,7 @@ import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { QuickCheckList } from "@/components/shop/QuickCheckList";
+import { getRateAdjuster } from "@/lib/storeRates";
 
 export default async function ShopQuickCheckPage() {
   const session = await requireStoreSession();
@@ -14,6 +15,7 @@ export default async function ShopQuickCheckPage() {
     where: { active: true },
     orderBy: { name: "asc" },
   });
+  const { adjust } = await getRateAdjuster(session.orgId, session.storeId);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -29,7 +31,7 @@ export default async function ShopQuickCheckPage() {
           name: p.name,
           company: p.company,
           unit: p.unit,
-          price: Number(p.price),
+          price: adjust(p.id, Number(p.price)),
           mrp: p.mrp != null ? Number(p.mrp) : null,
           composition: p.composition,
           stock: p.stock,

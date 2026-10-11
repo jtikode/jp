@@ -4,6 +4,7 @@ import { t } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { LowestRateList, type LowestRateGroup } from "@/components/shop/LowestRateList";
 import { getActiveCatalog } from "@/lib/productCatalog";
+import { applyStoreRates } from "@/lib/storeRates";
 import { TOP_SELLING_COMBOS, matchTopCombo } from "@/lib/topSellingCombos";
 
 // Only this many cheapest in-stock options are shown per combination.
@@ -13,7 +14,7 @@ export default async function ShopLowestRatePage() {
   const session = await requireStoreSession();
   const lang = await getLang();
 
-  const catalog = await getActiveCatalog(session.orgId);
+  const catalog = await applyStoreRates(session.orgId, session.storeId, await getActiveCatalog(session.orgId));
   // stock: null means the admin hasn't uploaded a quantity for this item
   // yet — treat that as "unknown", not "out of stock", so it isn't hidden
   // here before stock tracking has caught up. Only an explicit 0 excludes.
