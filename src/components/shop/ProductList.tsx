@@ -275,24 +275,28 @@ export function ProductList({
           const alternatives = p.alternatives;
           const isExpanded = expandedAlternatives.has(p.id);
           return (
-            <div key={p.id} className="rounded-xl border-2 border-slate-200 bg-white p-3">
-              <div className="flex items-center justify-between gap-3">
-              {p.imageUrl && <ProductThumb src={p.imageUrl} alt={p.name} size={72} />}
+            <div key={p.id} className="rounded-xl border-2 border-slate-200 bg-white p-2.5">
+              <div className="flex items-center justify-between gap-2.5">
+              {p.imageUrl && <ProductThumb src={p.imageUrl} alt={p.name} size={48} />}
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-1.5 font-semibold text-slate-900">
+                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm font-semibold leading-tight text-slate-900">
                   <span>{p.name}</span>
                   {p.hot && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
-                      <Flame size={12} strokeWidth={2} />
-                      {t(lang, "shop_hot_selling")}
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[11px] font-bold leading-none text-orange-700"
+                      title={t(lang, "shop_hot_selling")}
+                    >
+                      <Flame size={11} strokeWidth={2} />
+                      {t(lang, "shop_hot_short")}
                     </span>
                   )}
                 </p>
-                {p.composition && <p className="break-words text-xs text-slate-400">{p.composition}</p>}
-                <p className="text-sm text-slate-500">
-                  {[p.company, p.unit].filter(Boolean).join(" · ") || " "}
-                </p>
-                <p className="flex flex-wrap items-baseline gap-2">
+                {(p.composition || p.company || p.unit) && (
+                  <p className="line-clamp-2 break-words text-xs leading-snug text-slate-500">
+                    {[p.composition, p.company, p.unit].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                   <span className="text-sm font-bold text-blue-700">
                     {p.price > 0 || p.deal ? `₹${(p.deal ? p.deal.price : p.price).toLocaleString("en-IN")}` : "—"}
                   </span>
@@ -340,18 +344,6 @@ export function ProductList({
                     ))
                   )}
                 </p>
-                {p.expiryDate && (
-                  <p className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                    <span>
-                      {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
-                    </span>
-                    {isNearExpiry(p) && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 font-bold text-red-700">
-                        {t(lang, "shop_near_expiry")}
-                      </span>
-                    )}
-                  </p>
-                )}
                 {p.category && (
                   <span className="mt-1 mr-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                     {p.category}
@@ -367,16 +359,32 @@ export function ProductList({
                     {t(lang, "shop_deal_limit_left")}: {p.deal.remainingQty}
                   </p>
                 )}
-                {alternatives.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => toggleAlternatives(p.id)}
-                    className="mt-1 text-xs font-semibold text-blue-700 hover:underline"
-                  >
-                    {isExpanded
-                      ? t(lang, "shop_hide_alternatives")
-                      : `${t(lang, "shop_show_alternatives")} (${alternatives.length})`}
-                  </button>
+                {(alternatives.length > 0 || p.expiryDate) && (
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                    {alternatives.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleAlternatives(p.id)}
+                        className="text-xs font-semibold text-blue-700 hover:underline"
+                      >
+                        {isExpanded
+                          ? t(lang, "shop_hide_alternatives")
+                          : `${t(lang, "shop_show_alternatives")} (${alternatives.length})`}
+                      </button>
+                    )}
+                    {p.expiryDate && (
+                      <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span>
+                          {t(lang, "shop_expiry")}: {new Date(p.expiryDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                        </span>
+                        {isNearExpiry(p) && (
+                          <span className="rounded-full bg-red-100 px-1.5 py-0.5 font-bold text-red-700">
+                            {t(lang, "shop_near_expiry")}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
               <QuantityStepper

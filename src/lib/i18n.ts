@@ -390,6 +390,7 @@ export const translations = {
   shop_usual_qty: { en: "Usual qty", mr: "नेहमीचे प्रमाण" },
   shop_add_to_cart_checkout: { en: "Add to Cart & Checkout", mr: "कार्टमध्ये टाका आणि पुढे जा" },
   shop_hot_selling: { en: "Hot Selling", mr: "जास्त खपणारे" },
+  shop_hot_short: { en: "Hot", mr: "हॉट" },
   shop_menu_hot_selling: { en: "Hot Selling", mr: "जास्त खपणारे" },
   shop_menu_lowest_rate: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
   shop_lowest_rate_heading: { en: "Lowest Rate", mr: "सर्वात कमी दर" },
