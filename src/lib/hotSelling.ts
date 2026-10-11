@@ -2,8 +2,8 @@ import { unstable_cache } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { normalizeName } from "@/lib/normalizeName";
 import { getActiveCatalog } from "@/lib/productCatalog";
+import { FEATURED_PRODUCT_IDS } from "@/lib/featuredProducts";
 
-const HOT_SELLING_COUNT = 50;
 const DEAD_STOCK_COUNT = 100;
 
 // "Selling more"/"not selling" both come from the same combined signal:
@@ -57,17 +57,13 @@ async function getProductSalesScores(orgId: string): Promise<Map<string, number>
   return new Map(await getCachedProductSalesScores(orgId));
 }
 
-// Top HOT_SELLING_COUNT products by combined sales volume get marked hot.
+// Hot Selling is a hand-picked list (see featuredProducts.ts), in that order,
+// rather than the top sellers by volume. The Set keeps insertion order, which
+// is how the catalog index ranks these first in the main order list too.
 export async function getHotSellingProductIds(orgId: string): Promise<Set<string>> {
-  const scores = await getProductSalesScores(orgId);
-
-  const ranked = [...scores.entries()]
-    .filter(([, score]) => score > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, HOT_SELLING_COUNT)
-    .map(([productId]) => productId);
-
-  return new Set(ranked);
+  const catalog = await getActiveCatalog(orgId);
+  const active = new Set(catalog.map((p) => p.id));
+  return new Set(FEATURED_PRODUCT_IDS.filter((id) => active.has(id)));
 }
 
 export interface DeadStockProduct {
