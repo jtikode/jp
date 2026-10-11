@@ -3,15 +3,14 @@
 // list (product id, then its name as a reminder) to change what retailers see.
 export const FEATURED_PRODUCTS: ReadonlyArray<{ id: string; name: string }> = [
   { id: "cmsox34ub0037cctcryvd37ci", name: "OMEE CAP. omeprazole 20 S" },
-  { id: "cmsox5pww00gfcctcmw6xvimq", name: "COFSILS NEW ORANGE 33X10" },
+  { id: "cmumz180000lq94tcw8nl6dze", name: "COFSILS NEW ORANGE JAR 33X10" },
   { id: "cmsox56hy00dmcctcjn3cy717", name: "AZICIP 500 TAB. 20*3 S" },
   { id: "cmsox6v7k00mbcctcu6n4vltl", name: "MOVEXX SP TAB 20*10 S" },
   { id: "cmsox5lng00fscctcqi0uu02t", name: "CIPLADINE OINT 10GM 12*10GM" },
   { id: "cmsox5vwe00hacctchdn1h1tc", name: "OMNIGEL 10 GM 10 GM" },
   { id: "cmumz3rhv016w94tce1b3w2sn", name: "INTAGESIC MR TABLET 100*10S" },
-  { id: "cmsox99zu00zpcctcqduo0u4s", name: "INTAGESIC MR GIFT INSIDE BOX 10S" },
   { id: "cmsox52mb00d2cctcru0aift2", name: "LEVOZET M TAB 20*10 S" },
-  { id: "cmsox543l00dacctcer3ow1s4", name: "SKINSHINE SOAP 75 GM" },
+  { id: "cmumz0smj00i594tcvhuvxyge", name: "SKINSHINE SOAP (REGU) 75 GM" },
   { id: "cmsoxor0702xocctcqpoal711", name: "DERMI 5 CREAM 20X15GM" },
   { id: "cmsoxoqmt02xmcctcy7gp1zo2", name: "CLOBET GM CREAM RC 20*10 GM" },
   { id: "cmsoxoruw02xtcctchknl5rus", name: "MELAMET CREAM 20X15 GM" },
