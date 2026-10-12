@@ -17,6 +17,8 @@ import { SalesmanGlanceTable, type SalesmanGlanceRow } from "@/components/admin/
 import { getUnifiedRecords } from "@/lib/adminRecords";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 import { LoginActivitySections } from "@/components/admin/LoginActivitySections";
+import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
+import { storeLabel } from "@/lib/storeLabel";
 
 const RANGES = [
   { key: "day", label: "Today" },
@@ -43,7 +45,7 @@ export default async function AdminDashboardPage({
   const rangeStart =
     range === "day" ? getStartOfIstDayUtc(today) : range === "week" ? getStartOfIstWeekUtc(today) : monthStart;
 
-  const [routes, employees, records, salesmen, todayAgg, monthAgg, targets, orderTotals, cancelledCount] = await Promise.all([
+  const [routes, employees, records, salesmen, todayAgg, monthAgg, targets, orderTotals, cancelledCount, recentOrders] = await Promise.all([
     db.route.findMany({ orderBy: { name: "asc" } }),
     db.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     getUnifiedRecords(session.orgId, params),
@@ -69,6 +71,23 @@ export default async function AdminDashboardPage({
       _sum: { totalAmount: true },
     }),
     db.order.count({ where: { createdAt: { gte: rangeStart }, status: "CANCELLED" } }),
+    // The orders themselves for the same window, newest first.
+    db.order.findMany({
+      where: { createdAt: { gte: rangeStart } },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: {
+        id: true,
+        orderNumber: true,
+        createdAt: true,
+        totalAmount: true,
+        status: true,
+        notes: true,
+        adminSeenAt: true,
+        store: { select: { name: true, externalCode: true } },
+        items: { select: { productName: true, quantity: true } },
+      },
+    }),
   ]);
   const ordersReceived = orderTotals._count._all;
   const ordersValue = Number(orderTotals._sum.totalAmount ?? 0);
@@ -129,6 +148,92 @@ export default async function AdminDashboardPage({
             Excludes {cancelledCount} cancelled order{cancelledCount === 1 ? "" : "s"}.
           </p>
         )}
+      </Card>
+
+      <Card className="overflow-x-auto">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-slate-900">
+            Orders Received ({recentOrders.length}
+            {ordersReceived + cancelledCount > recentOrders.length ? ` of ${ordersReceived + cancelledCount}` : ""})
+          </h2>
+          <Link href="/team/admin/orders" className="text-sm font-semibold text-blue-700 hover:underline">
+            View all orders
+          </Link>
+        </div>
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-slate-500">
+              <th className="py-2 pr-3">Order #</th>
+              <th className="py-2 pr-3">Time</th>
+              <th className="py-2 pr-3">Shop</th>
+              <th className="py-2 pr-3">Items</th>
+              <th className="py-2 pr-3">Total</th>
+              <th className="py-2 pr-3">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentOrders.map((o) => {
+              const isOtc = !!o.notes?.startsWith("CIPLA OTC");
+              const isSpecial = !!o.notes?.includes("SPECIAL RATE");
+              return (
+                <tr key={o.id} className="border-b border-slate-100 align-top">
+                  <td className="py-2 pr-3 font-mono font-semibold text-slate-900">
+                    #{o.orderNumber}
+                    {!o.adminSeenAt && (
+                      <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 font-sans text-[10px] font-bold uppercase text-red-700">
+                        New
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-3 whitespace-nowrap text-slate-600">
+                    {o.createdAt.toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Asia/Kolkata",
+                    })}
+                  </td>
+                  <td className="py-2 pr-3 font-medium text-slate-900">
+                    {storeLabel(o.store.name, o.store.externalCode)}
+                    {isOtc && (
+                      <span className="ml-1.5 rounded-full bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700">
+                        CIPLA OTC
+                      </span>
+                    )}
+                    {isSpecial && (
+                      <span className="ml-1.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
+                        SPECIAL RATE
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-3 text-slate-600">
+                    {o.items.length} item{o.items.length === 1 ? "" : "s"}
+                    <span className="block max-w-xs truncate text-xs text-slate-400">
+                      {o.items
+                        .slice(0, 3)
+                        .map((i) => `${i.productName.replace(/\s+/g, " ")} x${i.quantity}`)
+                        .join(", ")}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3 font-semibold whitespace-nowrap text-slate-900">
+                    ₹{Number(o.totalAmount).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="py-2 pr-3">
+                    <OrderStatusSelect orderId={o.id} status={o.status} />
+                  </td>
+                </tr>
+              );
+            })}
+            {recentOrders.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-5 text-center text-slate-400">
+                  No orders in this period.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </Card>
 
       <Card className="overflow-x-auto">
