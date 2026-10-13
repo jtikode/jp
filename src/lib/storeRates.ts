@@ -5,6 +5,8 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 //  - never higher than the normal rate (some P.Rate values come from a
 //    different pack size and would otherwise overcharge),
 //  - items with no usable purchase rate stay at the normal rate,
+//  - products of the Smart / Smartway / S Iconic / S Eco companies are left out
+//    (see isRateExcludedCompany),
 //  - offer, deal and clearance prices are fixed elsewhere and are not touched
 //    by this; callers only pass the plain list price through here.
 // The purchase rate itself never leaves the server: callers receive only the
@@ -20,16 +22,36 @@ export function specialPrice(price: number, purchaseRate: number | null | undefi
 const PURCHASE_TTL_MS = 60_000;
 const purchaseCache = new Map<string, { at: number; value: Promise<Map<string, number>> }>();
 
+// Smart, Smartway (SMW), S Iconic and S Eco ranges never get a special rate,
+// whatever spelling the billing software gives the company (SMART 2, SMW
+// WELLNESS, 2S ICONIC, ZSMART, DEL SMW 2026 ...).
+const EXCLUDED_COMPANY = /^(DEL\s+)?(2\s*)?(Z\s*)?(SMART|SMW|S\s*ICONIC|S\s*ECO)/;
+const squash = (s: string) => s.replace(/\s+/g, " ").trim().toUpperCase();
+
+export function isRateExcludedCompany(company: string | null | undefined): boolean {
+  return !!company && EXCLUDED_COMPANY.test(squash(company));
+}
+
 function getPurchaseRates(orgId: string): Promise<Map<string, number>> {
   const hit = purchaseCache.get(orgId);
   if (hit && Date.now() - hit.at < PURCHASE_TTL_MS) return hit.value;
   const value = (async () => {
     const db = getOrgScopedDb(orgId);
     const rows = await db.product.findMany({
-      where: { active: true, purchaseRate: { not: null } },
-      select: { id: true, purchaseRate: true },
+      where: { active: true },
+      select: { id: true, name: true, company: true, purchaseRate: true },
     });
-    return new Map(rows.map((r) => [r.id, Number(r.purchaseRate)]));
+    // Old billing imports left a copy of some products with no company: those
+    // take the company of the same-named product that has one.
+    const companyByName = new Map<string, string>();
+    for (const r of rows) if (r.company) companyByName.set(squash(r.name), r.company);
+    const out = new Map<string, number>();
+    for (const r of rows) {
+      if (r.purchaseRate == null) continue;
+      if (isRateExcludedCompany(r.company ?? companyByName.get(squash(r.name)))) continue;
+      out.set(r.id, Number(r.purchaseRate));
+    }
+    return out;
   })();
   purchaseCache.set(orgId, { at: Date.now(), value });
   value.catch(() => {
