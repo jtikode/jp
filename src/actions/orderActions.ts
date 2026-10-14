@@ -170,6 +170,7 @@ export async function placeOrder(
   // price; clearance, Wednesday deal and offer prices below are never touched.
   const rates = await getRateAdjuster(session.orgId, session.storeId);
   let specialLines = 0;
+  const specialIds = new Set<string>();
   const orderLines = cleanLines.map((l) => {
     const product = productMap.get(l.productId)!;
     const expiryItem = l.expiryItemId ? expiryItemMap.get(l.expiryItemId) : undefined;
@@ -188,7 +189,10 @@ export async function placeOrder(
           (() => {
             const normal = Number(product.price);
             const special = rates.adjust(product.id, normal);
-            if (special !== normal) specialLines += 1;
+            if (special !== normal) {
+              specialLines += 1;
+              specialIds.add(product.id);
+            }
             return special;
           })());
 
@@ -283,7 +287,9 @@ export async function placeOrder(
     ordersTodayCount,
     totalAmount,
     notes: finalNotes,
+    goldPercent: rates.special ? rates.percent : null,
     lines: orderLines.map((l) => ({
+      gold: specialIds.has(l.productId),
       productName: l.productName,
       quantity: l.quantity,
       unitPrice: l.unitPrice,

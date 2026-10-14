@@ -5,7 +5,7 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 //  - never higher than the normal rate (some P.Rate values come from a
 //    different pack size and would otherwise overcharge),
 //  - items with no usable purchase rate stay at the normal rate,
-//  - products of the Smart / Smartway / S Iconic / S Eco companies are left out
+//  - products of the Smart / Smartway / S Iconic / S Eco / JP Scheme / Theogen companies are left out
 //    (see isRateExcludedCompany),
 //  - offer, deal and clearance prices are fixed elsewhere and are not touched
 //    by this; callers only pass the plain list price through here.
@@ -22,10 +22,10 @@ export function specialPrice(price: number, purchaseRate: number | null | undefi
 const PURCHASE_TTL_MS = 60_000;
 const purchaseCache = new Map<string, { at: number; value: Promise<Map<string, number>> }>();
 
-// Smart, Smartway (SMW), S Iconic and S Eco ranges never get a special rate,
-// whatever spelling the billing software gives the company (SMART 2, SMW
-// WELLNESS, 2S ICONIC, ZSMART, DEL SMW 2026 ...).
-const EXCLUDED_COMPANY = /^(DEL\s+)?(2\s*)?(Z\s*)?(SMART|SMW|S\s*ICONIC|S\s*ECO)/;
+// Smart, Smartway (SMW), S Iconic and S Eco ranges, plus JP SCHEME and Theogen,
+// never get a special rate, whatever spelling the billing software gives the
+// company (SMART 2, SMW WELLNESS, 2S ICONIC, ZSMART, DEL SMW 2026 ...).
+const EXCLUDED_COMPANY = /^((DEL\s+)?(2\s*)?(Z\s*)?(SMART|SMW|S\s*ICONIC|S\s*ECO)|JP\s*SCHEME|THEO(GEN|N))/;
 const squash = (s: string) => s.replace(/\s+/g, " ").trim().toUpperCase();
 
 export function isRateExcludedCompany(company: string | null | undefined): boolean {

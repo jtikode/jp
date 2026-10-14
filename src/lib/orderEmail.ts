@@ -6,6 +6,8 @@ export interface OrderEmailLine {
   unitPrice: number;
   lineTotal: number;
   scheme?: string;
+  // True when this line carries the Gold Member special rate.
+  gold?: boolean;
 }
 
 /**
@@ -28,6 +30,8 @@ export async function sendOrderNotificationEmail(params: {
   orderGiverWhatsapp?: string | null;
   totalAmount: number;
   notes?: string;
+  // Set when the ordering shop is a Gold Member (special-rate shop).
+  goldPercent?: number | null;
   lines: OrderEmailLine[];
   // Count of this store's orders today, including this one — lets billing
   // spot a repeat order from the same store the same day (a common sign the
@@ -55,6 +59,8 @@ async function attemptSend(params: {
   orderGiverWhatsapp?: string | null;
   totalAmount: number;
   notes?: string;
+  // Set when the ordering shop is a Gold Member (special-rate shop).
+  goldPercent?: number | null;
   lines: OrderEmailLine[];
   ordersTodayCount?: number;
 }): Promise<void> {
@@ -70,12 +76,27 @@ async function attemptSend(params: {
   const rows = params.lines
     .map(
       (l) =>
-        `<tr><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;">${l.productName}${l.scheme ? `<br/><span style="color:#b45309;font-size:12px;font-weight:bold;">Scheme: ${l.scheme}</span>` : ""}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">${l.quantity}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.unitPrice.toLocaleString("en-IN")}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.lineTotal.toLocaleString("en-IN")}</td></tr>`,
+        `<tr${l.gold ? ' style="background:#fde047;"' : ""}><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;">${l.gold ? `<span style="background:#78350f;color:#fef08a;font-size:11px;font-weight:bold;border-radius:4px;padding:1px 5px;">&#9733; GOLD RATE</span> ` : ""}${l.productName}${l.scheme ? `<br/><span style="color:#b45309;font-size:12px;font-weight:bold;">Scheme: ${l.scheme}</span>` : ""}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">${l.quantity}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.unitPrice.toLocaleString("en-IN")}</td><td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">₹${l.lineTotal.toLocaleString("en-IN")}</td></tr>`,
     )
     .join("");
 
+  const isGold = params.goldPercent != null;
+  const goldLineCount = params.lines.filter((l) => l.gold).length;
+  const goldBanner = isGold
+    ? `<div style="background:#78350f;color:#fef08a;border-radius:8px;padding:10px 14px;margin:0 0 12px;">
+        <div style="font-size:18px;font-weight:bold;">&#9733; GOLD MEMBER ORDER &#9733;</div>
+        <div style="font-size:14px;margin-top:4px;">${
+          goldLineCount > 0
+            ? `Special rate (purchase rate + ${params.goldPercent}%): ${goldLineCount} item${goldLineCount === 1 ? "" : "s"} marked GOLD RATE below. <strong>Change the rate in billing to the Rate shown</strong> for those items, not the normal list rate.`
+            : "Gold Member shop, but no item on this order carries the special rate. Bill at the rates shown."
+        }</div>
+      </div>`
+    : "";
+
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:480px;">
+    <div style="${isGold ? "background:#fcd34d;padding:14px;border-radius:10px;" : ""}">
+    <div style="font-family:Arial,sans-serif;max-width:480px;${isGold ? "background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:12px;" : ""}">
+      ${goldBanner}
       <h2 style="margin-bottom:4px;">New order from ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""}</h2>
       <p style="color:#64748b;margin-top:0;">Order #${params.orderNumber}</p>
       ${repeatBanner}
@@ -97,12 +118,13 @@ async function attemptSend(params: {
       </p>
       ${params.notes ? `<p style="color:#475569;"><strong>Notes:</strong> ${params.notes}</p>` : ""}
     </div>
+    </div>
   `;
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber}: ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `${isGold ? `[GOLD ${params.goldPercent}%] ` : ""}${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber}: ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a
