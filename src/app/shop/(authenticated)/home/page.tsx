@@ -12,6 +12,7 @@ import {
   Wallet,
   Sparkles,
   BellRing,
+  Crown,
 } from "lucide-react";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireStoreSession } from "@/lib/retailerPermissions";
@@ -26,6 +27,7 @@ import { getActiveWednesdayDeals, getRemainingDealQtyMap, isWednesdayToday } fro
 import { getStartOfIstYearUtc } from "@/lib/istTime";
 import { COMPANY_SALE_GROUPS, formatSaleDate } from "@/lib/companySales";
 import { getOfferBundle } from "@/lib/bannerBundle";
+import { getStoreRatePercent } from "@/lib/storeRates";
 
 const MENU_TILES = [
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
@@ -45,6 +47,7 @@ export default async function ShopHomePage() {
   const session = await requireStoreSession();
   const db = getOrgScopedDb(session.orgId);
   const lang = await getLang();
+  const gold = (await getStoreRatePercent(session.orgId, session.storeId)) != null;
 
   const startOfYear = getStartOfIstYearUtc();
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
@@ -98,6 +101,24 @@ export default async function ShopHomePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {gold && (
+        <section className="overflow-hidden rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-300 via-yellow-200 to-amber-400 p-4 shadow-md">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-900 text-yellow-200 shadow">
+              <Crown size={26} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-extrabold tracking-widest text-amber-900">{t(lang, "shop_gold_badge")}</p>
+              <h2 className="text-lg font-extrabold leading-tight text-amber-950">{t(lang, "shop_gold_title")}</h2>
+            </div>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-amber-950">{t(lang, "shop_gold_sub")}</p>
+          <p className="mt-2 rounded-xl bg-amber-950 px-3 py-2 text-sm font-bold leading-snug text-yellow-100">
+            {t(lang, "shop_gold_only_app")}
+          </p>
+        </section>
+      )}
+
       <p className="text-center text-xs font-medium text-blue-700">{t(lang, "shop_ai_tagline")}</p>
 
       <Card>

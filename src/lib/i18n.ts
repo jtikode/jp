@@ -281,6 +281,16 @@ export const translations = {
   },
   shop_tax: { en: "Tax", mr: "कर" },
   shop_scheme: { en: "Scheme", mr: "स्कीम" },
+  shop_gold_badge: { en: "GOLD MEMBER", mr: "गोल्ड मेंबर" },
+  shop_gold_title: { en: "Welcome, Gold Member", mr: "स्वागत आहे, गोल्ड मेंबर" },
+  shop_gold_sub: {
+    en: "Your special Gold Member rates are active on every product.",
+    mr: "तुमचे खास गोल्ड मेंबर दर सर्व उत्पादनांवर सुरू आहेत.",
+  },
+  shop_gold_only_app: {
+    en: "These rates are applicable ONLY on orders placed in this app.",
+    mr: "हे दर फक्त या ॲपमधून दिलेल्या ऑर्डरवरच लागू आहेत.",
+  },
   shop_pending_bills_heading: { en: "Pending Bills", mr: "थकीत बिले" },
   shop_total_outstanding: { en: "Total Outstanding", mr: "एकूण थकबाकी" },
   total_outstanding: { en: "Total Outstanding", mr: "एकूण थकबाकी" },

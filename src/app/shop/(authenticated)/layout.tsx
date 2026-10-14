@@ -9,6 +9,7 @@ import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
 import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
+import { getStoreRatePercent } from "@/lib/storeRates";
 import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -31,12 +32,19 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
     redirect("/shop/who-is-ordering");
   }
 
+  // Shops on a special rate are Gold Members: gold header and background.
+  const gold = (await getStoreRatePercent(session.orgId, session.storeId)) != null;
+
   return (
     <CartProvider>
-      <div className="flex min-h-dvh flex-col bg-slate-100">
+      <div
+        className={`flex min-h-dvh flex-col ${
+          gold ? "bg-gradient-to-b from-amber-100 via-amber-50 to-amber-50" : "bg-slate-100"
+        }`}
+      >
         {session.bookedBy && <StaffBookingBanner partyName={session.storeName} staffName={session.bookedBy} />}
         <OfflineBanner lang={lang} />
-        <ShopHeader storeName={session.storeName} lang={lang} />
+        <ShopHeader storeName={session.storeName} lang={lang} gold={gold} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">
           <OfflineCatalogSync />
           <PendingOrdersSync lang={lang} />
