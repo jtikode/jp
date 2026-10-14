@@ -230,6 +230,22 @@ export async function placeOrder(
       : undefined;
   const finalNotes = [rateNote, bookedNote, notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
 
+  // Safety net for a double tap or a quick resend that arrives with its own
+  // request id: an identical basket from the same shop in the last 90 seconds
+  // is the same order, so hand back the one already placed.
+  const basketKey = (ls: { productId: string; quantity: unknown }[]) =>
+    ls.map((l) => `${l.productId}:${Number(l.quantity)}`).sort().join("|");
+  const justPlaced = await db.order.findMany({
+    where: {
+      storeId: session.storeId,
+      status: { not: "CANCELLED" },
+      createdAt: { gte: new Date(Date.now() - 90_000) },
+    },
+    select: { id: true, items: { select: { productId: true, quantity: true } } },
+  });
+  const sameBasket = justPlaced.find((o) => basketKey(o.items) === basketKey(orderLines));
+  if (sameBasket) return { ok: true, orderId: sameBasket.id };
+
   let order;
   try {
     order = await db.$transaction(async (tx) => {

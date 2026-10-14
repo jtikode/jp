@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
@@ -18,6 +18,12 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  // Set synchronously on the first tap (state updates land too late to stop a
+  // quick second tap) so one cart can never be submitted twice at once.
+  const submittingRef = useRef(false);
+  // One id per cart: every attempt for this cart reuses it, so the server can
+  // recognise a resend and hand back the same order instead of a duplicate.
+  const requestIdRef = useRef<string | null>(null);
   // Set once the server accepted the order: shows the full-screen
   // "Order Placed!" page instead of dropping straight into the order.
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
@@ -26,6 +32,18 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
   const offerRemarks = [...new Set(items.map((i) => i.bannerRemark).filter((r): r is string => !!r))];
 
   async function handlePlaceOrder() {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setPlacing(true);
+    try {
+      await submitOrder();
+    } finally {
+      submittingRef.current = false;
+      setPlacing(false);
+    }
+  }
+
+  async function submitOrder() {
     setError(null);
 
     // A heads-up, not a block — placeOrder still accepts these lines (the
@@ -43,7 +61,6 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
       // normal placeOrder flow rather than blocking the order on this.
     }
 
-    setPlacing(true);
     const lines = items.map((i) => ({
       productId: i.productId,
       quantity: i.quantity,
@@ -57,13 +74,14 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
     // recognize a resend of an order that may have already committed, since
     // this exact tap can succeed server-side even if the response never
     // reaches the client.
-    const clientRequestId = crypto.randomUUID();
+    const clientRequestId = (requestIdRef.current ??= crypto.randomUUID());
     try {
       const result = await placeOrder(lines, notes, clientRequestId);
       if (!result.ok) {
         setError(result.error ?? "Could not place order.");
         return;
       }
+      requestIdRef.current = null;
       clear();
       setPlacedOrderId(result.orderId ?? null);
     } catch (err) {
@@ -72,13 +90,12 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
       // PendingOrdersSync retries it automatically once back online.
       if (isLikelyNetworkError(err)) {
         addPendingOrder(lines, notes, clientRequestId);
+        requestIdRef.current = null;
         clear();
         setSavedOffline(true);
       } else {
         setError("Could not place order.");
       }
-    } finally {
-      setPlacing(false);
     }
   }
 
