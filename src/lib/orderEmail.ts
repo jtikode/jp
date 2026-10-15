@@ -87,8 +87,8 @@ async function attemptSend(params: {
         <div style="font-size:18px;font-weight:bold;">&#9733; GOLD MEMBER ORDER &#9733;</div>
         <div style="font-size:14px;margin-top:4px;">${
           goldLineCount > 0
-            ? `Special rate (purchase rate + ${params.goldPercent}%): ${goldLineCount} item${goldLineCount === 1 ? "" : "s"} marked GOLD RATE below. <strong>Change the rate in billing to the Rate shown</strong> for those items, not the normal list rate.`
-            : "Gold Member shop, but no item on this order carries the special rate. Bill at the rates shown."
+            ? `${goldLineCount} item${goldLineCount === 1 ? "" : "s"} marked GOLD RATE below. <strong>Change the rate in billing to the Rate shown</strong> for those items, not the normal list rate.`
+            : "Gold Member shop, but no item on this order carries the gold rate. Bill at the rates shown."
         }</div>
       </div>`
     : "";
@@ -124,7 +124,7 @@ async function attemptSend(params: {
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: NOTIFY_EMAIL,
-    subject: `${isGold ? `[GOLD ${params.goldPercent}%] ` : ""}${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber}: ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
+    subject: `${isGold ? "[GOLD] " : ""}${isRepeatOrderToday ? `[Order #${params.ordersTodayCount} today] ` : ""}New order #${params.orderNumber}: ${params.storeName}${params.storeCode ? ` (${params.storeCode})` : ""} (₹${params.totalAmount.toLocaleString("en-IN")})`,
     html,
   });
   // The Resend SDK resolves (never rejects) on an API-level failure like a

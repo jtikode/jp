@@ -166,8 +166,8 @@ export async function placeOrder(
   // this same product — otherwise a client could pair a cheap deal's id
   // with an unrelated, expensive product to buy it at the wrong price.
   const today = getStartOfIstDayUtc();
-  // Special-rate shops pay purchase rate + their percentage on the plain list
-  // price; clearance, Wednesday deal and offer prices below are never touched.
+  // Special-rate (Gold) shops get their own rate on the plain list price (how it
+  // is worked out is never shown to retailers); clearance, Wednesday deal and offer prices below are never touched.
   const rates = await getRateAdjuster(session.orgId, session.storeId);
   let specialLines = 0;
   const specialIds = new Set<string>();
@@ -226,7 +226,7 @@ export async function placeOrder(
     : undefined;
   const rateNote =
     rates.special && specialLines > 0
-      ? `SPECIAL RATE: purchase rate + ${rates.percent}% on ${specialLines} item${specialLines === 1 ? "" : "s"}`
+      ? `GOLD RATE on ${specialLines} item${specialLines === 1 ? "" : "s"}`
       : undefined;
   const finalNotes = [rateNote, bookedNote, notes?.trim(), ...offerRemarks].filter(Boolean).join("\n") || undefined;
 

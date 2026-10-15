@@ -174,7 +174,7 @@ export default async function AdminDashboardPage({
           <tbody>
             {recentOrders.map((o) => {
               const isOtc = !!o.notes?.startsWith("CIPLA OTC");
-              const isSpecial = !!o.notes?.includes("SPECIAL RATE");
+              const isSpecial = !!o.notes && (o.notes.includes("GOLD RATE") || o.notes.includes("SPECIAL RATE"));
               return (
                 <tr key={o.id} className="border-b border-slate-100 align-top">
                   <td className="py-2 pr-3 font-mono font-semibold text-slate-900">
@@ -203,7 +203,7 @@ export default async function AdminDashboardPage({
                     )}
                     {isSpecial && (
                       <span className="ml-1.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
-                        SPECIAL RATE
+                        GOLD RATE
                       </span>
                     )}
                   </td>
