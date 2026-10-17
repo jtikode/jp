@@ -35,6 +35,24 @@ export interface CiplaStoreOption {
   name: string;
   address: string;
   code: string | null;
+  routeName?: string | null;
+}
+
+/** A salesman's own retailers (the routes assigned to them), for the "choose retailer" list. */
+export async function listCiplaMyStores(): Promise<CiplaStoreOption[]> {
+  const me = await getCiplaIdentity();
+  if (!me || me.kind !== "staff" || me.role !== "SALESMAN") return [];
+  const db = getOrgScopedDb(me.orgId);
+  const assigned = await db.routeAssignment.findMany({ where: { userId: me.userId }, select: { routeId: true } });
+  const routeIds = assigned.map((a) => a.routeId);
+  if (routeIds.length === 0) return [];
+  const stores = await db.store.findMany({
+    where: { OR: [{ routeId: { in: routeIds } }, { routeStores: { some: { routeId: { in: routeIds } } } }] },
+    select: { id: true, name: true, address: true, externalCode: true, route: { select: { name: true } } },
+    orderBy: { name: "asc" },
+    take: 600,
+  });
+  return stores.map((s) => ({ id: s.id, name: s.name, address: s.address, code: s.externalCode, routeName: s.route?.name ?? null }));
 }
 
 /** Staff-only lookup behind the "pick the retailer" box when booking for a shop. */

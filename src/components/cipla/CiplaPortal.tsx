@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, Gift, LogOut, Minus, Plus, Search, ShoppingCart, Sparkles, Tag, X } from "lucide-react";
 import { evaluateCart, inr, lineKey } from "@/lib/ciplaOtc/engine";
 import type { CartLine, OtcBrand, OtcSheet, OtcSku } from "@/lib/ciplaOtc/types";
-import { placeCiplaOtcOrder, searchCiplaStores, type CiplaStoreOption } from "@/actions/ciplaOtcActions";
+import { listCiplaMyStores, placeCiplaOtcOrder, searchCiplaStores, type CiplaStoreOption } from "@/actions/ciplaOtcActions";
 import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
 
 interface Props {
@@ -204,6 +204,8 @@ export function CiplaPortal({ sheet, identity, base }: Props) {
   const [store, setStore] = useState<CiplaStoreOption | null>(null);
   const [storeQuery, setStoreQuery] = useState("");
   const [storeResults, setStoreResults] = useState<CiplaStoreOption[]>([]);
+  const [myStores, setMyStores] = useState<CiplaStoreOption[]>([]);
+  const storeKey = `cipla-store:${identity.name}`;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState(false);
@@ -219,6 +221,29 @@ export function CiplaPortal({ sheet, identity, base }: Props) {
   useEffect(() => {
     if (ready) saveDraft(storageKey, cart);
   }, [cart, ready, storageKey]);
+
+  // Staff: the retailer being booked for is remembered on this phone until the order is sent.
+  useEffect(() => {
+    if (identity.kind !== "staff") return;
+    try {
+      const raw = localStorage.getItem(storeKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of browser storage
+      if (raw) setStore(JSON.parse(raw) as CiplaStoreOption);
+    } catch {
+      // storage unavailable: just start without a remembered retailer
+    }
+    listCiplaMyStores().then(setMyStores).catch(() => {});
+  }, [identity.kind, storeKey]);
+
+  useEffect(() => {
+    if (identity.kind !== "staff") return;
+    try {
+      if (store) localStorage.setItem(storeKey, JSON.stringify(store));
+      else localStorage.removeItem(storeKey);
+    } catch {
+      // ignore
+    }
+  }, [store, identity.kind, storeKey]);
 
   useEffect(() => {
     if (identity.kind !== "staff" || store) return;
@@ -344,6 +369,80 @@ export function CiplaPortal({ sheet, identity, base }: Props) {
             />
           </div>
         </div>
+        {identity.kind === "staff" && (
+          <div className="mx-auto max-w-2xl px-4 pb-3">
+            {store ? (
+              <div className="flex items-center justify-between rounded-xl border-2 border-green-300 bg-green-50 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-green-800">Booking for</p>
+                  <p className="truncate text-sm font-bold text-slate-900">{store.name}</p>
+                  <p className="truncate text-xs text-slate-600">
+                    {store.code ? `${store.code} · ` : ""}
+                    {store.address}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setStore(null)} className="ml-2 shrink-0 text-sm font-semibold text-blue-700">
+                  Change
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3">
+                <p className="mb-2 text-sm font-bold text-amber-900">Choose the retailer you are booking for</p>
+                {myStores.length > 0 && (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const s = myStores.find((x) => x.id === e.target.value);
+                      if (s) {
+                        setStore(s);
+                        setStoreResults([]);
+                        setStoreQuery("");
+                      }
+                    }}
+                    className="mb-2 h-11 w-full rounded-xl border-2 border-slate-300 bg-white px-2 text-base"
+                  >
+                    <option value="">My retailers ({myStores.length}): pick one</option>
+                    {myStores.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                        {s.code ? ` (${s.code})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <input
+                  value={storeQuery}
+                  onChange={(e) => setStoreQuery(e.target.value)}
+                  placeholder={myStores.length > 0 ? "Or search any retailer: name, code or phone" : "Search retailer: name, code or phone"}
+                  className="h-11 w-full rounded-xl border-2 border-slate-300 bg-white px-3 text-base focus:border-blue-600 focus:outline-none"
+                />
+                {storeResults.length > 0 && (
+                  <ul className="mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+                    {storeResults.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStore(s);
+                            setStoreResults([]);
+                            setStoreQuery("");
+                          }}
+                          className="w-full border-b border-slate-100 px-3 py-2 text-left last:border-0 hover:bg-slate-50"
+                        >
+                          <span className="block text-sm font-semibold text-slate-900">{s.name}</span>
+                          <span className="block truncate text-xs text-slate-500">
+                            {s.code ? `${s.code} · ` : ""}
+                            {s.address}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <main className="mx-auto max-w-2xl space-y-3 px-4 pt-4">
