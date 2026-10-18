@@ -10,8 +10,10 @@ import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
 import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
+import { LastChanceDeals } from "@/components/shop/LastChanceDeals";
+import type { LastChanceDeal } from "@/lib/lastChanceDeals";
 
-export function ShopCheckout({ lang }: { lang: Lang }) {
+export function ShopCheckout({ lang, deals = [] }: { lang: Lang; deals?: LastChanceDeal[] }) {
   const router = useRouter();
   const { items, setQuantity, removeItem, removeBundle, clear, total } = useCart();
   const [notes, setNotes] = useState("");
@@ -230,6 +232,8 @@ export function ShopCheckout({ lang }: { lang: Lang }) {
           </p>
         </div>
       </Card>
+
+      <LastChanceDeals deals={deals} lang={lang} />
 
       <Card>
         <label className="mb-1 block text-sm font-medium text-slate-700">

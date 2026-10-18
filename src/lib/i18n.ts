@@ -422,6 +422,12 @@ export const translations = {
   },
   shop_clearance: { en: "Clearance", mr: "क्लिअरन्स" },
   shop_expires: { en: "Expires", mr: "एक्सपायरी" },
+  shop_lastchance_title: { en: "Last-chance deals", mr: "शेवटची संधी: खास दर" },
+  shop_lastchance_sub: {
+    en: "Near-expiry stock at special rates. Add to this order before you place it.",
+    mr: "एक्स्पायरी जवळचा माल खास दरात. ऑर्डर देण्यापूर्वी यात जोडा.",
+  },
+  shop_percent_off: { en: "off", mr: "सूट" },
   shop_menu_quick_check: { en: "Quick Check", mr: "पटकन तपासा" },
   shop_quick_check_heading: { en: "Quick Check", mr: "पटकन तपासा" },
   shop_quick_check_subtitle: {
