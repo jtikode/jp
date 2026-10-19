@@ -3,12 +3,14 @@
 import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { byExpiryThenStockThenStrengthThenName, alternativesCap } from "@/lib/stockRank";
 import type { CatalogProduct } from "@/lib/productCatalog";
+import { classifyTile } from "@/lib/categoryTiles";
 import type { SearchProductItem } from "@/lib/productSearch";
 
 export interface OfflineSearchParams {
   query?: string;
   company?: string;
   salt?: string;
+  tile?: string;
   offset: number;
   limit: number;
 }
@@ -54,6 +56,7 @@ export function filterOfflineCatalog(
   let scoped = sorted;
   if (params.company) scoped = scoped.filter((p) => p.company === params.company);
   if (params.salt) scoped = scoped.filter((p) => p.composition === params.salt);
+  if (params.tile) scoped = scoped.filter((p) => classifyTile(p) === params.tile);
 
   const filtered = cascadingProductSearch(scoped, params.query ?? "", (p) => p.name, (p) => p.composition);
 

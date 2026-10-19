@@ -7,6 +7,7 @@ export async function fetchProductsPage(params: {
   query?: string;
   company?: string;
   salt?: string;
+  tile?: string;
   hotOnly?: boolean;
   offset: number;
   limit: number;

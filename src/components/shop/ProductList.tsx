@@ -92,6 +92,7 @@ export function ProductList({
   initialQuery = "",
   autoFocus = false,
   companyFilter,
+  tileFilter,
   hotOnly = false,
 }: {
   initialProducts: ProductListItem[];
@@ -102,6 +103,8 @@ export function ProductList({
   initialQuery?: string;
   autoFocus?: boolean;
   companyFilter?: string;
+  // Category tile slug the page was opened with (kept for every search/page).
+  tileFilter?: string;
   hotOnly?: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
@@ -142,6 +145,7 @@ export function ProductList({
               query: filters.query || undefined,
               company: filters.company || undefined,
               salt: filters.salt || undefined,
+              tile: tileFilter,
               hotOnly,
               offset,
               limit: PRODUCT_PAGE_SIZE,
@@ -160,6 +164,7 @@ export function ProductList({
               query: filters.query,
               company: filters.company,
               salt: filters.salt,
+              tile: tileFilter,
               offset,
               limit: PRODUCT_PAGE_SIZE,
             });
@@ -181,7 +186,7 @@ export function ProductList({
         if (myRequestId === requestIdRef.current) setLoading(false);
       }
     },
-    [hotOnly],
+    [hotOnly, tileFilter],
   );
 
   // Re-search from scratch whenever the query/company/salt filters change —

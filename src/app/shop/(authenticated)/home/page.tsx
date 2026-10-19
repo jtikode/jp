@@ -28,6 +28,8 @@ import { getStartOfIstYearUtc } from "@/lib/istTime";
 import { COMPANY_SALE_GROUPS, formatSaleDate } from "@/lib/companySales";
 import { getOfferBundle } from "@/lib/bannerBundle";
 import { getStoreRatePercent } from "@/lib/storeRates";
+import { getCategoryTileCounts } from "@/lib/productSearch";
+import { CategoryGrid } from "@/components/shop/CategoryGrid";
 
 const MENU_TILES = [
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
@@ -53,7 +55,7 @@ export default async function ShopHomePage() {
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 
-  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, companySales] = await Promise.all([
+  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, companySales, tileCounts] = await Promise.all([
     db.shopBanner.findMany({
       where: { placement: "HERO", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
@@ -69,6 +71,7 @@ export default async function ShopHomePage() {
       _sum: { totalAmount: true },
     }),
     db.companySale.findMany({ where: { storeId: session.storeId } }),
+    getCategoryTileCounts(session.orgId).catch(() => new Map<string, { total: number; inStock: number }>()),
   ]);
 
   const bundleByBannerId = new Map(
@@ -255,6 +258,8 @@ export default async function ShopHomePage() {
           </table>
         </Card>
       )}
+
+      <CategoryGrid lang={lang} counts={tileCounts} />
     </div>
   );
 }

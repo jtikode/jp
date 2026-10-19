@@ -8,6 +8,7 @@ import { cascadingProductSearch } from "@/lib/fuzzySearch";
 import { PRODUCT_PAGE_SIZE } from "@/lib/productSearchConstants";
 import { byExpiryThenStockThenStrengthThenName, alternativesCap } from "@/lib/stockRank";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
+import { classifyTile } from "@/lib/categoryTiles";
 
 export { PRODUCT_PAGE_SIZE };
 
@@ -59,6 +60,8 @@ export interface ProductSearchParams {
   query?: string;
   company?: string;
   salt?: string;
+  // Category tile slug (see categoryTiles.ts).
+  tile?: string;
   hotOnly?: boolean;
   offset: number;
   limit: number;
@@ -88,6 +91,8 @@ interface CatalogIndex {
   companies: string[];
   salts: string[];
   byComposition: Map<string, IndexedProduct[]>;
+  // Products per category tile slug (all active products, and the in-stock ones).
+  tileCounts: Map<string, { total: number; inStock: number }>;
 }
 
 // The sorted/indexed view of an org's catalog is identical for every
@@ -148,7 +153,17 @@ async function buildCatalogIndex(orgId: string): Promise<CatalogIndex> {
     byComposition.set(key, group);
   }
 
-  return { ordered, companies, salts, byComposition };
+  const tileCounts = new Map<string, { total: number; inStock: number }>();
+  for (const p of ordered) {
+    const slug = classifyTile(p);
+    if (!slug) continue;
+    const c = tileCounts.get(slug) ?? { total: 0, inStock: 0 };
+    c.total++;
+    if (p.stock == null ? !p.onRequest : p.stock > 0) c.inStock++;
+    tileCounts.set(slug, c);
+  }
+
+  return { ordered, companies, salts, byComposition, tileCounts };
 }
 
 function getCatalogIndex(orgId: string): Promise<CatalogIndex> {
@@ -186,6 +201,13 @@ export async function searchProductCatalog(
   if (params.company) scoped = scoped.filter((p) => p.company === params.company);
   if (params.salt) scoped = scoped.filter((p) => p.composition === params.salt);
   if (params.hotOnly) scoped = scoped.filter((p) => p.hot);
+  if (params.tile) {
+    // Inside a category, what can be delivered now comes first; the rest keeps
+    // the usual hot-selling / company order.
+    const inTile = scoped.filter((p) => classifyTile(p) === params.tile);
+    const available = (p: IndexedProduct) => (p.stock == null ? !p.onRequest : p.stock > 0);
+    scoped = [...inTile.filter(available), ...inTile.filter((p) => !available(p))];
+  }
 
   // Out-of-stock products stay visible in browsing/search — they show a
   // "Low Stock" badge (see ProductList) instead of being hidden, so a
@@ -248,4 +270,9 @@ export async function searchProductCatalog(
   });
 
   return { products, hasMore, companies, salts };
+}
+
+/** Product counts per category tile, for the "Shop by category" grid. */
+export async function getCategoryTileCounts(orgId: string): Promise<Map<string, { total: number; inStock: number }>> {
+  return (await getCatalogIndex(orgId)).tileCounts;
 }
