@@ -8,6 +8,7 @@ export function GET(request: Request) {
       query: q.get("query") ?? undefined,
       company: q.get("company") ?? undefined,
       salt: q.get("salt") ?? undefined,
+      tile: q.get("tile") ?? undefined,
       hotOnly: q.get("hotOnly") === "1",
       offset: Math.max(0, Number(q.get("offset")) || 0),
       limit: Math.min(100, Math.max(1, Number(q.get("limit")) || 40)),
