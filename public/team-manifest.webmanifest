@@ -1,0 +1,25 @@
+{
+  "name": "JP Sales Team",
+  "short_name": "JP Sales Team",
+  "description": "Orders, routes and visits for the J P Traders sales team.",
+  "start_url": "/team/login",
+  "scope": "/team/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1d4ed8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/sales-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/sales-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
