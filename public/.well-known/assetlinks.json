@@ -33,7 +33,8 @@
       "namespace": "android_app",
       "package_name": "in.jpkop.salesteam",
       "sha256_cert_fingerprints": [
-        "E7:9F:BA:42:22:32:84:7C:2A:EB:0F:06:EC:EF:89:4E:28:E9:2A:D4:37:7E:07:E7:88:E4:5C:7F:47:66:78:87"
+        "E7:9F:BA:42:22:32:84:7C:2A:EB:0F:06:EC:EF:89:4E:28:E9:2A:D4:37:7E:07:E7:88:E4:5C:7F:47:66:78:87",
+        "22:D2:23:EC:8F:E4:A3:74:AC:55:00:C7:4E:5A:15:A1:6A:20:54:27:6B:46:13:59:3F:4E:27:59:D4:54:53:18"
       ]
     }
   }
