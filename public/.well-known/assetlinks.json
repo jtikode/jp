@@ -3,6 +3,20 @@
       "target": {
         "namespace": "android_app",
         "package_name": "in.jpkop.app.twa",
-        "sha256_cert_fingerprints": ["BC:08:88:75:D9:3C:FD:38:1F:B2:DF:4C:7B:20:9A:A3:80:BA:0B:DA:3F:D8:A0:5D:0A:88:67:EF:AB:7E:CA:D6"]
+        "sha256_cert_fingerprints": [
+          "BC:08:88:75:D9:3C:FD:38:1F:B2:DF:4C:7B:20:9A:A3:80:BA:0B:DA:3F:D8:A0:5D:0A:88:67:EF:AB:7E:CA:D6",
+          "9A:3E:15:65:50:CF:35:D3:0B:81:ED:EF:A4:58:4B:41:64:FA:0A:AF:CF:EB:EC:A9:D9:DF:48:C4:06:9D:B5:AA"
+        ]
+      }
+    },
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.jp.jp_supply_chain_pharmacies",
+        "sha256_cert_fingerprints": [
+          "85:83:50:8D:32:7E:29:41:25:98:AB:8C:BB:8B:E8:82:18:A9:75:8D:72:35:3D:A2:0F:18:44:0D:2F:AD:F6:25",
+          "BC:08:88:75:D9:3C:FD:38:1F:B2:DF:4C:7B:20:9A:A3:80:BA:0B:DA:3F:D8:A0:5D:0A:88:67:EF:AB:7E:CA:D6"
+        ]
       }
     }]
