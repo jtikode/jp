@@ -11,9 +11,17 @@ function formatCurrency(lang: "en" | "mr", value: number | null | undefined): st
   if (value == null) return t(lang, "not_set");
   return `₹${Number(value).toLocaleString("en-IN")}`;
 }
+import { getTodaysTasksForEmployee, getWeekProjectionForEmployee } from "@/lib/taskGeneration";
+import { TaskList } from "@/components/tasks/TaskList";
+import { WeekProjection } from "@/components/tasks/WeekProjection";
+import { AddOwnTaskForm } from "@/components/tasks/AddOwnTaskForm";
 
 export default async function SalesmanDashboardPage() {
   const session = await getSession();
+  const [myTasks, myWeek] = await Promise.all([
+    getTodaysTasksForEmployee(session.orgId as string, session.userId as string, "SALESMAN"),
+    getWeekProjectionForEmployee(session.orgId as string, session.userId as string, "SALESMAN"),
+  ]);
   const userId = session.userId as string;
   const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
@@ -134,6 +142,21 @@ export default async function SalesmanDashboardPage() {
           <p className="text-center text-slate-400">{t(lang, "no_routes_assigned")}</p>
         </Card>
       )}
+      <Card>
+        <h2 className="mb-1 text-lg font-bold text-slate-900">My Tasks</h2>
+        <p className="mb-4 text-sm text-slate-500">Tap Done when you finish a task.</p>
+        <TaskList tasks={myTasks} employeeUserId={session.userId as string} />
+        <div className="mt-5 border-t border-slate-200 pt-4">
+          <h3 className="mb-1 text-base font-bold text-slate-900">Add your own task</h3>
+          <p className="mb-3 text-sm text-slate-500">For something one-off, due today.</p>
+          <AddOwnTaskForm />
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-lg font-bold text-slate-900">This week</h2>
+        <WeekProjection days={myWeek} />
+      </Card>
     </div>
   );
 }

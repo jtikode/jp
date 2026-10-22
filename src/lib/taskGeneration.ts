@@ -128,3 +128,48 @@ export async function getTodaysTasksForEmployee(
       return a.title.localeCompare(b.title);
     });
 }
+
+export interface ProjectedDay {
+  date: Date;
+  tasks: { taskId: string; title: string; recurrence: string; scheduledTime: string | null }[];
+}
+
+// What is due for one employee on each of the next 7 days (today included),
+// worked out from each task's repeat rule, so people can see their week
+// ahead. ONCE tasks only appear while still waiting (they roll forward to
+// today); anything already finished today is left to the Today list.
+export async function getWeekProjectionForEmployee(
+  orgId: string,
+  userId: string,
+  role: Role,
+): Promise<ProjectedDay[]> {
+  const db = getOrgScopedDb(orgId);
+  const today = getStartOfIstDayUtc();
+
+  const tasks = await db.task.findMany({
+    where: { active: true, OR: [{ assignedToId: userId }, { assignedToId: null, assignedRole: role }] },
+  });
+  const pendingOnce = await db.taskOccurrence.findMany({
+    where: {
+      taskId: { in: tasks.filter((t) => t.recurrence === "ONCE").map((t) => t.id) },
+      status: { in: ["PENDING", "REJECTED"] },
+    },
+    select: { taskId: true },
+  });
+  const onceWaiting = new Set(pendingOnce.map((o) => o.taskId));
+
+  const days: ProjectedDay[] = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+    const due = tasks.filter((t) =>
+      t.recurrence === "ONCE" ? i === 0 && onceWaiting.has(t.id) : isDueOn(t, date),
+    );
+    days.push({
+      date,
+      tasks: due
+        .map((t) => ({ taskId: t.id, title: t.title, recurrence: t.recurrence, scheduledTime: t.scheduledTime }))
+        .sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99") || a.title.localeCompare(b.title)),
+    });
+  }
+  return days;
+}

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
-import { createTaskSchema } from "@/lib/validators";
+import { createTaskSchema, renameTaskSchema } from "@/lib/validators";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
 import type { ActionResult } from "@/actions/employeeActions";
 import type { Role } from "@/generated/prisma/client";
@@ -80,6 +80,46 @@ export async function toggleTaskActive(taskId: string, active: boolean): Promise
   revalidatePath("/team/admin/tasks");
 }
 
+// Admin changes a task's title; past and pending occurrences keep pointing at the same task.
+export async function renameTask(taskId: string, newTitle: string): Promise<ActionResult> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const parsed = renameTaskSchema.safeParse({ title: newTitle });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid title." };
+  }
+  const task = await db.task.findFirst({ where: { id: taskId }, select: { id: true } });
+  if (!task) return { ok: false, error: "Task not found." };
+
+  await db.task.update({ where: { id: taskId }, data: { title: parsed.data.title } });
+
+  revalidatePath("/team/admin/tasks");
+  revalidatePath("/team/board");
+  revalidatePath("/team/warehouse");
+  return { ok: true };
+}
+
+// Permanently removes a task together with all of its occurrences (its
+// completion history). Pausing is the option that keeps the history.
+export async function deleteTask(taskId: string): Promise<ActionResult> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const task = await db.task.findFirst({ where: { id: taskId }, select: { id: true } });
+  if (!task) return { ok: false, error: "Task not found." };
+
+  await db.$transaction([
+    db.taskOccurrence.deleteMany({ where: { taskId } }),
+    db.task.delete({ where: { id: taskId } }),
+  ]);
+
+  revalidatePath("/team/admin/tasks");
+  revalidatePath("/team/board");
+  revalidatePath("/team/warehouse");
+  return { ok: true };
+}
+
 /** Lets an employee add their own one-off task, due today, from their own dashboard. */
 export async function createOwnTask(
   _prevState: ActionResult | null,
@@ -107,7 +147,9 @@ export async function createOwnTask(
   });
 
   revalidatePath("/team/warehouse");
-  revalidatePath("/team/board");
+  revalidatePath("/team/salesman/dashboard");
+  revalidatePath("/team/telecaller/dashboard");
+  revalidatePath("/team/board", "layout");
   return { ok: true };
 }
 
@@ -121,37 +163,10 @@ export async function markTaskComplete(occurrenceId: string, employeeUserId: str
 
   await db.taskOccurrence.update({
     where: { id: occurrenceId },
-    data: { status: "AWAITING_APPROVAL", completedAt: new Date(), completedById: employeeUserId },
+    data: { status: "APPROVED", completedAt: new Date(), completedById: employeeUserId },
   });
 
   revalidatePath("/team/warehouse");
-  revalidatePath("/team/board");
-}
-
-export async function approveTaskOccurrence(occurrenceId: string): Promise<void> {
-  const session = await assertRole(["ADMIN"]);
-  const db = getOrgScopedDb(session.orgId);
-
-  await db.taskOccurrence.update({
-    where: { id: occurrenceId },
-    data: { status: "APPROVED", approvedAt: new Date(), approvedById: session.userId },
-  });
-
-  revalidatePath("/team/admin/tasks");
-  revalidatePath("/team/board");
-}
-
-/** Sends a task back to the employee, marked rejected, so they can redo and resubmit it. */
-export async function rejectTaskOccurrence(occurrenceId: string): Promise<void> {
-  const session = await assertRole(["ADMIN"]);
-  const db = getOrgScopedDb(session.orgId);
-
-  await db.taskOccurrence.update({
-    where: { id: occurrenceId },
-    data: { status: "REJECTED" },
-  });
-
-  revalidatePath("/team/admin/tasks");
   revalidatePath("/team/board");
 }
 

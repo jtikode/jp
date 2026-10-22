@@ -12,6 +12,14 @@ export const changeEmployeePasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters.").max(100, "Password is too long."),
 });
 
+export const renameEmployeeSchema = z.object({
+  name: z.string().trim().min(1, "Name is required.").max(80, "Name is too long."),
+});
+
+export const renameTaskSchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(120, "Title is too long."),
+});
+
 export const signupSchema = z.object({
   businessName: z.string().min(2, "Business name is required."),
   businessCode: z

@@ -87,7 +87,8 @@ export function buildTaskTrends(
     if (wIdx === -1 && mIdx === -1) continue;
 
     const bucketKey: "approved" | "awaiting" | "missed" =
-      o.status === "APPROVED" ? "approved" : o.status === "AWAITING_APPROVAL" ? "awaiting" : "missed";
+      // AWAITING_APPROVAL only exists on rows completed before approvals were removed.
+      o.status === "APPROVED" || o.status === "AWAITING_APPROVAL" ? "approved" : "missed";
     const responsibleUserId = o.taskAssignedToId ?? o.completedById ?? undefined;
 
     if (wIdx !== -1) {

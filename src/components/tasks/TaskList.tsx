@@ -78,14 +78,9 @@ export function TaskList({ tasks, employeeUserId }: { tasks: TaskListItem[]; emp
               </Button>
             </div>
           )}
-          {t.status === "AWAITING_APPROVAL" && (
-            <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800">
-              Awaiting approval
-            </span>
-          )}
-          {t.status === "APPROVED" && (
+          {(t.status === "APPROVED" || t.status === "AWAITING_APPROVAL") && (
             <span className="shrink-0 rounded-full bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700">
-              ✓ Approved
+              ✓ Done
             </span>
           )}
         </div>

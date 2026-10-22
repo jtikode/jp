@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
-import { AdminTasksPanel, type ApprovalRow, type TaskRow } from "@/components/admin/AdminTasksPanel";
+import { AdminTasksPanel, type TaskRow } from "@/components/admin/AdminTasksPanel";
 import type { EmployeeCompletionPoint } from "@/components/charts/TaskCompletionChart";
 import { buildTaskTrends } from "@/lib/taskReporting";
 import { getStartOfIstDayUtc, addIstMonths } from "@/lib/istTime";
@@ -23,14 +23,9 @@ export default async function AdminTasksPage() {
   const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixMonthsAgo = addIstMonths(today, -6);
 
-  const [users, tasks, awaitingOccurrences, historyOccurrences] = await Promise.all([
+  const [users, tasks, historyOccurrences] = await Promise.all([
     db.user.findMany({ where: { active: true }, orderBy: [{ role: "asc" }, { name: "asc" }] }),
     db.task.findMany({ include: { assignedTo: true }, orderBy: { createdAt: "desc" } }),
-    db.taskOccurrence.findMany({
-      where: { status: "AWAITING_APPROVAL" },
-      include: { task: true },
-      orderBy: { completedAt: "asc" },
-    }),
     // Bucketed by originalDate (when a task was ACTUALLY due), not
     // scheduledDate — a WEEKLY/MONTHLY occurrence rolled forward from weeks
     // ago would otherwise only ever show up in "today"'s bucket. Six months
@@ -57,13 +52,6 @@ export default async function AdminTasksPage() {
     active: t.active,
   }));
 
-  const approvalRows: ApprovalRow[] = awaitingOccurrences.map((o) => ({
-    occurrenceId: o.id,
-    taskTitle: o.task.title,
-    employeeName: (o.completedById && userNameById.get(o.completedById)) ?? "Unknown",
-    completedAt: o.completedAt ? o.completedAt.toLocaleString("en-IN") : "",
-  }));
-
   // Only occurrences with a determinate responsible person: an individually
   // assigned task (always attributable), or a role-wide task someone
   // actually completed (credit goes to whoever did it). A role-wide task
@@ -75,8 +63,8 @@ export default async function AdminTasksPage() {
     if (!responsibleUserId) continue;
 
     const bucket = buckets.get(responsibleUserId) ?? { approved: 0, awaiting: 0, missed: 0 };
-    if (o.status === "APPROVED") bucket.approved += 1;
-    else if (o.status === "AWAITING_APPROVAL") bucket.awaiting += 1;
+    // AWAITING_APPROVAL only exists on rows completed before approvals were removed.
+    if (o.status === "APPROVED" || o.status === "AWAITING_APPROVAL") bucket.approved += 1;
     else bucket.missed += 1;
     buckets.set(responsibleUserId, bucket);
   }
@@ -121,7 +109,6 @@ export default async function AdminTasksPage() {
         <AdminTasksPanel
           employees={users.map((u) => ({ id: u.id, name: u.name, role: u.role }))}
           tasks={taskRows}
-          approvals={approvalRows}
           chartData={chartData}
           trendsByEmployee={trendsByEmployee}
         />

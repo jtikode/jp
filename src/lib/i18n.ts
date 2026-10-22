@@ -5,6 +5,8 @@ export const translations = {
   nav_home: { en: "Home", mr: "मुख्यपृष्ठ" },
   nav_calendar: { en: "Calendar", mr: "दिनदर्शिका" },
   nav_stores: { en: "Stores", mr: "दुकाने" },
+  nav_outstanding: { en: "Outstanding", mr: "थकबाकी" },
+  near_expiry_qty: { en: "Stock", mr: "साठा" },
   nav_near_expiry: { en: "Near Expiry", mr: "एक्सपायरी जवळ" },
   nav_regular_items: { en: "Regular Items", mr: "नियमित माल" },
   nav_tour_plan: { en: "Tour Plan", mr: "टूर प्लॅन" },

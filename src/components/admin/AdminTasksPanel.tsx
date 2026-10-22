@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { toggleTaskActive, approveTaskOccurrence, rejectTaskOccurrence } from "@/actions/taskActions";
+import { toggleTaskActive, renameTask, deleteTask } from "@/actions/taskActions";
+import { InlineRenameButton } from "@/components/admin/InlineRenameButton";
+import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
 import { TaskForm, type TaskFormEmployee } from "@/components/admin/TaskForm";
 import { TaskCompletionChart, type EmployeeCompletionPoint } from "@/components/charts/TaskCompletionChart";
 import { TaskTrendChart } from "@/components/charts/TaskTrendChart";
@@ -21,13 +23,6 @@ export interface TaskRow {
   active: boolean;
 }
 
-export interface ApprovalRow {
-  occurrenceId: string;
-  taskTitle: string;
-  employeeName: string;
-  completedAt: string;
-}
-
 function describeRecurrence(task: { recurrence: string; dayOfWeek: number | null; dayOfMonth: number | null; scheduledTime: string | null }): string {
   let base: string;
   if (task.recurrence === "ONCE") base = "One-time";
@@ -40,19 +35,15 @@ function describeRecurrence(task: { recurrence: string; dayOfWeek: number | null
 export function AdminTasksPanel({
   employees,
   tasks,
-  approvals,
   chartData,
   trendsByEmployee,
 }: {
   employees: TaskFormEmployee[];
   tasks: TaskRow[];
-  approvals: ApprovalRow[];
   chartData: EmployeeCompletionPoint[];
   trendsByEmployee: Record<string, EmployeeTrends>;
 }) {
-  const [tab, setTab] = useState<"manage" | "approvals" | "chart">(
-    approvals.length > 0 ? "approvals" : "manage",
-  );
+  const [tab, setTab] = useState<"manage" | "chart">("manage");
 
   return (
     <div className="space-y-4">
@@ -60,7 +51,6 @@ export function AdminTasksPanel({
         {(
           [
             ["manage", "Manage Tasks"],
-            ["approvals", `Approvals${approvals.length > 0 ? ` (${approvals.length})` : ""}`],
             ["chart", "Completion Report"],
           ] as const
         ).map(([key, label]) => (
@@ -87,7 +77,7 @@ export function AdminTasksPanel({
 
           <div className="overflow-x-auto">
             <h2 className="mb-3 text-base font-bold text-slate-900">All tasks</h2>
-            <table className="w-full min-w-[600px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500">
                   <th className="py-2 pr-4">Title</th>
@@ -115,11 +105,18 @@ export function AdminTasksPanel({
                       </span>
                     </td>
                     <td className="py-2 pr-4">
-                      <form action={toggleTaskActive.bind(null, task.id, !task.active)}>
-                        <button type="submit" className="text-sm font-semibold text-blue-700 hover:underline">
-                          {task.active ? "Pause" : "Resume"}
-                        </button>
-                      </form>
+                      <div className="flex items-center gap-3">
+                        <InlineRenameButton currentName={task.title} action={renameTask.bind(null, task.id)} />
+                        <form action={toggleTaskActive.bind(null, task.id, !task.active)}>
+                          <button type="submit" className="text-sm font-semibold text-blue-700 hover:underline">
+                            {task.active ? "Pause" : "Resume"}
+                          </button>
+                        </form>
+                        <ConfirmDeleteButton
+                          action={deleteTask.bind(null, task.id)}
+                          confirmMessage={`Delete the task "${task.title}"? This also removes its completion history. Use Pause instead to keep the history.`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -133,45 +130,6 @@ export function AdminTasksPanel({
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {tab === "approvals" && (
-        <div className="flex flex-col gap-2">
-          {approvals.map((a) => (
-            <div
-              key={a.occurrenceId}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-200 bg-amber-50 p-3"
-            >
-              <div>
-                <p className="font-semibold text-slate-900">{a.taskTitle}</p>
-                <p className="text-sm text-slate-600">
-                  {a.employeeName} · marked done {a.completedAt}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <form action={approveTaskOccurrence.bind(null, a.occurrenceId)}>
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-green-700 px-3 py-1.5 text-sm font-bold text-white hover:bg-green-800"
-                  >
-                    Approve
-                  </button>
-                </form>
-                <form action={rejectTaskOccurrence.bind(null, a.occurrenceId)}>
-                  <button
-                    type="submit"
-                    className="rounded-lg border-2 border-red-700 px-3 py-1.5 text-sm font-bold text-red-700 hover:bg-red-50"
-                  >
-                    Reject
-                  </button>
-                </form>
-              </div>
-            </div>
-          ))}
-          {approvals.length === 0 && (
-            <p className="py-6 text-center text-slate-400">Nothing waiting for approval.</p>
-          )}
         </div>
       )}
 

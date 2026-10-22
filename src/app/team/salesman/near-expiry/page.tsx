@@ -3,15 +3,23 @@ import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { getLang } from "@/lib/langCookie";
 import { t } from "@/lib/i18n";
+import { normalizeName } from "@/lib/normalizeName";
 
 export default async function SalesmanNearExpiryPage() {
   const session = await getSession();
   const db = getOrgScopedDb(session.orgId as string);
   const lang = await getLang();
-  const nearExpiryItems = await db.expiryItem.findMany({
-    orderBy: { expiryDate: "asc" },
-    take: 100,
-  });
+  const [nearExpiryItems, products] = await Promise.all([
+    db.expiryItem.findMany({ orderBy: { expiryDate: "asc" }, take: 100 }),
+    db.product.findMany({ where: { active: true }, select: { name: true, stock: true } }),
+  ]);
+  // The expiry list has no quantity of its own: show the item's current stock
+  // (all batches together) from the product catalogue.
+  const stockByName = new Map<string, number | null>();
+  for (const p of products) {
+    const key = normalizeName(p.name);
+    if (!stockByName.has(key) || (stockByName.get(key) == null && p.stock != null)) stockByName.set(key, p.stock);
+  }
 
   const today = new Date();
 
@@ -20,11 +28,12 @@ export default async function SalesmanNearExpiryPage() {
       <Card className="overflow-x-auto">
         <h1 className="mb-1 text-lg font-bold text-slate-900">{t(lang, "near_expiry_heading")}</h1>
         <p className="mb-4 text-sm text-slate-500">{t(lang, "soonest_expiry_first")}</p>
-        <table className="w-full min-w-[320px] text-left text-sm">
+        <table className="w-full min-w-[360px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
               <th className="py-2 pr-4">{t(lang, "item")}</th>
               <th className="py-2 pr-4">{t(lang, "expiry")}</th>
+              <th className="py-2 pr-4">{t(lang, "near_expiry_qty")}</th>
               <th className="py-2 pr-4">{t(lang, "rate")}</th>
             </tr>
           </thead>
@@ -45,6 +54,9 @@ export default async function SalesmanNearExpiryPage() {
                   <td className={`py-2 pr-4 ${urgency}`}>
                     {item.expiryDate.toLocaleDateString("en-IN", { month: "short", year: "numeric" })} ({daysLeft}d)
                   </td>
+                  <td className="py-2 pr-4 font-semibold text-slate-900">
+                    {stockByName.get(normalizeName(item.itemName)) ?? "—"}
+                  </td>
                   <td className="py-2 pr-4 text-slate-600">
                     {item.specialRate != null ? `₹${Number(item.specialRate).toLocaleString("en-IN")}` : "—"}
                   </td>
@@ -53,7 +65,7 @@ export default async function SalesmanNearExpiryPage() {
             })}
             {nearExpiryItems.length === 0 && (
               <tr>
-                <td colSpan={3} className="py-4 text-center text-slate-400">
+                <td colSpan={4} className="py-4 text-center text-slate-400">
                   {t(lang, "no_expiry_uploaded")}
                 </td>
               </tr>

@@ -4,7 +4,8 @@ import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
-import { toggleEmployeeActive, deleteEmployee, changeEmployeePassword } from "@/actions/employeeActions";
+import { toggleEmployeeActive, deleteEmployee, changeEmployeePassword, renameEmployee } from "@/actions/employeeActions";
+import { InlineRenameButton } from "@/components/admin/InlineRenameButton";
 import { ChangePasswordButton } from "@/components/admin/ChangePasswordButton";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
@@ -34,7 +35,7 @@ export default async function EmployeesPage() {
             filename="employees"
           />
         </div>
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[820px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
               <th className="py-2 pr-4">Name</th>
@@ -79,6 +80,10 @@ export default async function EmployeesPage() {
                         {emp.active ? "Deactivate" : "Activate"}
                       </button>
                     </form>
+                    <InlineRenameButton
+                      currentName={emp.name}
+                      action={renameEmployee.bind(null, emp.id)}
+                    />
                     <ChangePasswordButton
                       employeeName={emp.name}
                       action={changeEmployeePassword.bind(null, emp.id)}

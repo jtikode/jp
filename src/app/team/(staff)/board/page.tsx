@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { requireRole } from "@/lib/permissions";
 import { ensureTodaysOccurrences } from "@/lib/taskGeneration";
@@ -19,6 +20,8 @@ const ROLE_LABELS: Record<string, string> = {
 // identity comes from tapping a name, not from the device's own session.
 export default async function BoardPage() {
   const session = await requireRole(["ADMIN", "SALESMAN", "TELECALLER", "WAREHOUSE"]);
+  // Employees only ever see their own tasks; the all-employees board is for admins.
+  if (session.role !== "ADMIN") redirect(`/team/board/${session.userId}`);
   const db = getOrgScopedDb(session.orgId);
   await ensureTodaysOccurrences(session.orgId);
   const today = getStartOfIstDayUtc();
