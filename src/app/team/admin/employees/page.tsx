@@ -4,7 +4,8 @@ import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
-import { toggleEmployeeActive, deleteEmployee } from "@/actions/employeeActions";
+import { toggleEmployeeActive, deleteEmployee, changeEmployeePassword } from "@/actions/employeeActions";
+import { ChangePasswordButton } from "@/components/admin/ChangePasswordButton";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
 
 export default async function EmployeesPage() {
@@ -33,7 +34,7 @@ export default async function EmployeesPage() {
             filename="employees"
           />
         </div>
-        <table className="w-full min-w-[600px] text-left text-sm">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
               <th className="py-2 pr-4">Name</th>
@@ -78,6 +79,10 @@ export default async function EmployeesPage() {
                         {emp.active ? "Deactivate" : "Activate"}
                       </button>
                     </form>
+                    <ChangePasswordButton
+                      employeeName={emp.name}
+                      action={changeEmployeePassword.bind(null, emp.id)}
+                    />
                     <ConfirmDeleteButton
                       action={deleteEmployee.bind(null, emp.id)}
                       confirmMessage={`Delete ${emp.name} (${emp.username})? This only works if they have no logged activity yet.`}

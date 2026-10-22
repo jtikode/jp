@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
 import { hashPassword } from "@/lib/auth";
-import { createEmployeeSchema } from "@/lib/validators";
+import { createEmployeeSchema, changeEmployeePasswordSchema } from "@/lib/validators";
 
 export interface ActionResult {
   ok: boolean;
@@ -42,6 +42,27 @@ export async function createEmployee(_prevState: ActionResult | null, formData: 
       phone: parsed.data.phone,
     },
   });
+
+  revalidatePath("/team/admin/employees");
+  return { ok: true };
+}
+
+// Admin sets a new password for any employee (including themselves). The
+// employee's current login session keeps working until it expires; the new
+// password is needed the next time they sign in.
+export async function changeEmployeePassword(userId: string, newPassword: string): Promise<ActionResult> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  const parsed = changeEmployeePasswordSchema.safeParse({ password: newPassword });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid password." };
+  }
+
+  const employee = await db.user.findFirst({ where: { id: userId }, select: { id: true } });
+  if (!employee) return { ok: false, error: "Employee not found." };
+
+  await db.user.update({ where: { id: userId }, data: { passwordHash: await hashPassword(parsed.data.password) } });
 
   revalidatePath("/team/admin/employees");
   return { ok: true };

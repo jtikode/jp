@@ -8,6 +8,10 @@ export const createEmployeeSchema = z.object({
   phone: z.string().optional(),
 });
 
+export const changeEmployeePasswordSchema = z.object({
+  password: z.string().min(6, "Password must be at least 6 characters.").max(100, "Password is too long."),
+});
+
 export const signupSchema = z.object({
   businessName: z.string().min(2, "Business name is required."),
   businessCode: z
