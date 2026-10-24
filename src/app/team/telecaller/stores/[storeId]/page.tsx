@@ -4,12 +4,8 @@ import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/Card";
 import { TelecallerLogForm } from "@/components/forms/TelecallerLogForm";
 import { StoreContactForm } from "@/components/telecaller/StoreContactForm";
-import {
-  buildTelLink,
-  buildWhatsAppLink,
-  buildRegularItemsMessage,
-  buildStatementMessage,
-} from "@/lib/waLink";
+import { buildTelLink, buildWhatsAppLink, buildRegularItemsMessage } from "@/lib/waLink";
+import { SendStatementButton } from "@/components/team/SendStatementButton";
 import { storeLabel } from "@/lib/storeLabel";
 
 export default async function TelecallerStorePage({
@@ -44,15 +40,12 @@ export default async function TelecallerStorePage({
       : undefined;
 
   const totalOutstanding = ledgerEntries.reduce((sum, e) => sum + Number(e.outstandingAmount), 0);
-  const statementMessage = buildStatementMessage(
-    storeLabel(store.name, store.externalCode),
-    ledgerEntries.map((e) => ({
-      invoiceNo: e.invoiceNo,
-      invoiceDate: e.invoiceDate,
-      amount: Number(e.amount),
-      outstandingAmount: Number(e.outstandingAmount),
-    })),
-  );
+  const statementEntries = ledgerEntries.map((e) => ({
+    invoiceNo: e.invoiceNo,
+    invoiceDate: e.invoiceDate,
+    amount: Number(e.amount),
+    outstandingAmount: Number(e.outstandingAmount),
+  }));
 
   return (
     <div className="mx-auto max-w-md space-y-4">
@@ -131,14 +124,7 @@ export default async function TelecallerStorePage({
               </table>
             </div>
             {store.phone ? (
-              <a
-                href={buildWhatsAppLink(store.phone, statementMessage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block min-h-11 rounded-lg bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-green-700"
-              >
-                Share Statement on WhatsApp
-              </a>
+              <SendStatementButton phone={store.phone} entries={statementEntries} />
             ) : (
               <p className="text-xs text-slate-500">Add a mobile number above to share this on WhatsApp.</p>
             )}

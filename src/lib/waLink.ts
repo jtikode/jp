@@ -4,6 +4,14 @@ export function buildWhatsAppLink(phone: string, message?: string): string {
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
+/** Digits-only WhatsApp number with the India country code, or null if it can't be one. */
+export function toWhatsAppNumber(phone: string): string | null {
+  let digits = phone.replace(/[^\d]/g, "");
+  if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  if (digits.length === 10) digits = `91${digits}`;
+  return digits.length >= 11 && digits.length <= 15 ? digits : null;
+}
+
 export function buildTelLink(phone: string): string {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
@@ -16,33 +24,4 @@ export function buildVisitReminderMessage(): string {
 export function buildRegularItemsMessage(itemNames: string[]): string {
   const list = itemNames.map((name, i) => `${i + 1}. ${name}`).join("\n");
   return `नमस्कार, जे.पी. ट्रेडर्सकडून. आपण नियमित खरेदी करता ती उत्पादने:\n\n${list}\n\nयापैकी काही हवे आहे का? कृपया कळवा.\n\nSent via J P Traders AI`;
-}
-
-export interface StatementLine {
-  invoiceNo: string | null;
-  invoiceDate: Date | null;
-  amount: number;
-  outstandingAmount: number;
-}
-
-/** Formats a store's outstanding ledger as a plain-text statement for the telecaller's "Share on WhatsApp" button. */
-export function buildStatementMessage(storeName: string, entries: StatementLine[]): string {
-  const total = entries.reduce((sum, e) => sum + e.outstandingAmount, 0);
-  const lines = entries.map((e) => {
-    const date = e.invoiceDate ? e.invoiceDate.toLocaleDateString("en-IN") : "-";
-    return `${e.invoiceNo ?? "-"} (${date}): Rs ${e.outstandingAmount.toLocaleString("en-IN")} due`;
-  });
-
-  return [
-    `नमस्कार, जे.पी. ट्रेडर्सकडून.`,
-    `${storeName}, Outstanding Statement`,
-    "",
-    ...lines,
-    "",
-    `Total Outstanding: Rs ${total.toLocaleString("en-IN")}`,
-    "",
-    "कृपया थकबाकीची रक्कम लवकरात लवकर ट्रान्सफर करावी.",
-    "",
-    "Sent via J P Traders AI",
-  ].join("\n");
 }

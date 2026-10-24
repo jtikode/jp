@@ -12,29 +12,30 @@ function daysSince(d: Date): number {
   return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
 }
 
-// Party-wise outstanding for one of the salesman's own routes.
+// Party-wise outstanding for any route (own or not).
 export default async function RouteOutstandingPage({ params }: { params: Promise<{ routeId: string }> }) {
   const { routeId } = await params;
   const session = await getSession();
   const orgId = session.orgId as string;
   const db = getOrgScopedDb(orgId);
 
-  const assigned = await db.routeAssignment.findFirst({
-    where: { userId: session.userId, routeId },
-    include: { route: true },
-  });
-  if (!assigned) notFound();
+  const [route, mine] = await Promise.all([
+    db.route.findUnique({ where: { id: routeId }, select: { name: true } }),
+    db.routeAssignment.findFirst({ where: { userId: session.userId, routeId }, select: { id: true } }),
+  ]);
+  if (!route) notFound();
 
   const { parties, total, partyCount } = await getRouteOutstanding(orgId, routeId);
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <Link href="/team/salesman/outstanding" className="inline-block text-sm font-semibold text-slate-600 hover:text-slate-900">
-        ← All routes
+      <Link href="/team/outstanding" className="inline-block text-sm font-semibold text-slate-600 hover:text-slate-900">
+        ← Outstanding
       </Link>
 
       <Card>
-        <h1 className="text-xl font-bold text-slate-900">{assigned.route.name}</h1>
+        <h1 className="text-xl font-bold text-slate-900">{route.name}</h1>
+        {!mine && <p className="text-xs font-medium text-slate-500">Not one of your routes</p>}
         <p className="mt-2 text-2xl font-extrabold text-red-700">₹{Math.round(total).toLocaleString("en-IN")}</p>
         <p className="text-xs text-slate-500">
           {parties.length} of {partyCount} parties have dues
@@ -43,7 +44,7 @@ export default async function RouteOutstandingPage({ params }: { params: Promise
 
       <div className="space-y-2">
         {parties.map((p) => (
-          <Link key={p.storeId} href={`/team/salesman/stores/${p.storeId}/visit`}>
+          <Link key={p.storeId} href={`/team/outstanding/party/${p.storeId}`}>
             <Card className="mb-2 hover:bg-slate-50">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

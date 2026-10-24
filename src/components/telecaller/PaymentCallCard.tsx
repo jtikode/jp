@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { buildTelLink, buildWhatsAppLink, buildStatementMessage, type StatementLine } from "@/lib/waLink";
+import { buildTelLink } from "@/lib/waLink";
+import type { StatementLine } from "@/lib/statementMessage";
+import { SendStatementButton } from "@/components/team/SendStatementButton";
 import { storeLabel } from "@/lib/storeLabel";
 
 interface PaymentCallCardProps {
@@ -22,8 +24,6 @@ export function PaymentCallCard({
   outstanding,
   entries,
 }: PaymentCallCardProps) {
-  const message = buildStatementMessage(storeLabel(name, externalCode), entries);
-
   return (
     <Card>
       <Link href={`/team/telecaller/stores/${id}`}>
@@ -45,14 +45,7 @@ export function PaymentCallCard({
           >
             Call
           </a>
-          <a
-            href={buildWhatsAppLink(phone, message)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="min-h-11 flex-1 rounded-lg bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-green-700"
-          >
-            Send Statement
-          </a>
+          <SendStatementButton phone={phone} entries={entries} label="Send Statement" className="flex-1" />
         </div>
       )}
       {!phone && <p className="mt-2 text-xs text-slate-400">No phone number on file.</p>}

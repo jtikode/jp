@@ -7,6 +7,7 @@ import { clsx } from "@/lib/clsx";
 const LINKS = [
   { href: "/team/warehouse", label: "Tasks" },
   { href: "/team/warehouse/stock", label: "Stock Sheet" },
+  { href: "/team/outstanding", label: "Outstanding" },
   { href: "/team/board", label: "Task Board" },
 ];
 

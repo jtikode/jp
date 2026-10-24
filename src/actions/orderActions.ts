@@ -276,6 +276,7 @@ export async function placeOrder(
 
   revalidatePath("/shop/orders");
   revalidatePath("/team/admin/orders");
+  revalidatePath("/team/telecaller/shop-orders");
 
   // Best-effort — a failed/misconfigured email send must never block the
   // order itself, which is already committed above. The real fail-safe is
@@ -503,7 +504,7 @@ export async function getFastOrderItems(): Promise<FastOrderItem[]> {
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<void> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN", "TELECALLER"]);
   const db = getOrgScopedDb(session.orgId);
 
   const order = await db.order.update({ where: { id: orderId }, data: { status } });

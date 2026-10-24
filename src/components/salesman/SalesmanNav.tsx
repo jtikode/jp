@@ -12,7 +12,7 @@ export function SalesmanNav({ lang }: { lang: Lang }) {
     { href: "/team/salesman/dashboard", label: t(lang, "nav_home") },
     { href: "/team/salesman/calendar", label: t(lang, "nav_calendar") },
     { href: "/team/salesman/stores", label: t(lang, "nav_stores") },
-    { href: "/team/salesman/outstanding", label: t(lang, "nav_outstanding") },
+    { href: "/team/outstanding", label: t(lang, "nav_outstanding") },
     { href: "/team/salesman/tour-plan", label: t(lang, "nav_tour_plan") },
     { href: "/team/salesman/near-expiry", label: t(lang, "nav_near_expiry") },
     { href: "/team/salesman/regular-items", label: t(lang, "nav_regular_items") },

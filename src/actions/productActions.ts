@@ -65,7 +65,7 @@ export async function importProducts(
   _prevState: { ok: boolean; error?: string; rowCount?: number } | null,
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string; rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(["ADMIN", "TELECALLER"]);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;

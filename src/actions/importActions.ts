@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import * as XLSX from "xlsx";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { assertRole } from "@/lib/permissions";
+import type { Role } from "@/generated/prisma/client";
 import { parseSpreadsheet, findColumn } from "@/lib/csv";
 import { parseOutstandingPdf } from "@/lib/pdfOutstanding";
 import { parseMargOutstandingReport } from "@/lib/margOutstanding";
@@ -13,6 +14,9 @@ import { parseCompanySaleReport } from "@/lib/companySales";
 import { parseStockExpiryReport, stockMatchKey } from "@/lib/stockExpiryReport";
 import { getStartOfIstDayUtc, getIstDateParts } from "@/lib/istTime";
 import type { ActionResult } from "@/actions/employeeActions";
+
+// Telecallers upload the outstanding, stock and rate files, same as the admin.
+const UPLOADERS: Role[] = ["ADMIN", "TELECALLER"];
 
 /** Handles both a typed date string and an Excel serial date number. */
 function parseFlexibleDate(raw: string): Date | undefined {
@@ -52,7 +56,7 @@ export async function importStoreMaster(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -135,6 +139,8 @@ export async function importStoreMaster(
   });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/admin/routes");
   return { ok: true, rowCount: imported };
 }
@@ -152,7 +158,7 @@ export async function importOutstanding(
   _prevState: (ActionResult & { rowCount?: number; note?: string }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number; note?: string }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -174,6 +180,7 @@ export async function importOutstanding(
       });
       if (!result.ok) return { ok: false, error: result.error ?? "Import failed." };
       revalidatePath("/team/admin/imports");
+      revalidatePath("/team/telecaller/uploads");
       revalidatePath("/team/admin/outstanding");
       revalidatePath("/team/admin/stores");
       const notes: string[] = [];
@@ -290,6 +297,8 @@ export async function importOutstanding(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/admin/outstanding");
   return { ok: true, rowCount: imported };
 }
@@ -308,7 +317,7 @@ export async function importPurchaseHistory(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -411,6 +420,8 @@ export async function importPurchaseHistory(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/admin/intelligence");
   return { ok: true, rowCount: imported };
 }
@@ -422,7 +433,7 @@ export async function importFastOrderItems(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -485,6 +496,8 @@ export async function importFastOrderItems(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   return { ok: true, rowCount: imported };
 }
 
@@ -498,7 +511,7 @@ export async function importExpiryItems(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -553,6 +566,8 @@ export async function importExpiryItems(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/admin/intelligence");
   return { ok: true, rowCount: parsedRows.length };
 }
@@ -575,7 +590,7 @@ export async function importStockAndExpiry(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -672,6 +687,8 @@ export async function importStockAndExpiry(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: matched.length } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/admin/products");
   revalidatePath("/team/admin/intelligence");
   revalidatePath("/team/salesman/near-expiry");
@@ -689,7 +706,7 @@ export async function importIncentiveItems(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -737,6 +754,8 @@ export async function importIncentiveItems(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: parsedRows.length } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/salesman/dashboard");
   return { ok: true, rowCount: parsedRows.length };
 }
@@ -749,7 +768,7 @@ export async function importTelecallerParties(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -795,6 +814,8 @@ export async function importTelecallerParties(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: stores.length } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/team/telecaller/dashboard");
   return { ok: true, rowCount: stores.length };
 }
@@ -803,7 +824,7 @@ export async function importCompanySales(
   _prevState: (ActionResult & { rowCount?: number }) | null,
   formData: FormData,
 ): Promise<ActionResult & { rowCount?: number }> {
-  const session = await assertRole(["ADMIN"]);
+  const session = await assertRole(UPLOADERS);
   const db = getOrgScopedDb(session.orgId);
 
   const file = formData.get("file") as File | null;
@@ -859,6 +880,8 @@ export async function importCompanySales(
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: matched.length } });
 
   revalidatePath("/team/admin/imports");
+
+  revalidatePath("/team/telecaller/uploads");
   revalidatePath("/shop/home");
   return { ok: true, rowCount: matched.length };
 }

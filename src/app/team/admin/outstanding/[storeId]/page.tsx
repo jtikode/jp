@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { storeLabel } from "@/lib/storeLabel";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
+import { SendStatementButton } from "@/components/team/SendStatementButton";
 
 export default async function StoreOutstandingPage({
   params,
@@ -44,6 +45,17 @@ export default async function StoreOutstandingPage({
             <p className="text-xs font-medium text-slate-500">Total Billed</p>
             <p className="text-xl font-bold text-slate-900">₹{totalBilled.toLocaleString("en-IN")}</p>
           </div>
+        </div>
+        <div className="mt-4 max-w-sm">
+          <SendStatementButton
+            phone={store.phone}
+            entries={entries.map((e) => ({
+              invoiceNo: e.invoiceNo,
+              invoiceDate: e.invoiceDate,
+              amount: Number(e.amount),
+              outstandingAmount: Number(e.outstandingAmount),
+            }))}
+          />
         </div>
       </Card>
 
