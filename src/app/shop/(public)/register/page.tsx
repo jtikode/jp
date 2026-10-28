@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { submitShopRegistration, type RegistrationState } from "@/actions/shopRegistrationActions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { buildWhatsAppLink } from "@/lib/waLink";
+import { track } from "@/lib/analytics";
 
 const initialState: RegistrationState = { ok: false };
 const KNOW_YOUR_LOGIN_MESSAGE =
@@ -35,6 +36,10 @@ function Field({
 
 export default function ShopRegisterPage() {
   const [state, formAction, pending] = useActionState(submitShopRegistration, initialState);
+
+  useEffect(() => {
+    if (state.ok) track("sign_up", { method: "shop_registration" });
+  }, [state.ok]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-slate-100 p-4">
@@ -103,6 +108,7 @@ export default function ShopRegisterPage() {
           href={buildWhatsAppLink("917721881599", KNOW_YOUR_LOGIN_MESSAGE)}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => track("generate_lead", { method: "whatsapp_know_your_login" })}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-green-600 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 hover:bg-green-100"
         >
           Know Your Login

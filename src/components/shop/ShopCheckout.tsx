@@ -9,6 +9,7 @@ import { useCart, paidQuantity } from "@/components/shop/CartProvider";
 import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
+import { track } from "@/lib/analytics";
 import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
 import { LastChanceDeals } from "@/components/shop/LastChanceDeals";
 import type { LastChanceDeal } from "@/lib/lastChanceDeals";
@@ -84,6 +85,12 @@ export function ShopCheckout({ lang, deals = [] }: { lang: Lang; deals?: LastCha
         return;
       }
       requestIdRef.current = null;
+      track("purchase", {
+        transaction_id: result.orderId,
+        currency: "INR",
+        value: total,
+        items: items.map((i) => ({ item_id: i.productId, item_name: i.name, price: i.unitPrice, quantity: i.quantity })),
+      });
       clear();
       setPlacedOrderId(result.orderId ?? null);
     } catch (err) {

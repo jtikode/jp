@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { track } from "@/lib/analytics";
 
 export interface CartItem {
   productId: string;
@@ -91,6 +92,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   function setQuantity(product: Omit<CartItem, "quantity">, quantity: number) {
+    if (quantity > 0 && !items.some((i) => i.productId === product.productId)) {
+      track("add_to_cart", {
+        currency: "INR",
+        value: product.unitPrice * quantity,
+        items: [{ item_id: product.productId, item_name: product.name, price: product.unitPrice, quantity }],
+      });
+    }
     setItems((prev) => {
       const current = prev.find((i) => i.productId === product.productId);
       const base = current?.bannerId ? detachBanner(prev, current.bannerId) : prev;

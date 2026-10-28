@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { track } from "@/lib/analytics";
 
 // Temporary: this deployment only serves J P Traders, so the multi-tenant
 // Business Code field is hidden from the form and hardcoded here instead.
@@ -57,6 +58,7 @@ function ShopLoginForm() {
         return;
       }
 
+      track("login", { method: "shop_login_id" });
       router.push(data.redirectTo);
       router.refresh();
     } finally {
@@ -126,7 +128,13 @@ function ShopLoginForm() {
         </p>
         <p className="mt-2 text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <a href={ASK_LOGIN_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-slate-700 underline">
+          <a
+            href={ASK_LOGIN_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track("generate_lead", { method: "whatsapp_login_request" })}
+            className="font-medium text-slate-700 underline"
+          >
             Ask for login ID and password
           </a>
         </p>
