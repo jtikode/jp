@@ -27,9 +27,9 @@ function RouteRow({ route }: { route: RouteTotal }) {
   );
 }
 
-// Outstanding tab: search any party or route, then the salesman's own routes,
-// then every other route. Tapping a route lists its parties; tapping a party
-// lists its bills.
+// Outstanding tab: search any party or route, otherwise only the salesman's own
+// routes. Other routes and parties appear only when searched by name. Tapping a
+// route lists its parties; tapping a party lists its bills.
 export default async function SalesmanOutstandingPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
@@ -45,7 +45,6 @@ export default async function SalesmanOutstandingPage({ searchParams }: { search
   ]);
   const mineIds = new Set(assignments.map((a) => a.routeId));
   const mine = allRoutes.filter((r) => mineIds.has(r.routeId)).sort((a, b) => a.name.localeCompare(b.name));
-  const others = allRoutes.filter((r) => !mineIds.has(r.routeId) && r.total > 0).sort((a, b) => a.name.localeCompare(b.name));
   const myTotal = mine.reduce((a, r) => a + r.total, 0);
 
   return (
@@ -108,12 +107,9 @@ export default async function SalesmanOutstandingPage({ searchParams }: { search
             ))}
             {mine.length === 0 && <p className="py-4 text-center text-slate-400">No routes assigned to you.</p>}
           </section>
-          <section>
-            <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-500">All other routes</h2>
-            {others.map((r) => (
-              <RouteRow key={r.routeId} route={r} />
-            ))}
-          </section>
+          <p className="px-2 text-center text-xs text-slate-400">
+            Other routes and parties show up only when you search their name.
+          </p>
         </>
       )}
     </div>

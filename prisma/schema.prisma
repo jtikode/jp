@@ -258,6 +258,10 @@ model Store {
   // percentage (e.g. 10 or 15) instead of the normal selling rate, but never
   // more than the normal rate. Null means the normal rate list.
   specialRatePercent Decimal?
+  // Set only for shops that pay MORE than the normal list: the normal selling
+  // rate times (1 + this/100), never above the product's M.R.P. Not a Gold
+  // (special-rate) shop; if both are set the special rate wins. Null = normal.
+  rateMarkupPercent Decimal?
 
   org               Organization          @relation(fields: [orgId], references: [id])
   visits            Visit[]

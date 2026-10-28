@@ -189,7 +189,7 @@ export async function placeOrder(
           (() => {
             const normal = Number(product.price);
             const special = rates.adjust(product.id, normal);
-            if (special !== normal) {
+            if (rates.special && special !== normal) {
               specialLines += 1;
               specialIds.add(product.id);
             }

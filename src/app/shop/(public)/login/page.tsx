@@ -12,6 +12,12 @@ import { Card } from "@/components/ui/Card";
 // than one distributor.
 const BUSINESS_CODE = "jptraders";
 
+// Existing customers who don't have their login yet message the distributor on
+// WhatsApp; a person replies with the Login Id and password.
+const ASK_LOGIN_WHATSAPP_URL = `https://wa.me/917721881599?text=${encodeURIComponent(
+  "Hello J P Traders, I already have an account with you. Please send me my login ID and password for the J P Traders app.",
+)}`;
+
 export default function ShopLoginPage() {
   // useSearchParams needs a Suspense boundary around it, per Next.js.
   return (
@@ -116,6 +122,12 @@ function ShopLoginForm() {
           First time ordering online?{" "}
           <a href="/shop/register" className="font-medium text-slate-700 underline">
             Register Account
+          </a>
+        </p>
+        <p className="mt-2 text-center text-sm text-slate-500">
+          Already have an account?{" "}
+          <a href={ASK_LOGIN_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-slate-700 underline">
+            Ask for login ID and password
           </a>
         </p>
       </Card>
