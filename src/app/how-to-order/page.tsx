@@ -1,19 +1,46 @@
 import type { Metadata } from "next";
 import { Baloo_2, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import { buildWhatsAppLink } from "@/lib/waLink";
+import { JsonLd } from "@/components/JsonLd";
+import { ORG_LOGO_PATH, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 const baloo = Baloo_2({ variable: "--font-baloo", subsets: ["latin"], weight: ["500", "700", "800"] });
 const workSans = Work_Sans({ variable: "--font-work-sans", subsets: ["latin"], weight: ["400", "500", "600"] });
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["500", "600"] });
 
+const TITLE = "How to Order";
+const DESCRIPTION = "A step-by-step guide for retailers to install the JP Traders shop app and place their first order.";
+
 export const metadata: Metadata = {
-  title: "How to Order | J P Traders",
-  description: "A step-by-step guide for retailers to install the JP Traders shop app and place their first order.",
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: absoluteUrl("/how-to-order") },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "article",
+    siteName: "J P Traders",
+    title: `${TITLE} | J P Traders`,
+    description: DESCRIPTION,
+    url: absoluteUrl("/how-to-order"),
+    images: [{ url: ORG_LOGO_PATH }],
+  },
+  twitter: {
+    card: "summary",
+    title: `${TITLE} | J P Traders`,
+    description: DESCRIPTION,
+    images: [ORG_LOGO_PATH],
+  },
 };
 
 export default function HowToOrderPage() {
   return (
     <main className={`${baloo.variable} ${workSans.variable} ${plexMono.variable} guide-page`}>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "How to Order", path: "/how-to-order" },
+        ])}
+      />
       <style>{`
         .guide-page{
           --paper:#ffffff;

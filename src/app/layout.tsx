@@ -4,6 +4,8 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { BrandBar } from "@/components/BrandBar";
 import { BrandFooter } from "@/components/BrandFooter";
+import { JsonLd } from "@/components/JsonLd";
+import { ORG_DESCRIPTION, ORG_LOGO_PATH, SITE_URL, organizationJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,9 +23,32 @@ const geistMono = Geist_Mono({
 // Rendering on demand makes Next send no-store, so nothing caches them.
 export const dynamic = "force-dynamic";
 
+// Most routes (the field terminal, telecaller desk, warehouse and admin
+// screens) sit behind a login and are blocked from crawling in robots.ts —
+// default to noindex here and let the handful of public pages (the blog,
+// how-to-order) opt back in with their own `robots` metadata.
 export const metadata: Metadata = {
-  title: "J P Traders",
-  description: "Field terminal, telecalling, warehouse and admin operations hub for pharma distributors.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "J P Traders",
+    template: "%s | J P Traders",
+  },
+  description: ORG_DESCRIPTION,
+  robots: { index: false, follow: false },
+  openGraph: {
+    type: "website",
+    siteName: "J P Traders",
+    title: "J P Traders",
+    description: ORG_DESCRIPTION,
+    url: SITE_URL,
+    images: [{ url: ORG_LOGO_PATH }],
+  },
+  twitter: {
+    card: "summary",
+    title: "J P Traders",
+    description: ORG_DESCRIPTION,
+    images: [ORG_LOGO_PATH],
+  },
 };
 
 export const viewport: Viewport = {
@@ -50,6 +75,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={organizationJsonLd()} />
         <ServiceWorkerRegistration />
         <BrandBar />
         <div className="flex flex-1 flex-col">{children}</div>

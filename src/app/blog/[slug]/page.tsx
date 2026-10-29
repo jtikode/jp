@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { getBlogPost, type BlogBlock } from "@/lib/blogPosts";
 import { buildWhatsAppLink } from "@/lib/waLink";
+import { JsonLd } from "@/components/JsonLd";
+import { ORG_LOGO_PATH, absoluteUrl, blogPostingJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -13,11 +15,29 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = getBlogPost(slug);
-  if (!post) return { title: "Post not found | J P Traders" };
+  if (!post) return { title: "Post not found" };
 
+  const url = absoluteUrl(`/blog/${post.slug}`);
   return {
-    title: `${post.title} | J P Traders`,
+    title: post.title,
     description: post.description,
+    alternates: { canonical: url },
+    robots: { index: true, follow: true },
+    openGraph: {
+      type: "article",
+      siteName: "J P Traders",
+      title: post.title,
+      description: post.description,
+      url,
+      section: post.category,
+      images: [{ url: ORG_LOGO_PATH }],
+    },
+    twitter: {
+      card: "summary",
+      title: post.title,
+      description: post.description,
+      images: [ORG_LOGO_PATH],
+    },
   };
 }
 
@@ -55,6 +75,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ])}
+      />
+      <JsonLd data={blogPostingJsonLd(post)} />
       <Link
         href="/blog"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:underline"
