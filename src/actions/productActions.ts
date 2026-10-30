@@ -140,8 +140,22 @@ export async function importProducts(
     },
   });
 
+  // The same item can appear twice in a billing export; keep the last row so
+  // two concurrent upserts never race to create one product.
+  const byName = new Map<string, (typeof parsedRows)[number]>();
+  for (const row of parsedRows) byName.set(row.name, row);
+  const uniqueRows = [...byName.values()];
+
+  // ~5,000 rows one after another outlasts the request timeout, so upsert in
+  // small parallel batches (the DB pool allows 20 connections).
+  const BATCH = 10;
   let imported = 0;
-  for (const row of parsedRows) {
+  for (let i = 0; i < uniqueRows.length; i += BATCH) {
+    await Promise.all(uniqueRows.slice(i, i + BATCH).map((row) => upsertProduct(row)));
+    imported += Math.min(BATCH, uniqueRows.length - i);
+  }
+
+  async function upsertProduct(row: (typeof parsedRows)[number]) {
     await db.product.upsert({
       where: { orgId_name: { orgId: session.orgId, name: row.name } },
       update: {
@@ -174,7 +188,6 @@ export async function importProducts(
         onRequest: row.onRequest ?? false,
       },
     });
-    imported += 1;
   }
 
   await db.importBatch.update({ where: { id: batch.id }, data: { rowCount: imported } });

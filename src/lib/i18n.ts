@@ -257,7 +257,12 @@ export const translations = {
     en: "India's first AI-based ordering platform, personalized to your buying history.",
     mr: "भारतातील पहिले AI-आधारित ऑर्डरिंग प्लॅटफॉर्म, तुमच्या खरेदी इतिहासानुसार वैयक्तिकृत.",
   },
-  shop_install_app: { en: "Install", mr: "इंस्टॉल करा" },
+  shop_install_app: { en: "Get the app", mr: "ॲप मिळवा" },
+  shop_play_banner_text: {
+    en: "Download the J P Traders app on Google Play",
+    mr: "जे. पी. ट्रेडर्स ॲप Google Play वर डाउनलोड करा",
+  },
+  shop_play_banner_button: { en: "Download", mr: "डाउनलोड" },
   shop_explore: { en: "Explore", mr: "एक्सप्लोर" },
   shop_by_category: { en: "Shop by category", mr: "श्रेणीनुसार खरेदी करा" },
   shop_by_category_sub: { en: "Tap a category to see its medicines", mr: "श्रेणी निवडा आणि त्यातील औषधे पहा" },

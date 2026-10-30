@@ -1,52 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Download } from "lucide-react";
+import { PLAY_STORE_URL, shouldOfferPlayStore } from "@/lib/playStore";
+import { track } from "@/lib/analytics";
 import { t, type Lang } from "@/lib/i18n";
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+function subscribe(): () => void {
+  return () => {};
 }
 
-// Chrome/Android fire `beforeinstallprompt` once per page load when the PWA
-// criteria (manifest + service worker) are met and it isn't already
-// installed — we stash that event so a normal button click can trigger the
-// native install UI later instead of relying on the browser's own mini-bar.
+// Header button that sends browser visitors to the Google Play listing. It
+// disappears inside the installed app, where there's nothing left to download.
 export function ShopInstallButton({ lang }: { lang: Lang }) {
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (isStandalone) return;
-
-    function handlePrompt(e: Event) {
-      e.preventDefault();
-      setInstallEvent(e as BeforeInstallPromptEvent);
-    }
-    window.addEventListener("beforeinstallprompt", handlePrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handlePrompt);
-  }, []);
-
-  if (!installEvent) return null;
-
-  async function handleInstall() {
-    await installEvent!.prompt();
-    await installEvent!.userChoice;
-    setInstallEvent(null);
-  }
+  const canOffer = useSyncExternalStore(subscribe, shouldOfferPlayStore, () => false);
+  if (!canOffer) return null;
 
   return (
-    <button
-      onClick={handleInstall}
+    <a
+      href={PLAY_STORE_URL}
+      onClick={() => track("select_content", { content_type: "play_store_header_button" })}
       className="flex h-9 items-center gap-1.5 rounded-full bg-blue-700 px-2.5 text-xs font-bold text-white hover:bg-blue-800 sm:h-11 sm:px-3.5"
       aria-label={t(lang, "shop_install_app")}
       title={t(lang, "shop_install_app")}
     >
       <Download size={16} strokeWidth={2} />
       <span className="hidden sm:inline">{t(lang, "shop_install_app")}</span>
-    </button>
+    </a>
   );
 }

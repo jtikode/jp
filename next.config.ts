@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Server Actions reject request bodies over 1MB by default; the billing
+    // software's product master (~4,800 rows) and other list uploads exceed that.
+    serverActions: { bodySizeLimit: "10mb" },
+  },
   async headers() {
     return [
       {
