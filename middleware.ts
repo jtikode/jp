@@ -54,6 +54,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // cnf.jpkop.in is the distributor ordering portal, same rewrite pattern.
+  if (host.startsWith("cnf.")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/cnf" : `/cnf${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   if (pathname.startsWith("/shop")) {
     if (SHOP_PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
       return NextResponse.next();

@@ -262,6 +262,10 @@ model Store {
   // rate times (1 + this/100), never above the product's M.R.P. Not a Gold
   // (special-rate) shop; if both are set the special rate wins. Null = normal.
   rateMarkupPercent Decimal?
+  // Set only for distributors with access to the cnf.jpkop.in ordering portal:
+  // they pay purchase rate + this percentage there (never above the normal
+  // rate). Null means the store is not a distributor and cannot sign in there.
+  distributorRatePercent Decimal?
 
   org               Organization          @relation(fields: [orgId], references: [id])
   visits            Visit[]
