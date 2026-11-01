@@ -38,7 +38,7 @@ export function CnfLogin({ base }: { base: string }) {
     <div className="flex min-h-dvh items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">Distributor Orders</h1>
-        <p className="mb-5 mt-1 text-sm text-slate-500">J P Traders. DKT, Morepen Devices, Morepen Burnol and Ambitech.</p>
+        <p className="mb-5 mt-1 text-sm text-slate-500">J P Traders. DKT, Morepen, Ambitech, Cipla OTC and Omee.</p>
 
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div>

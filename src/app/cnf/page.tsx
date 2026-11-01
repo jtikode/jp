@@ -8,17 +8,17 @@ import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { loadCnfCatalog } from "@/lib/cnf/catalog";
 import { CNF_GROUPS } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
+import { inr } from "@/lib/cnf/format";
 import { CnfSignOut } from "@/components/cnf/CnfSignOut";
 
 export const metadata: Metadata = {
   title: "Distributor Orders | J P Traders",
-  description: "Order DKT, Morepen Devices, Morepen Burnol and Ambitech directly from J P Traders.",
+  description: "Order DKT, Morepen, Ambitech, Cipla OTC and Omee directly from J P Traders.",
   robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";
 
-const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 const SHOWN_BILLS = 5;
 
 const TILE_COLORS: Record<string, string> = {
@@ -26,6 +26,8 @@ const TILE_COLORS: Record<string, string> = {
   "morepen-devices": "bg-sky-100 text-sky-700",
   "morepen-burnol": "bg-orange-100 text-orange-700",
   ambitech: "bg-emerald-100 text-emerald-700",
+  "cipla-otc": "bg-violet-100 text-violet-700",
+  omee: "bg-amber-100 text-amber-700",
 };
 
 export default async function CnfHomePage() {
@@ -74,7 +76,7 @@ export default async function CnfHomePage() {
 
         <Image
           src="/banners/cnf-banner.jpg"
-          alt="Order direct from J P Traders: DKT, Morepen Devices, Morepen Burnol and Ambitech at distributor rates"
+          alt="Order direct from J P Traders at distributor rates"
           width={1200}
           height={400}
           priority

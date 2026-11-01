@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Minus, Plus, Search, ShoppingCart, X } from "lucide-react";
 import type { CnfProduct } from "@/lib/cnf/catalog";
 import { CNF_GROUPS, CNF_MIN_ORDER_VALUE } from "@/lib/cnf/config";
+import { inr } from "@/lib/cnf/format";
 import { placeCnfOrder } from "@/actions/cnfActions";
 import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
 
@@ -21,7 +22,6 @@ interface Props {
   initialQuery: string;
 }
 
-const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 const draftKey = (storeId: string) => `cnf-cart:${storeId}`;
 const EMPTY_CART: Record<string, number> = {};
 

@@ -4,12 +4,12 @@ import { redirect } from "next/navigation";
 import { getCnfIdentity } from "@/actions/cnfActions";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getCnfBase } from "@/lib/cnf/base";
+import { inr } from "@/lib/cnf/format";
 
 export const metadata: Metadata = { title: "Pending Bills | J P Traders", robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 
-const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 export default async function CnfBillsPage() {
   const base = await getCnfBase();

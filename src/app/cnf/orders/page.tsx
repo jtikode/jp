@@ -4,12 +4,12 @@ import { getCnfIdentity } from "@/actions/cnfActions";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { CNF_NOTE_PREFIX } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
+import { inr } from "@/lib/cnf/format";
 
 export const metadata: Metadata = { title: "Distributor Orders | J P Traders", robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 
-const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 export default async function CnfOrdersPage() {
   const base = await getCnfBase();

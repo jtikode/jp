@@ -69,7 +69,7 @@ export function DistributorsManager({ current }: { current: DistributorShop[] })
         <h2 className="text-lg font-bold text-slate-900">Give distributors access to cnf.jpkop.in</h2>
         <p className="mt-1 text-sm text-slate-500">
           Paste one distributor per line: the party name, party code or phone number. They sign in with their normal J P Traders
-          Login Id and password, and pay the purchase rate plus the percentage you choose, never more than the normal rate.
+          Login Id and password, and pay the purchase rate plus the percentage you choose on DKT, never more than the normal rate. The other ranges have fixed rates: Morepen Devices +10%, Morepen Burnol +7%, Ambitech +10%, Cipla OTC and Omee at purchase rate.
         </p>
         <textarea
           value={text}
