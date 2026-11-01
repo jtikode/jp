@@ -1,6 +1,6 @@
 {
-  "name": "JP Distributor Orders",
-  "short_name": "JP Distributor",
+  "name": "SuperStockist Pharma",
+  "short_name": "SuperStockist",
   "description": "Order DKT, Morepen and Ambitech products directly from J P Traders at distributor rates.",
   "start_url": "/cnf",
   "scope": "/cnf",
