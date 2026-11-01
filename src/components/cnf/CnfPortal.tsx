@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Minus, Plus, Search, ShoppingCart, X } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Search, ShoppingCart, X } from "lucide-react";
 import type { CnfProduct } from "@/lib/cnf/catalog";
 import { CNF_GROUPS, CNF_MIN_ORDER_VALUE } from "@/lib/cnf/config";
 import { placeCnfOrder } from "@/actions/cnfActions";
@@ -14,6 +15,10 @@ interface Props {
   storeName: string;
   /** "" on cnf.jpkop.in, "/cnf" on app.jpkop.in. */
   base: string;
+  /** Group slug opened from the home screen, or "all". */
+  initialGroup: string;
+  /** Search typed on the home screen. */
+  initialQuery: string;
 }
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -83,7 +88,7 @@ function stockNote(stock: number | null): { text: string; className: string } {
   return { text: "In stock", className: "text-green-700" };
 }
 
-export function CnfPortal({ products, storeId, storeName, base }: Props) {
+export function CnfPortal({ products, storeId, storeName, base, initialGroup, initialQuery }: Props) {
   const router = useRouter();
   const key = draftKey(storeId);
   // The saved draft is read only after hydration so the server and first client render agree.
@@ -91,8 +96,8 @@ export function CnfPortal({ products, storeId, storeName, base }: Props) {
   const saved = useMemo(() => (hydrated ? loadDraft(key) : EMPTY_CART), [hydrated, key]);
   const [edited, setEdited] = useState<Record<string, number> | null>(null);
   const cart = edited ?? saved;
-  const [group, setGroup] = useState<string>("all");
-  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState<string>(initialGroup);
+  const [query, setQuery] = useState(initialQuery);
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -162,32 +167,20 @@ export function CnfPortal({ products, storeId, storeName, base }: Props) {
     if (viewOrders) router.push(`${base}/orders`);
   }
 
-  async function signOut() {
-    await fetch("/api/shop/logout", { method: "POST" });
-    router.push(`${base}/login`);
-    router.refresh();
-  }
-
   return (
     <div className="min-h-dvh bg-slate-100 pb-28">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+          <Link
+            href={`${base}/`}
+            aria-label="Back to home"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-700"
+          >
+            <ArrowLeft size={18} />
+          </Link>
           <div className="min-w-0">
-            <h1 className="text-lg font-bold text-slate-900">Distributor Orders</h1>
+            <h1 className="text-lg font-bold text-slate-900">Products</h1>
             <p className="truncate text-xs text-slate-500">{storeName}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <a href={`${base}/orders`} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-              My orders
-            </a>
-            <button
-              type="button"
-              onClick={signOut}
-              aria-label="Sign out"
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600"
-            >
-              <LogOut size={16} />
-            </button>
           </div>
         </div>
         <div className="mx-auto max-w-3xl px-4 pb-3">
