@@ -26,7 +26,7 @@ export function cnfGroupOf(company: string | null | undefined): CnfGroup | null 
 
 // Smallest order total (in rupees) a distributor can place. 0 means no minimum;
 // set it to the agreed amount to turn the rule on in the cart and on the server.
-export const CNF_MIN_ORDER_VALUE = 0;
+export const CNF_MIN_ORDER_VALUE = 5000;
 
 export const CNF_NOTE_PREFIX = "CNF PORTAL (distributor order)";
 

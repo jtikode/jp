@@ -1,0 +1,15 @@
+{
+  "name": "JP Distributor Orders",
+  "short_name": "JP Distributor",
+  "description": "Order DKT, Morepen and Ambitech products directly from J P Traders at distributor rates.",
+  "start_url": "/cnf",
+  "scope": "/cnf",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#0f766e",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/distributor-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/distributor-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
