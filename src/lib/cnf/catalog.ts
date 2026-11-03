@@ -25,8 +25,8 @@ function distributorPrice(price: number, purchaseRate: number | null, percent: n
  * The portal ranges, priced for one distributor. DKT takes the distributor's own
  * percentage; every other range has its own fixed percentage (see CNF_GROUPS).
  * The purchase rate is read here and only the final price leaves the server. Items with no selling rate
- * are left out (nothing to charge); items with no usable purchase rate stay at
- * the normal rate, and no price is ever above the normal rate.
+ * or no purchase rate are left out (nothing to charge, or no way to price them for a distributor),
+ * and no price is ever above the normal rate.
  */
 export async function loadCnfCatalog(orgId: string, percent: number): Promise<CnfProduct[]> {
   const db = getOrgScopedDb(orgId);
@@ -34,6 +34,7 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
     where: {
       active: true,
       price: { gt: 0 },
+      purchaseRate: { gt: 0 },
       OR: [
         { company: { in: [...CNF_COMPANIES] } },
         // Omee is picked by name: its company is Alkem, which is not a portal range.
