@@ -8,6 +8,8 @@ const registrationSchema = z
     medicalName: z.string().trim().min(1, "Medical/shop name is required."),
     ownerName: z.string().trim().min(1, "Owner name is required."),
     whatsappNumber: z.string().trim().min(10, "Enter a valid WhatsApp number."),
+    address: z.string().trim().min(10, "Enter the full shop address.").max(500, "Address is too long."),
+    preferredTransport: z.string().trim().max(200, "Transport name is too long.").optional().or(z.literal("")),
     email: z.string().trim().email("Enter a valid email address.").optional().or(z.literal("")),
     drugLicense20B: z.string().trim().min(1, "Drug license (20-B) is required."),
     drugLicense21B: z.string().trim().min(1, "Drug license (21-B) is required."),
@@ -34,6 +36,8 @@ export async function submitShopRegistration(
     medicalName: formData.get("medicalName"),
     ownerName: formData.get("ownerName"),
     whatsappNumber: formData.get("whatsappNumber"),
+    address: formData.get("address"),
+    preferredTransport: formData.get("preferredTransport"),
     email: formData.get("email"),
     drugLicense20B: formData.get("drugLicense20B"),
     drugLicense21B: formData.get("drugLicense21B"),
@@ -50,6 +54,7 @@ export async function submitShopRegistration(
   try {
     await sendRegistrationEmail({
       ...parsed.data,
+      preferredTransport: parsed.data.preferredTransport || undefined,
       email: parsed.data.email || undefined,
       gstNumber: parsed.data.gstNumber || undefined,
       panNumber: parsed.data.panNumber || undefined,

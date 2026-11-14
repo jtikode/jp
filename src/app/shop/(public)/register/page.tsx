@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { submitShopRegistration, type RegistrationState } from "@/actions/shopRegistrationActions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { buildWhatsAppLink } from "@/lib/waLink";
 import { track } from "@/lib/analytics";
@@ -65,6 +66,14 @@ export default function ShopRegisterPage() {
 
             <Field id="whatsappNumber" label="WhatsApp Number">
               <Input id="whatsappNumber" name="whatsappNumber" type="tel" autoComplete="tel" required />
+            </Field>
+
+            <Field id="address" label="Shop Address" hint="Shop no., street, area, city and PIN code">
+              <Textarea id="address" name="address" rows={3} autoComplete="street-address" required />
+            </Field>
+
+            <Field id="preferredTransport" label="Preferred Transport" hint="Optional. Transporter or courier you want your orders sent by">
+              <Input id="preferredTransport" name="preferredTransport" type="text" autoComplete="off" />
             </Field>
 
             <Field id="email" label="Email Address" hint="If applicable">

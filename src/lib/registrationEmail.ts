@@ -4,6 +4,8 @@ export interface ShopRegistrationDetails {
   medicalName: string;
   ownerName: string;
   whatsappNumber: string;
+  address: string;
+  preferredTransport?: string;
   email?: string;
   drugLicense20B: string;
   drugLicense21B: string;
@@ -16,9 +18,13 @@ export interface ShopRegistrationDetails {
 export async function sendRegistrationEmail(details: ShopRegistrationDetails): Promise<void> {
   if (!resend) return;
 
+  // Form values are free text from a public page, so escape them before they
+  // go into the email's HTML.
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const row = (label: string, value?: string) =>
     value
-      ? `<tr><td style="padding:4px 8px;color:#64748b;">${label}</td><td style="padding:4px 8px;font-weight:600;">${value}</td></tr>`
+      ? `<tr><td style="padding:4px 8px;color:#64748b;vertical-align:top;">${label}</td><td style="padding:4px 8px;font-weight:600;white-space:pre-line;">${esc(value)}</td></tr>`
       : "";
 
   const html = `
@@ -29,6 +35,8 @@ export async function sendRegistrationEmail(details: ShopRegistrationDetails): P
           ${row("Medical/Shop Name", details.medicalName)}
           ${row("Owner Name", details.ownerName)}
           ${row("WhatsApp Number", details.whatsappNumber)}
+          ${row("Shop Address", details.address)}
+          ${row("Preferred Transport", details.preferredTransport)}
           ${row("Email", details.email)}
           ${row("Drug License (20-B)", details.drugLicense20B)}
           ${row("Drug License (21-B)", details.drugLicense21B)}

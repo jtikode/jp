@@ -9,6 +9,7 @@ import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
 import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
+import { AutoNotificationPrompt } from "@/components/shop/AutoNotificationPrompt";
 import { getStoreRatePercent } from "@/lib/storeRates";
 import { t } from "@/lib/i18n";
 
@@ -43,6 +44,8 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
         }`}
       >
         {session.bookedBy && <StaffBookingBanner partyName={session.storeName} staffName={session.bookedBy} />}
+        {/* Not while staff book for a party: their phone must not get the shop's notifications. */}
+        {!session.bookedBy && <AutoNotificationPrompt />}
         <OfflineBanner lang={lang} />
         <ShopHeader storeName={session.storeName} lang={lang} gold={gold} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">

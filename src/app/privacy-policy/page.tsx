@@ -116,7 +116,7 @@ export default function PrivacyPolicyPage() {
             <p>JP Heights, CS 2189/1, 2189/2, Ram Galli, Mangalwar Peth, Kolhapur 416012</p>
             <p>Phone: +91 94220 46470 / +91 77218 81599</p>
             <p>Email: jptraderskop@gmail.com</p>
-            <p>Website: jptraders.net</p>
+            <p>Website: www.jpkop.in</p>
           </div>
         </section>
       </div>
