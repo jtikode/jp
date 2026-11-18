@@ -1,6 +1,5 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
-import { CNF_COMPANIES, CNF_GROUPS, cnfGroupOf } from "@/lib/cnf/config";
-import { CNF_EXTRA_PRODUCT_NAMES } from "@/lib/cnf/extraProducts";
+import { CNF_COMPANIES, CNF_GROUPS, CNF_OVERSTOCK_QTY, CNF_OVERSTOCK_VALUE, cnfGroupOf } from "@/lib/cnf/config";
 
 export interface CnfProduct {
   id: string;
@@ -31,6 +30,17 @@ function distributorPrice(price: number, purchaseRate: number | null, percent: n
  */
 export async function loadCnfCatalog(orgId: string, percent: number): Promise<CnfProduct[]> {
   const db = getOrgScopedDb(orgId);
+  // Overstocked products (any company) join the "More products" range: over CNF_OVERSTOCK_QTY units,
+  // or stock value at purchase rate over CNF_OVERSTOCK_VALUE.
+  const stocked = await db.product.findMany({
+    where: { active: true, price: { gt: 0 }, purchaseRate: { gt: 0 }, stock: { gt: 0 } },
+    select: { id: true, stock: true, purchaseRate: true },
+  });
+  const overstockIds = new Set(
+    stocked
+      .filter((r) => (r.stock ?? 0) > CNF_OVERSTOCK_QTY || (r.stock ?? 0) * Number(r.purchaseRate) > CNF_OVERSTOCK_VALUE)
+      .map((r) => r.id),
+  );
   const rows = await db.product.findMany({
     where: {
       active: true,
@@ -40,8 +50,8 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
         { company: { in: [...CNF_COMPANIES] } },
         // Omee is picked by name: its company is Alkem, which is not a portal range.
         { name: { startsWith: "OMEE", mode: "insensitive" } },
-        // "More products": picked one by one by exact name.
-        { name: { in: [...CNF_EXTRA_PRODUCT_NAMES] } },
+        // "More products": overstock of any company.
+        { id: { in: [...overstockIds] } },
       ],
     },
     select: { id: true, name: true, company: true, unit: true, price: true, purchaseRate: true, mrp: true, taxPercent: true, stock: true },
@@ -54,7 +64,7 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
   // that has a company wins, so rows with a company are walked first.
   rows.sort((a, b) => Number(b.company != null) - Number(a.company != null));
   for (const r of rows) {
-    const group = cnfGroupOf(r.company, r.name);
+    const group = cnfGroupOf(r.company, r.name, overstockIds.has(r.id));
     if (!group) continue;
     const name = r.name.replace(/\s+/g, " ").trim();
     if (!r.company) {
