@@ -1,5 +1,6 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { CNF_COMPANIES, CNF_GROUPS, cnfGroupOf } from "@/lib/cnf/config";
+import { CNF_EXTRA_PRODUCT_NAMES } from "@/lib/cnf/extraProducts";
 
 export interface CnfProduct {
   id: string;
@@ -39,6 +40,8 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
         { company: { in: [...CNF_COMPANIES] } },
         // Omee is picked by name: its company is Alkem, which is not a portal range.
         { name: { startsWith: "OMEE", mode: "insensitive" } },
+        // "More products": picked one by one by exact name.
+        { name: { in: [...CNF_EXTRA_PRODUCT_NAMES] } },
       ],
     },
     select: { id: true, name: true, company: true, unit: true, price: true, purchaseRate: true, mrp: true, taxPercent: true, stock: true },
