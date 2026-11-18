@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCnfIdentity } from "@/actions/cnfActions";
 import { loadCnfCatalog } from "@/lib/cnf/catalog";
-import { CNF_GROUPS } from "@/lib/cnf/config";
+import { cnfGroupTabs } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
 import { CnfPortal } from "@/components/cnf/CnfPortal";
 
@@ -19,7 +19,7 @@ export default async function CnfProductsPage({ searchParams }: { searchParams: 
   const me = await getCnfIdentity();
   if (!me) redirect(`${base}/login`);
   const products = await loadCnfCatalog(me.orgId, me.percent);
-  const initialGroup = CNF_GROUPS.some((g) => g.slug === group) ? (group as string) : "all";
+  const initialGroup = cnfGroupTabs(products).some((g) => g.slug === group) ? (group as string) : "all";
   const initialQuery = (q ?? "").slice(0, 80);
   return (
     <CnfPortal

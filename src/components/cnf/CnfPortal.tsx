@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Minus, Plus, Search, ShoppingCart, X } from "lucide-react";
 import type { CnfProduct } from "@/lib/cnf/catalog";
-import { CNF_GROUPS, CNF_MIN_ORDER_VALUE } from "@/lib/cnf/config";
+import { CNF_MIN_ORDER_VALUE, cnfGroupTabs } from "@/lib/cnf/config";
 import { inr } from "@/lib/cnf/format";
 import { placeCnfOrder } from "@/actions/cnfActions";
 import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
@@ -195,7 +195,7 @@ export function CnfPortal({ products, storeId, storeName, base, initialGroup, in
             />
           </div>
           <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
-            {[{ slug: "all", label: "All" }, ...CNF_GROUPS].map((g) => (
+            {[{ slug: "all", label: "All" }, ...cnfGroupTabs(products)].map((g) => (
               <button
                 key={g.slug}
                 type="button"
@@ -219,7 +219,7 @@ export function CnfPortal({ products, storeId, storeName, base, initialGroup, in
               <div className="min-w-0">
                 <p className="font-semibold leading-snug text-slate-900">{p.name}</p>
                 <p className="text-xs text-slate-500">
-                  {[CNF_GROUPS.find((g) => g.slug === p.group)?.label, p.unit, p.mrp ? `MRP ${inr(p.mrp)}` : null].filter(Boolean).join(" · ")}
+                  {[p.groupLabel, p.unit, p.mrp ? `MRP ${inr(p.mrp)}` : null].filter(Boolean).join(" · ")}
                 </p>
                 <p className="mt-1 text-base font-bold text-slate-900">
                   {inr(p.price)}

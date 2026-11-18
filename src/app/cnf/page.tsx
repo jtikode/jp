@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { getCnfIdentity } from "@/actions/cnfActions";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { loadCnfCatalog } from "@/lib/cnf/catalog";
-import { CNF_GROUPS } from "@/lib/cnf/config";
+import { cnfGroupTabs } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
 import { inr } from "@/lib/cnf/format";
 import { CnfSignOut } from "@/components/cnf/CnfSignOut";
@@ -20,6 +20,16 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const SHOWN_BILLS = 5;
+
+// Fixed ranges keep their colour; every other company block cycles through these.
+const TILE_CYCLE = [
+  "bg-teal-100 text-teal-700",
+  "bg-indigo-100 text-indigo-700",
+  "bg-pink-100 text-pink-700",
+  "bg-lime-100 text-lime-700",
+  "bg-cyan-100 text-cyan-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+];
 
 const TILE_COLORS: Record<string, string> = {
   dkt: "bg-rose-100 text-rose-700",
@@ -42,6 +52,7 @@ export default async function CnfHomePage() {
     db.ledgerEntry.findMany({ where: { storeId: me.storeId }, orderBy: { invoiceDate: "asc" } }),
   ]);
 
+  const tabs = cnfGroupTabs(products);
   const totalDue = bills.reduce((sum, b) => sum + Number(b.outstandingAmount), 0);
   const today = new Date();
 
@@ -86,18 +97,18 @@ export default async function CnfHomePage() {
         <section aria-label="Companies">
           <h2 className="mb-2 text-sm font-semibold text-slate-500">Shop by company</h2>
           <div className="grid grid-cols-2 gap-3">
-            {CNF_GROUPS.map((g) => (
+            {tabs.map((g, i) => (
               <Link
                 key={g.slug}
                 href={`${base}/products?group=${g.slug}`}
                 className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                <span className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold ${TILE_COLORS[g.slug] ?? "bg-slate-100 text-slate-700"}`}>
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold ${TILE_COLORS[g.slug] ?? TILE_CYCLE[i % TILE_CYCLE.length]}`}>
                   {g.label.charAt(0)}
                 </span>
                 <span>
                   <span className="block font-semibold text-slate-900">{g.label}</span>
-                  <span className="block text-xs text-slate-500">{products.filter((p) => p.group === g.slug).length} products</span>
+                  <span className="block text-xs text-slate-500">{g.count} {g.count === 1 ? "product" : "products"}</span>
                 </span>
               </Link>
             ))}

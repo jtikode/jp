@@ -33,6 +33,47 @@ export const CNF_GROUPS: readonly CnfGroup[] = [
 export const CNF_OVERSTOCK_QTY = 500;
 export const CNF_OVERSTOCK_VALUE = 10000;
 
+/** Billing-software company text made readable: "SMW WELLNESS" -> "SMW Wellness". Short words stay as they are. */
+export function cnfCompanyLabel(company: string): string {
+  return company
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w.length <= 3 ? w : w.charAt(0) + w.slice(1).toLowerCase()))
+    .join(" ");
+}
+
+/** Overstock is shown one block per company, so each gets its own group slug. */
+export function cnfCompanySlug(company: string | null | undefined): string {
+  const s = (company ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `more-${s || "other"}`;
+}
+
+export interface CnfGroupTab {
+  slug: string;
+  label: string;
+  count: number;
+}
+
+/**
+ * The blocks and filter chips: the fixed ranges first (always shown), then one block for every other
+ * company that has products in the catalog, A to Z.
+ */
+export function cnfGroupTabs(products: readonly { group: string; groupLabel: string }[]): CnfGroupTab[] {
+  const seen = new Map<string, { label: string; count: number }>();
+  for (const p of products) {
+    const e = seen.get(p.group);
+    if (e) e.count += 1;
+    else seen.set(p.group, { label: p.groupLabel, count: 1 });
+  }
+  const fixed = CNF_GROUPS.filter((g) => !g.overstock).map((g) => ({ slug: g.slug, label: g.label, count: seen.get(g.slug)?.count ?? 0 }));
+  const fixedSlugs = new Set(fixed.map((g) => g.slug));
+  const rest = [...seen]
+    .filter(([slug]) => !fixedSlugs.has(slug))
+    .map(([slug, v]) => ({ slug, label: v.label, count: v.count }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return [...fixed, ...rest];
+}
+
 export const CNF_COMPANIES: readonly string[] = CNF_GROUPS.flatMap((g) => g.companies);
 
 export function cnfGroupOf(company: string | null | undefined, name?: string | null, overstocked = false): CnfGroup | null {

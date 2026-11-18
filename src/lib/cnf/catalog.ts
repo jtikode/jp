@@ -1,10 +1,12 @@
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
-import { CNF_COMPANIES, CNF_GROUPS, CNF_OVERSTOCK_QTY, CNF_OVERSTOCK_VALUE, cnfGroupOf } from "@/lib/cnf/config";
+import { CNF_COMPANIES, CNF_GROUPS, CNF_OVERSTOCK_QTY, CNF_OVERSTOCK_VALUE, cnfCompanyLabel, cnfCompanySlug, cnfGroupOf } from "@/lib/cnf/config";
 
 export interface CnfProduct {
   id: string;
   name: string;
+  /** Block the product sits in: a fixed range, or one company for overstock. */
   group: string;
+  groupLabel: string;
   company: string;
   unit: string | null;
   mrp: number | null;
@@ -84,7 +86,8 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
     out.push({
       id: r.id,
       name,
-      group: group.slug,
+      group: group.overstock ? cnfCompanySlug(r.company) : group.slug,
+      groupLabel: group.overstock ? (r.company?.trim() ? cnfCompanyLabel(r.company) : "Other") : group.label,
       company: r.company ?? "",
       unit: r.unit,
       mrp: r.mrp != null ? Number(r.mrp) : null,
@@ -93,6 +96,10 @@ export async function loadCnfCatalog(orgId: string, percent: number): Promise<Cn
       price: distributorPrice(Number(r.price), r.purchaseRate != null ? Number(r.purchaseRate) : null, group.fixedPercent ?? percent),
     });
   }
-  out.sort((a, b) => CNF_GROUPS.findIndex((g) => g.slug === a.group) - CNF_GROUPS.findIndex((g) => g.slug === b.group) || a.company.localeCompare(b.company) || a.name.localeCompare(b.name));
+const rank = (slug: string) => {
+    const i = CNF_GROUPS.findIndex((g) => g.slug === slug);
+    return i === -1 ? CNF_GROUPS.length : i;
+  };
+  out.sort((a, b) => rank(a.group) - rank(b.group) || a.groupLabel.localeCompare(b.groupLabel) || a.company.localeCompare(b.company) || a.name.localeCompare(b.name));
   return out;
 }
