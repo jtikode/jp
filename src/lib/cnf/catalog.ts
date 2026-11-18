@@ -25,32 +25,42 @@ function distributorPrice(price: number, purchaseRate: number | null, percent: n
  * The portal ranges, priced for one distributor. DKT takes the distributor's own
  * percentage; every other range has its own fixed percentage (see CNF_GROUPS).
  * The purchase rate is read here and only the final price leaves the server. Items with no selling rate
- * or no purchase rate are left out (nothing to charge, or no way to price them for a distributor),
- * and no price is ever above the normal rate.
+ * are left out (nothing to charge). Items with no purchase rate are left out too, unless they are
+ * overstocked: those are sold at the normal rate. No price is ever above the normal rate.
  */
 export async function loadCnfCatalog(orgId: string, percent: number): Promise<CnfProduct[]> {
   const db = getOrgScopedDb(orgId);
-  // Overstocked products (any company) join the "More products" range: over CNF_OVERSTOCK_QTY units,
-  // or stock value at purchase rate over CNF_OVERSTOCK_VALUE.
+  // Overstocked products (any company) join the portal: over CNF_OVERSTOCK_QTY units, or stock value
+  // over CNF_OVERSTOCK_VALUE (at purchase rate, or at the selling rate when there is none). Those with
+  // no purchase rate are sold at the normal rate, since no distributor rate can be worked out.
   const stocked = await db.product.findMany({
-    where: { active: true, price: { gt: 0 }, purchaseRate: { gt: 0 }, stock: { gt: 0 } },
-    select: { id: true, stock: true, purchaseRate: true },
+    where: { active: true, price: { gt: 0 }, stock: { gt: 0 } },
+    select: { id: true, stock: true, price: true, purchaseRate: true },
   });
   const overstockIds = new Set(
     stocked
-      .filter((r) => (r.stock ?? 0) > CNF_OVERSTOCK_QTY || (r.stock ?? 0) * Number(r.purchaseRate) > CNF_OVERSTOCK_VALUE)
+      .filter((r) => {
+        const units = r.stock ?? 0;
+        const rate = Number(r.purchaseRate) > 0 ? Number(r.purchaseRate) : Number(r.price);
+        return units > CNF_OVERSTOCK_QTY || units * rate > CNF_OVERSTOCK_VALUE;
+      })
       .map((r) => r.id),
   );
   const rows = await db.product.findMany({
     where: {
       active: true,
       price: { gt: 0 },
-      purchaseRate: { gt: 0 },
       OR: [
-        { company: { in: [...CNF_COMPANIES] } },
-        // Omee is picked by name: its company is Alkem, which is not a portal range.
-        { name: { startsWith: "OMEE", mode: "insensitive" } },
-        // "More products": overstock of any company.
+        // The ranges: only items with a purchase rate, so a distributor rate can be worked out.
+        {
+          purchaseRate: { gt: 0 },
+          OR: [
+            { company: { in: [...CNF_COMPANIES] } },
+            // Omee is picked by name: its company is Alkem, which is not a portal range.
+            { name: { startsWith: "OMEE", mode: "insensitive" } },
+          ],
+        },
+        // Overstock of any company, with or without a purchase rate.
         { id: { in: [...overstockIds] } },
       ],
     },
