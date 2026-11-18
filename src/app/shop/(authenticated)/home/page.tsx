@@ -30,6 +30,8 @@ import { getOfferBundle } from "@/lib/bannerBundle";
 import { getStoreRatePercent } from "@/lib/storeRates";
 import { getCategoryTileCounts } from "@/lib/productSearch";
 import { CategoryGrid } from "@/components/shop/CategoryGrid";
+import { MissedDeals } from "@/components/shop/MissedDeals";
+import { getMissedDeals } from "@/lib/missedDeals";
 
 const MENU_TILES = [
   { href: "/shop/fast-order", key: "shop_menu_fast_order", icon: Zap, bg: "bg-amber-50", fg: "text-amber-600" },
@@ -55,7 +57,7 @@ export default async function ShopHomePage() {
   const wednesdayDeals = isWednesdayToday() ? await getActiveWednesdayDeals(session.orgId) : [];
   const remainingByDealId = await getRemainingDealQtyMap(session.orgId, session.storeId, wednesdayDeals);
 
-  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, companySales, tileCounts] = await Promise.all([
+  const [heroBanners, offerBanners, loyaltyTiers, yearSpendResult, companySales, tileCounts, missedDeals] = await Promise.all([
     db.shopBanner.findMany({
       where: { placement: "HERO", active: true, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { sortOrder: "asc" },
@@ -72,6 +74,8 @@ export default async function ShopHomePage() {
     }),
     db.companySale.findMany({ where: { storeId: session.storeId } }),
     getCategoryTileCounts(session.orgId).catch(() => new Map<string, { total: number; inStock: number }>()),
+    // A failure here must never take down the home page; it is only a teaser strip.
+    getMissedDeals(session.orgId, session.storeId).catch(() => []),
   ]);
 
   const bundleByBannerId = new Map(
@@ -192,6 +196,8 @@ export default async function ShopHomePage() {
           />
         </div>
       )}
+
+      <MissedDeals deals={missedDeals} lang={lang} />
 
       {salePeriodEnd && (
         <Card>

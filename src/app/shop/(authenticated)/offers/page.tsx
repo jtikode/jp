@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { OfferExpiryBadge } from "@/components/shop/OfferExpiryBadge";
 import { getOfferBundle } from "@/lib/bannerBundle";
 import { OfferBundleTap } from "@/components/shop/OfferBundleTap";
+import { MissedDeals } from "@/components/shop/MissedDeals";
+import { getMissedDeals } from "@/lib/missedDeals";
 
 export default async function ShopOffersPage() {
   const session = await requireStoreSession();
@@ -23,6 +25,7 @@ export default async function ShopOffersPage() {
   });
 
   const bundles = await Promise.all(offers.map((o) => getOfferBundle(session.orgId, o)));
+  const missedDeals = await getMissedDeals(session.orgId, session.storeId).catch(() => []);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -69,6 +72,8 @@ export default async function ShopOffersPage() {
           </Card>
         )}
       </div>
+
+      <MissedDeals deals={missedDeals} lang={lang} />
     </div>
   );
 }
