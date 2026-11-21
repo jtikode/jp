@@ -16,6 +16,7 @@ export function StaffBookingBanner({ partyName, staffName }: { partyName: string
       // The cart is kept per device, so clear it before the next party's order.
       try {
         localStorage.removeItem("jpt_shop_cart");
+        for (const k of Object.keys(localStorage)) if (k.startsWith("cnf-cart:")) localStorage.removeItem(k);
       } catch {
         // Storage can be blocked; the next booking then starts with whatever is there.
       }

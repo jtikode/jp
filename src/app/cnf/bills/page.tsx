@@ -5,6 +5,7 @@ import { getCnfIdentity } from "@/actions/cnfActions";
 import { getOrgScopedDb } from "@/lib/orgScopedDb";
 import { getCnfBase } from "@/lib/cnf/base";
 import { inr } from "@/lib/cnf/format";
+import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 
 export const metadata: Metadata = { title: "Pending Bills | J P Traders", robots: { index: false, follow: false } };
 
@@ -23,6 +24,7 @@ export default async function CnfBillsPage() {
 
   return (
     <div className="min-h-dvh bg-slate-100 pb-10">
+      {me.bookedBy && <StaffBookingBanner partyName={me.name} staffName={me.bookedBy} />}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-slate-900">Pending bills</h1>

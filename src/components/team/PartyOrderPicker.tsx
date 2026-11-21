@@ -41,11 +41,11 @@ export function PartyOrderPicker() {
     };
   }, [query]);
 
-  async function open(id: string) {
+  async function open(party: OrderPartyOption) {
     setError(null);
-    setOpeningId(id);
+    setOpeningId(party.id);
     try {
-      const res = await startOrderingForParty(id);
+      const res = await startOrderingForParty(party.id);
       if (!res.ok) {
         setError(res.error ?? "Could not open the shop for this party.");
         return;
@@ -53,10 +53,12 @@ export function PartyOrderPicker() {
       // A fresh cart for each party: the shop keeps its cart per device.
       try {
         localStorage.removeItem("jpt_shop_cart");
+        localStorage.removeItem(`cnf-cart:${party.id}`);
       } catch {
         // Blocked storage: carry on with whatever cart is there.
       }
-      router.push("/shop/home");
+      // Distributors order from the distributor portal, at their own rates.
+      router.push(party.isDistributor ? "/cnf" : "/shop/home");
     } catch {
       setError("Could not open the shop for this party.");
     } finally {
@@ -87,12 +89,17 @@ export function PartyOrderPicker() {
           <li key={s.id}>
             <button
               type="button"
-              onClick={() => open(s.id)}
+              onClick={() => open(s)}
               disabled={openingId !== null}
               className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-slate-50 disabled:opacity-60"
             >
               <span className="min-w-0">
-                <span className="block font-semibold text-slate-900">{s.name}</span>
+                <span className="block font-semibold text-slate-900">
+                  {s.name}
+                  {s.isDistributor && (
+                    <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">Distributor</span>
+                  )}
+                </span>
                 <span className="block truncate text-xs text-slate-500">
                   {[s.code, s.routeName, s.address].filter(Boolean).join(" · ")}
                 </span>

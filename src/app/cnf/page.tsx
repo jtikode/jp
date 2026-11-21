@@ -10,6 +10,7 @@ import { cnfGroupTabs } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
 import { inr } from "@/lib/cnf/format";
 import { CnfSignOut } from "@/components/cnf/CnfSignOut";
+import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 
 export const metadata: Metadata = {
   title: "Distributor Orders | J P Traders",
@@ -58,6 +59,7 @@ export default async function CnfHomePage() {
 
   return (
     <div className="min-h-dvh bg-slate-100 pb-10">
+      {me.bookedBy && <StaffBookingBanner partyName={me.name} staffName={me.bookedBy} />}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">

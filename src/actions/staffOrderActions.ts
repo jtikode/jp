@@ -16,6 +16,8 @@ export interface OrderPartyOption {
   address: string;
   code: string | null;
   routeName: string | null;
+  /** A distributor orders from the distributor portal (distributor rates), not the shop. */
+  isDistributor: boolean;
 }
 
 export async function searchPartiesForOrder(query: string): Promise<OrderPartyOption[]> {
@@ -31,7 +33,7 @@ export async function searchPartiesForOrder(query: string): Promise<OrderPartyOp
         { phone: { contains: q } },
       ],
     },
-    select: { id: true, name: true, address: true, externalCode: true, route: { select: { name: true } } },
+    select: { id: true, name: true, address: true, externalCode: true, distributorRatePercent: true, route: { select: { name: true } } },
     orderBy: { name: "asc" },
     take: 20,
   });
@@ -41,6 +43,7 @@ export async function searchPartiesForOrder(query: string): Promise<OrderPartyOp
     address: s.address,
     code: s.externalCode,
     routeName: s.route?.name ?? null,
+    isDistributor: s.distributorRatePercent != null && Number(s.distributorRatePercent) > 0,
   }));
 }
 

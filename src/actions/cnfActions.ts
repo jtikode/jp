@@ -16,6 +16,9 @@ export interface CnfIdentity {
   storeId: string;
   name: string;
   percent: number;
+  /** Set while an admin or salesman is taking the order for the distributor. */
+  bookedBy?: string;
+  bookedByRole?: string;
 }
 
 /** The distributor signed in on this device, or null (not signed in, or not a distributor). */
@@ -29,7 +32,7 @@ export async function getCnfIdentity(): Promise<CnfIdentity | null> {
   });
   const percent = store?.distributorRatePercent != null ? Number(store.distributorRatePercent) : 0;
   if (!store || percent <= 0) return null;
-  return { orgId: session.orgId, storeId: session.storeId, name: store.name, percent };
+  return { orgId: session.orgId, storeId: session.storeId, name: store.name, percent, bookedBy: session.bookedBy, bookedByRole: session.bookedByRole };
 }
 
 const orderSchema = z.object({
@@ -86,7 +89,10 @@ export async function placeCnfOrder(
     select: { name: true, externalCode: true, address: true, orderGiverWhatsapp: true },
   });
 
-  const finalNotes = [CNF_NOTE_PREFIX, notes?.trim()].filter(Boolean).join("\n");
+  const bookedNote = me.bookedBy
+    ? `Booked by ${me.bookedBy}${me.bookedByRole ? ` (${me.bookedByRole.toLowerCase()})` : ""} for the distributor`
+    : undefined;
+  const finalNotes = [CNF_NOTE_PREFIX, bookedNote, notes?.trim()].filter(Boolean).join("\n");
 
   let order;
   try {

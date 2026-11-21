@@ -5,6 +5,7 @@ import { loadCnfCatalog } from "@/lib/cnf/catalog";
 import { cnfGroupTabs } from "@/lib/cnf/config";
 import { getCnfBase } from "@/lib/cnf/base";
 import { CnfPortal } from "@/components/cnf/CnfPortal";
+import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 
 export const metadata: Metadata = {
   title: "Distributor Products | J P Traders",
@@ -22,14 +23,17 @@ export default async function CnfProductsPage({ searchParams }: { searchParams: 
   const initialGroup = cnfGroupTabs(products).some((g) => g.slug === group) ? (group as string) : "all";
   const initialQuery = (q ?? "").slice(0, 80);
   return (
-    <CnfPortal
-      key={`${initialGroup}|${initialQuery}`}
-      products={products}
-      storeId={me.storeId}
-      storeName={me.name}
-      base={base}
-      initialGroup={initialGroup}
-      initialQuery={initialQuery}
-    />
+    <>
+      {me.bookedBy && <StaffBookingBanner partyName={me.name} staffName={me.bookedBy} />}
+      <CnfPortal
+        key={`${initialGroup}|${initialQuery}`}
+        products={products}
+        storeId={me.storeId}
+        storeName={me.name}
+        base={base}
+        initialGroup={initialGroup}
+        initialQuery={initialQuery}
+      />
+    </>
   );
 }
