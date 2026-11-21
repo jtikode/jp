@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { EmployeeForm } from "@/components/admin/EmployeeForm";
 import { ConfirmDeleteButton } from "@/components/ui/ConfirmDeleteButton";
-import { toggleEmployeeActive, deleteEmployee, changeEmployeePassword, renameEmployee } from "@/actions/employeeActions";
+import { toggleEmployeeActive, deleteEmployee, changeEmployeePassword, renameEmployee, setEmployeeOrderAccess } from "@/actions/employeeActions";
 import { InlineRenameButton } from "@/components/admin/InlineRenameButton";
 import { ChangePasswordButton } from "@/components/admin/ChangePasswordButton";
 import { ExportExcelButton } from "@/components/ui/ExportExcelButton";
@@ -35,13 +35,18 @@ export default async function EmployeesPage() {
             filename="employees"
           />
         </div>
-        <table className="w-full min-w-[820px] text-left text-sm">
+        <p className="mb-3 text-xs text-slate-500">
+          &ldquo;Takes orders for&rdquo; (salesmen): green means the salesman can book orders for that kind of party from Take an order.
+          Tap to switch Retail or Distributor on or off.
+        </p>
+        <table className="w-full min-w-[960px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
               <th className="py-2 pr-4">Name</th>
               <th className="py-2 pr-4">Username</th>
               <th className="py-2 pr-4">Role</th>
               <th className="py-2 pr-4">Status</th>
+              <th className="py-2 pr-4">Takes orders for</th>
               <th className="py-2 pr-4"></th>
             </tr>
           </thead>
@@ -61,6 +66,34 @@ export default async function EmployeesPage() {
                   >
                     {emp.active ? "Active" : "Inactive"}
                   </span>
+                </td>
+                <td className="py-2 pr-4">
+                  {emp.role === "SALESMAN" ? (
+                    <div className="flex items-center gap-2">
+                      {([
+                        ["retail", "Retail", emp.canOrderRetail],
+                        ["distributor", "Distributor", emp.canOrderDistributor],
+                      ] as const).map(([kind, label, on]) => (
+                        <form key={kind} action={setEmployeeOrderAccess.bind(null, emp.id, kind, !on)}>
+                          <button
+                            type="submit"
+                            title={on ? `Tap to turn ${label.toLowerCase()} orders off` : `Tap to turn ${label.toLowerCase()} orders on`}
+                            className={
+                              on
+                                ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700"
+                                : "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-400 line-through"
+                            }
+                          >
+                            {label}
+                          </button>
+                        </form>
+                      ))}
+                    </div>
+                  ) : emp.role === "ADMIN" ? (
+                    <span className="text-xs text-slate-400">Both</span>
+                  ) : (
+                    <span className="text-xs text-slate-400">—</span>
+                  )}
                 </td>
                 <td className="py-2 pr-4">
                   <div className="flex items-center gap-3">
@@ -98,7 +131,7 @@ export default async function EmployeesPage() {
             ))}
             {employees.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-4 text-center text-slate-400">
+                <td colSpan={6} className="py-4 text-center text-slate-400">
                   No employees yet.
                 </td>
               </tr>

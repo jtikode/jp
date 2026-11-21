@@ -97,6 +97,24 @@ export async function toggleEmployeeActive(userId: string, active: boolean): Pro
   revalidatePath("/team/admin/employees");
 }
 
+// Admin switches a salesman's "Take an order" access on or off, per kind of
+// party: retailers or distributors.
+export async function setEmployeeOrderAccess(
+  userId: string,
+  kind: "retail" | "distributor",
+  allowed: boolean,
+): Promise<void> {
+  const session = await assertRole(["ADMIN"]);
+  const db = getOrgScopedDb(session.orgId);
+
+  await db.user.update({
+    where: { id: userId },
+    data: kind === "retail" ? { canOrderRetail: allowed } : { canOrderDistributor: allowed },
+  });
+
+  revalidatePath("/team/admin/employees");
+}
+
 export async function deleteEmployee(userId: string): Promise<ActionResult> {
   const session = await assertRole(["ADMIN"]);
   const db = getOrgScopedDb(session.orgId);

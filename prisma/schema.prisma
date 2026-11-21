@@ -127,6 +127,11 @@ model User {
   // (app.jpkop.in/go/<promoSlug>) — lazily generated from `name` the first
   // time the admin Promo Links page is viewed, not set at creation time.
   promoSlug    String?
+  // Which parties this employee may take orders for from "Take an order":
+  // retailers (everyone by default) and distributors (switched on by the
+  // admin per salesman). Admins can always take both.
+  canOrderRetail      Boolean @default(true)
+  canOrderDistributor Boolean @default(false)
 
   org                    Organization            @relation(fields: [orgId], references: [id])
   routeAssignments       RouteAssignment[]
