@@ -18,7 +18,47 @@ export function startNotificationScheduler(): void {
     runDueNotifications().catch((err) => console.error("notificationScheduler tick failed:", err));
     runDueOrderReminders().catch((err) => console.error("orderReminder tick failed:", err));
     runPaymentDigest().catch((err) => console.error("paymentDigest tick failed:", err));
+    queueOutstationLastCall().catch((err) => console.error("outstationLastCall tick failed:", err));
   });
+}
+
+// Tuesday, Thursday and Saturday are the outstation dispatch days. At noon on
+// those days every retailer gets a push saying the last order for that
+// dispatch is taken until 5 PM (the shop closes orders at 5 PM, see
+// orderCutoff.ts). It is queued as an ordinary ScheduledNotification so it is
+// sent by runDueNotifications above and shows up in the admin list.
+const OUTSTATION_DAYS = new Set([2, 4, 6]); // Tue, Thu, Sat
+const LAST_CALL_HOUR_IST = 12;
+// Tolerates a server restart just after noon, but not a send hours late.
+const LAST_CALL_WINDOW_MINUTES = 15;
+
+export async function queueOutstationLastCall(): Promise<void> {
+  const { dayOfWeek, hour, minute, dateKey } = getIstNow();
+  if (!OUTSTATION_DAYS.has(dayOfWeek) || hour !== LAST_CALL_HOUR_IST || minute >= LAST_CALL_WINDOW_MINUTES) return;
+
+  const orgs = await db.organization.findMany({ select: { id: true } });
+  for (const org of orgs) {
+    const admin = await db.user.findFirst({ where: { orgId: org.id, role: "ADMIN" }, select: { id: true } });
+    if (!admin) continue;
+    try {
+      // One fixed id per org per day: a second tick, or a second worker
+      // running the same cron, hits the primary key and cannot queue it twice.
+      await db.scheduledNotification.create({
+        data: {
+          id: `outstation-last-call-${org.id}-${dateKey}`,
+          orgId: org.id,
+          title: "Last order today till 5 PM",
+          body: "आउटस्टेशन डिस्पॅचसाठी आजची शेवटची ऑर्डर संध्याकाळी ५ वाजेपर्यंत घेतली जाईल. Last order for outstation dispatch is accepted till 5 PM today.",
+          url: "/shop/products",
+          scheduledAt: new Date(),
+          createdById: admin.id,
+        },
+      });
+    } catch (err) {
+      if ((err as { code?: string }).code === "P2002") continue; // already queued today
+      throw err;
+    }
+  }
 }
 
 export async function runDueNotifications(): Promise<void> {

@@ -9,5 +9,5 @@ export default async function ShopCheckoutPage() {
   // Near-expiry items offered at the end of the order. A failure here must never
   // block checkout, so it quietly falls back to no strip.
   const deals = await getLastChanceDeals(session.orgId).catch(() => []);
-  return <ShopCheckout lang={lang} deals={deals} />;
+  return <ShopCheckout lang={lang} deals={deals} staffBooking={!!session.bookedBy} />;
 }

@@ -7,6 +7,7 @@ import { ShopBottomNav } from "@/components/shop/ShopBottomNav";
 import { CartProvider } from "@/components/shop/CartProvider";
 import { PendingOrdersSync } from "@/components/shop/PendingOrdersSync";
 import { OfflineBanner } from "@/components/shop/OfflineBanner";
+import { OrdersClosedBanner } from "@/components/shop/OrdersClosedBanner";
 import { OfflineCatalogSync } from "@/components/shop/OfflineCatalogSync";
 import { StaffBookingBanner } from "@/components/shop/StaffBookingBanner";
 import { AutoNotificationPrompt } from "@/components/shop/AutoNotificationPrompt";
@@ -47,6 +48,7 @@ export default async function ShopAuthenticatedLayout({ children }: { children: 
         {/* Not while staff book for a party: their phone must not get the shop's notifications. */}
         {!session.bookedBy && <AutoNotificationPrompt />}
         <OfflineBanner lang={lang} />
+        {!session.bookedBy && <OrdersClosedBanner lang={lang} />}
         <ShopHeader storeName={session.storeName} lang={lang} gold={gold} />
         <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-20">
           <OfflineCatalogSync />

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCart, paidQuantity } from "@/components/shop/CartProvider";
 import { placeOrder, getOutOfStockNames } from "@/actions/orderActions";
+import { useOrdersClosed } from "@/components/shop/useOrdersClosed";
 import { addPendingOrder, isLikelyNetworkError } from "@/lib/pendingOrders";
 import { t, type Lang } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
@@ -14,13 +15,24 @@ import { OrderPlacedScreen } from "@/components/shop/OrderPlacedScreen";
 import { LastChanceDeals } from "@/components/shop/LastChanceDeals";
 import type { LastChanceDeal } from "@/lib/lastChanceDeals";
 
-export function ShopCheckout({ lang, deals = [] }: { lang: Lang; deals?: LastChanceDeal[] }) {
+export function ShopCheckout({
+  lang,
+  deals = [],
+  staffBooking = false,
+}: {
+  lang: Lang;
+  deals?: LastChanceDeal[];
+  // Staff booking for a party are not held to the retailer's 5 PM cutoff.
+  staffBooking?: boolean;
+}) {
   const router = useRouter();
   const { items, setQuantity, removeItem, removeBundle, clear, total } = useCart();
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  // True from 5 PM to midnight: the button is replaced by a closed notice.
+  const ordersClosed = useOrdersClosed() && !staffBooking;
   // Set synchronously on the first tap (state updates land too late to stop a
   // quick second tap) so one cart can never be submitted twice at once.
   const submittingRef = useRef(false);
@@ -262,10 +274,14 @@ export function ShopCheckout({ lang, deals = [] }: { lang: Lang; deals?: LastCha
         <button
           type="button"
           onClick={handlePlaceOrder}
-          disabled={placing}
+          disabled={placing || ordersClosed}
           className="mx-auto flex w-full max-w-2xl items-center justify-center rounded-xl bg-blue-700 px-6 py-3 text-base font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {placing ? t(lang, "shop_placing_order") : `${t(lang, "shop_place_order")}: ₹${total.toLocaleString("en-IN")}`}
+          {ordersClosed
+            ? t(lang, "shop_orders_closed_button")
+            : placing
+              ? t(lang, "shop_placing_order")
+              : `${t(lang, "shop_place_order")}: ₹${total.toLocaleString("en-IN")}`}
         </button>
       </div>
     </div>

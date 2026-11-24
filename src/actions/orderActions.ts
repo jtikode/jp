@@ -13,6 +13,7 @@ import { getRateAdjuster } from "@/lib/storeRates";
 import { parseBundleItems, computeFreeUnits } from "@/lib/bannerBundle";
 import { isWednesdayToday, getRemainingDealQty } from "@/lib/wednesdayDeals";
 import { getStartOfIstDayUtc } from "@/lib/istTime";
+import { isOrderingClosed, ORDERS_CLOSED_MESSAGE } from "@/lib/orderCutoff";
 import { Prisma, type OrderStatus } from "@/generated/prisma/client";
 
 export interface CartLine {
@@ -64,6 +65,14 @@ export async function placeOrder(
   if (clientRequestId) {
     const existing = await db.order.findFirst({ where: { clientRequestId } });
     if (existing) return { ok: true, orderId: existing.id };
+  }
+
+  // After the 5 PM cutoff no new retailer order is taken. Staff booking for a
+  // party (bookedBy) are exempt: the cutoff is for retailers. Checked after the
+  // resend lookup above, so a retry of an order that already went through
+  // before 5 PM still returns it instead of an error.
+  if (!session.bookedBy && isOrderingClosed()) {
+    return { ok: false, error: ORDERS_CLOSED_MESSAGE };
   }
 
   const cleanLines = lines.filter((l) => l.quantity > 0);
