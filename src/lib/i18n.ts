@@ -283,11 +283,10 @@ export const translations = {
   shop_menu_request_product: { en: "Request Product", mr: "उत्पादनाची मागणी" },
   shop_menu_pay_online: { en: "Pay Online", mr: "ऑनलाइन पेमेंट" },
   shop_special_offers: { en: "Special Offers", mr: "खास ऑफर्स" },
-  shop_orders_closed_banner: {
-    en: "Orders are closed now (after 5 PM). Please order again tomorrow.",
-    mr: "ऑर्डर आता बंद आहेत (संध्याकाळी ५ नंतर). कृपया उद्या पुन्हा ऑर्डर द्या.",
+  shop_billing_closed_banner: {
+    en: "Billing is closed for today (after 5 PM). You can still place your order.",
+    mr: "आजचे बिलिंग बंद झाले आहे (संध्याकाळी ५ नंतर). तुम्ही तरीही ऑर्डर देऊ शकता.",
   },
-  shop_orders_closed_button: { en: "Orders closed, order tomorrow", mr: "ऑर्डर बंद, उद्या ऑर्डर द्या" },
   shop_missed_deals_heading: { en: "Deals you missed", mr: "तुम्ही गमावलेल्या डील्स" },
   shop_missed_deals_sub: {
     en: "These offers have ended. Keep notifications on so you never miss the next one.",

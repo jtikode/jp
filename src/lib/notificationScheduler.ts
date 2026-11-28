@@ -24,7 +24,7 @@ export function startNotificationScheduler(): void {
 
 // Tuesday, Thursday and Saturday are the outstation dispatch days. At noon on
 // those days every retailer gets a push saying the last order for that
-// dispatch is taken until 5 PM (the shop closes orders at 5 PM, see
+// dispatch is taken until 5 PM (billing closes then, see
 // orderCutoff.ts). It is queued as an ordinary ScheduledNotification so it is
 // sent by runDueNotifications above and shows up in the admin list.
 const OUTSTATION_DAYS = new Set([2, 4, 6]); // Tue, Thu, Sat
